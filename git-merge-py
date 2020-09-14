@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+import logging
+import sys
+
+from redbaron import (RedBaron,
+                      nodes)
+
+from gitmergepy.applyier import apply_changes
+from gitmergepy.differ import compute_diff_iterables
+
+VALUES_NODES = (nodes.CommentNode,
+                nodes.AssociativeParenthesisNode)
+INDENT = "   "
+
+
+def parse_file(filename):
+    with open(filename, 'r') as f:
+        return RedBaron(f.read())
+
+
+def main():
+    logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+    logging.debug("args %r", sys.argv)
+    base_file = sys.argv[1]
+    current_file = sys.argv[2]
+    other_file = sys.argv[3]
+    merge_files(base_file, current_file, other_file)
+
+
+def merge_files(base_file, current_file, other_file):
+    base_ast = parse_file(base_file)
+    current_ast = parse_file(current_file)
+    other_ast = parse_file(other_file)
+    merge_ast(base_ast, current_ast, other_ast)
+    with open('out.py', 'w') as out:
+        out.write(other_ast.dumps())
+
+
+def merge_ast(base_ast, current_ast, other_ast):
+    changes = compute_diff_iterables(base_ast, current_ast)
+    logging.info("Changes %r", changes)
+    apply_changes(other_ast, changes)
+    logging.info("Result %r", other_ast)
+
+
+if __name__ == '__main__':
+    # import IPython; IPython.embed()
+    main()

@@ -1,0 +1,301 @@
+from redbaron import RedBaron
+
+from gitmergepy.applyier import apply_changes
+from gitmergepy.differ import compute_diff
+
+
+def _test_apply_changes(base, current):
+    base_ast = RedBaron(base)
+    current_ast = RedBaron(current)
+    assert base_ast.dumps() != current_ast.dumps()
+
+    changes = compute_diff(base_ast, current_ast)
+    print('======== changes =======', changes, "========================")
+    apply_changes(base_ast, changes)
+    print("======= new_ast =======\n", base_ast.dumps(), "===================")
+
+    assert base_ast.dumps() == current_ast.dumps()
+
+
+def test_change_first_line():
+    base = """
+def fun():
+    print('hello')
+"""
+    current = """
+def fun():
+    print('hello world')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_fun_arg():
+    base = """
+def fun(arg):
+    pass
+"""
+    current = """
+def fun(new_arg):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_fun_arg_middle():
+    base = """
+def fun(arg1=1, arg2=2, arg3=3):
+    pass
+"""
+    current = """
+def fun(arg1=1, new_arg2=2, arg3=3):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_fun_arg_last():
+    base = """
+def fun(arg1=1, arg2=2, arg3=3):
+    pass
+"""
+    current = """
+def fun(arg1=1, arg2=2, new_arg3=3):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_fun_default():
+    base = """
+def fun(arg=1):
+    pass
+"""
+    current = """
+def fun(arg=2):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_line_with_context():
+    base = """
+def fun():
+    # Printing hello
+    print('hello')
+"""
+    current = """
+def fun():
+    # Printing hello
+    print('hello world')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_line_middle():
+    base = """
+# line 1
+# line 2
+# line 3
+"""
+    current = """
+# line 1
+# line 2 modified
+# line 3
+"""
+    _test_apply_changes(base, current)
+
+
+def test_move_function():
+    base = """
+def fun1():
+    print('fun1')
+
+def fun2():
+    print('fun2')
+"""
+    current = """
+def fun2():
+    print('fun2')
+
+def fun1():
+    print('fun1')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_import():
+    base = """
+from module1 import fun1
+"""
+    current = """
+from module1 import fun1, fun2
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_import_as():
+    base = """
+from module1 import fun1 as f1
+"""
+    current = """
+from module1 import fun1 as f1, fun2
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_import_module():
+    base = """
+import module1
+"""
+    current = """
+import module1
+import module2
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_import_first():
+    base = """
+from module1 import fun1, fun2
+"""
+    current = """
+from module1 import fun1
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_import_last():
+    base = """
+from module1 import fun1, fun2
+"""
+    current = """
+from module1 import fun2
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_import_middle():
+    base = """
+from module1 import fun1, fun2, fun3
+"""
+    current = """
+from module1 import fun1, fun3
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_with():
+    base = """
+with fun():
+    print('hello')
+"""
+    current = """
+print('hello')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_with():
+    base = """
+with fun():
+    print('hello')
+"""
+    current = """
+with fun2():
+    print('hello')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_with_double():
+    base = """
+with fun() as f, fun2() as f2:
+    print('hello')
+"""
+    current = """
+with fun3() as f3:
+    print('hello')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_with_content():
+    base = """
+with fun():
+    print('hello')
+"""
+    current = """
+with fun():
+    print('hello world')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_rename_function():
+    base = """
+def fun1():
+    print('fun1')
+"""
+    current = """
+def renamed_function():
+    print('fun1')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_new_function():
+    base = """
+def fun1():
+    print('fun1')
+
+def fun2():
+    print('fun2')
+"""
+    current = """
+def fun1():
+    print('fun1')
+
+def new_fun():
+    print('new fun')
+
+def fun2():
+    print('fun2')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_function():
+    base = """
+def fun1():
+    print('fun1')
+
+def old_fun():
+    print('new fun')
+
+def fun2():
+    print('fun2')
+"""
+    current = """
+def fun1():
+    print('fun1')
+
+def fun2():
+    print('fun2')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_first_line_changed():
+    base = """
+def fun():
+    # line1
+    pass
+    # line3
+"""
+    current = """
+def fun():
+    # line1 changed
+    pass
+    # line3 changed
+"""
+    _test_apply_changes(base, current)

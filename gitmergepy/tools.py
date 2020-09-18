@@ -1,11 +1,40 @@
 from redbaron import nodes
 
 
+def iter_coma_list(l):
+    trimmed_list = l
+    if isinstance(l[0], nodes.LeftParenthesisNode):
+        trimmed_list = trimmed_list[1:]
+    if isinstance(l[-1], nodes.RightParenthesisNode):
+        trimmed_list = trimmed_list[:-1]
+    return iter(trimmed_list)
+
+
+def append_coma_list(l, to_add):
+    if isinstance(l[-1], nodes.RightParenthesisNode):
+        # Workaround redbaron bug: extra separator if last element is a )
+        sep = l.node_list[2].copy()
+        l.data[-2][1] = sep
+        l.data.insert(-1, [to_add, None])
+        l.node_list.insert(-1, sep)
+        l.node_list.insert(-1, to_add)
+    else:
+        l.append(to_add)
+
+
+def pop_coma_list(l):
+    if isinstance(l[0], nodes.LeftParenthesisNode):
+        # Workaround bug: extra separator if first element is a (
+        del l.data[1]
+        del l.node_list[1:3]
+    else:
+        del l[0]
+
+
 def sort_imports(targets):
-    new_targets = [t.copy() for t in targets]
-    targets.extend(sorted(new_targets, key=lambda el: el.value))
-    for _ in new_targets:
-        targets.pop(0)
+    for target in sorted(iter_coma_list(targets), key=lambda el: el.value):
+        append_coma_list(targets, target)
+        pop_coma_list(targets)
 
 
 def short_display_el(el):

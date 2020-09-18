@@ -1,6 +1,8 @@
+import logging
+
 from redbaron import RedBaron
 
-from gitmergepy.applyier import apply_changes
+from gitmergepy.applyier import apply_changes_safe
 from gitmergepy.differ import compute_diff
 
 
@@ -10,9 +12,9 @@ def _test_apply_changes(base, current):
     assert base_ast.dumps() != current_ast.dumps()
 
     changes = compute_diff(base_ast, current_ast)
-    print('======== changes =======', changes, "========================")
-    apply_changes(base_ast, changes)
-    print("======= new_ast =======\n", base_ast.dumps(), "===================")
+    logging.debug("applying changes")
+    apply_changes_safe(base_ast, changes)
+    logging.debug("======= new_ast =======\n%s", base_ast.dumps())
 
     assert base_ast.dumps() == current_ast.dumps()
 
@@ -150,6 +152,19 @@ import module1
     current = """
 import module1
 import module2
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_import_multiline():
+    base = """
+from module1 import (fun1,
+                     fun2)
+"""
+    current = """
+from module1 import (fun1,
+                     fun2,
+                     fun3)
 """
     _test_apply_changes(base, current)
 
@@ -297,5 +312,29 @@ def fun():
     # line1 changed
     pass
     # line3 changed
+"""
+    _test_apply_changes(base, current)
+
+
+def test_func_call_add_arg():
+    base = """
+fun1(arg1)
+"""
+    current = """
+fun1(arg1, arg2)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_block():
+    base = """
+# line 1
+# line 2
+# line 3
+"""
+    current = """
+# line 1
+# line 2 changed
+# line 3 changed
 """
     _test_apply_changes(base, current)

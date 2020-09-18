@@ -1,6 +1,6 @@
 from redbaron import RedBaron
 
-from gitmergepy.applyier import apply_changes
+from gitmergepy.applyier import apply_changes_safe
 from gitmergepy.differ import compute_diff
 
 
@@ -12,43 +12,43 @@ def _test_merge_changes(base, current, other, expected):
 
     changes = compute_diff(base_ast, current_ast)
     print("======== changes from current ========\n", changes)
-    apply_changes(base_ast, changes)
+    apply_changes_safe(base_ast, changes)
     print("======= changes applied to base =======\n", base_ast.dumps())
     assert base_ast.dumps() == current_ast.dumps()
-    apply_changes(other_ast, changes)
+    apply_changes_safe(other_ast, changes)
     print("======= changes applied to other =======\n", other_ast.dumps())
     assert other_ast.dumps() == expected
 
 
 def test_add_import():
     base = """
-    from module1 import fun1
-    """
+from module1 import fun1
+"""
     current = """
-    from module1 import fun1, fun2
-    """
+from module1 import fun1, fun2
+"""
     other = """
-    from module1 import fun3
-    """
+from module1 import fun3
+"""
     expected = """
-    from module1 import fun2, fun3
-    """
+from module1 import fun2, fun3
+"""
     _test_merge_changes(base, current, other, expected)
 
 
 def test_add_import_2():
     base = """
-    from module1 import fun1
-    """
+from module1 import fun1
+"""
     current = """
-    from module1 import fun1, fun3
-    """
+from module1 import fun1, fun3
+"""
     other = """
-    from module1 import fun2
-    """
+from module1 import fun2
+"""
     expected = """
-    from module1 import fun2, fun3
-    """
+from module1 import fun2, fun3
+"""
     _test_merge_changes(base, current, other, expected)
 
 

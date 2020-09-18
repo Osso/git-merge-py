@@ -1,3 +1,5 @@
+from redbaron import RedBaron
+
 from .matcher import (find_context,
                       gather_context)
 
@@ -26,3 +28,11 @@ def insert_at_context(el, context_stack, tree):
     else:
         # move to beginning
         tree.insert(0, el)
+
+
+def apply_changes_safe(tree, changes):
+    """Workaround redbaron bug in case of empty tree"""
+    placeholder = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
+    tree.append(placeholder)
+    apply_changes(tree, changes)
+    tree.remove(placeholder)

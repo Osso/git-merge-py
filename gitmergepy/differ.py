@@ -106,7 +106,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         el_left = stack_left.pop(0)
 
         if el_diff:
-            diff += [context_class(el_left, el_diff, context=previous_el)]
+            diff += [context_class(el, el_diff, context=gather_context(el))]
             previous_el = el_left
 
         return diff
@@ -115,7 +115,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     for el_right in right:
         if not stack_left:
             logging.debug("%s stack_left empty, new el %r", indent+INDENT, type(el_right).__name__)
-            diff += [AddEl(el_right, context=gather_context(el_right))]
+            add_to_diff(diff, el_right)
             continue
 
         # Pre-processing
@@ -158,7 +158,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                             # stack_left[0] is defined somewhere else
                             # we are not modifying it
                             logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                            diff += [AddEl(el_right, context=gather_context(el_right))]
+                            add_to_diff(diff, el_right)
                         else:
                             # stack_left[0] is nowhere else
                             # assume function is modified
@@ -171,7 +171,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                 diff += diff_el
                     else:
                         logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                        diff += [AddEl(el_right, context=gather_context(el_right))]
+                        add_to_diff(diff, el_right)
         elif isinstance(el_right, nodes.ClassNode):
             logging.debug("%s changed class %r", indent+INDENT, type(el_right).__name__)
             # We have encountered a function
@@ -181,19 +181,26 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 diff += _changed_el(el_right, stack_left)
             else:
                 logging.debug("%s new class %r", indent+INDENT, el_right.name)
-                diff += [AddEl(el_right, context=gather_context(el_right))]
+                add_to_diff(diff, el_right)
         elif guess_if_same_el(stack_left[0], el_right):
             # previous_el or
             logging.debug("%s changed el %r", indent+INDENT, type(el_right).__name__)
             diff += _changed_el(el_right, stack_left)
         else:
             logging.debug("%s new el %r", indent+INDENT, type(el_right).__name__)
-            diff += [AddEl(el_right, context=gather_context(el_right))]
+            add_to_diff(diff, el_right)
             previous_el = None
 
     if stack_left:
         logging.debug("%s compute_diff_iterables removing leftover %r", indent, stack_left)
-        diff = [RemoveEl(el, context=gather_context(el)) for el in stack_left] + diff
+        diff = [RemoveEl([el], context=gather_context(el)) for el in stack_left] + diff
 
     logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff
+
+
+def add_to_diff(diff, el):
+    if diff and isinstance(diff[-1], AddEl):
+        diff[-1].add_el(el)
+    else:
+        diff += [AddEl([el], context=gather_context(el))]

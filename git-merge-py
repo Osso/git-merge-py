@@ -44,5 +44,4 @@ def merge_ast(base_ast, current_ast, other_ast):
 
 
 if __name__ == '__main__':
-    # import IPython; IPython.embed()
     main()

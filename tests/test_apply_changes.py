@@ -338,3 +338,53 @@ def test_add_block():
 # line 3 changed
 """
     _test_apply_changes(base, current)
+
+
+def test_change_call_arg():
+    base = """
+fun(arg)
+"""
+    current = """
+fun(new_arg)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_call_arg_middle():
+    base = """
+fun(arg1, arg2, arg3)
+"""
+    current = """
+fun(arg1, new_arg2, arg3)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_call_arg_last():
+    base = """
+fun(arg1, arg2, arg3)
+"""
+    current = """
+fun(arg1, arg2, new_arg3)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_call_default():
+    base = """
+fun(arg=1)
+"""
+    current = """
+fun(arg=2)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_call_arg_equal():
+    base = """
+a = fun(arg)
+"""
+    current = """
+a = fun(new_arg)
+"""
+    _test_apply_changes(base, current)

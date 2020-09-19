@@ -87,3 +87,27 @@ def is_iterable(el):
         return False
     else:
         return True
+
+
+def get_call_el(el):
+    sub_el = None
+    for sub_el in el:
+        if not isinstance(sub_el, nodes.NameNode):
+            break
+
+    if isinstance(sub_el, nodes.CallNode):
+        return sub_el
+    return None
+
+
+def get_name_els_from_call(el):
+    name_els = []
+    for sub_el in el:
+        if not isinstance(sub_el, nodes.NameNode):
+            break
+        name_els.append(el)
+    return name_els
+
+
+def name_els_to_string(els):
+    return '.'.join(el.name.value for el in els)

@@ -8,17 +8,22 @@ from .matcher import (find_func,
                       same_el)
 from .tools import (changed_list,
                     diff_list,
+                    get_call_el,
                     is_iterable)
-from .tree import (AddEl,
+from .tree import (AddCallArg,
+                   AddEl,
                    AddFunArg,
                    AddImports,
                    ChangeArgDefault,
+                   ChangeAssignmentNode,
                    ChangeAttr,
+                   ChangeCallArgDefault,
                    ChangeEl,
                    ChangeFun,
                    ChangeValue,
                    MoveFunction,
                    NoDefault,
+                   RemoveCallArgs,
                    RemoveEl,
                    RemoveFunArgs,
                    RemoveImports,
@@ -46,14 +51,14 @@ def compute_diff_one(left, right, indent=""):
                                       key_getter=lambda t: t.name.value)
         logging.debug('%s diff fun new args %r old args %r', indent, to_add, to_remove)
         for arg in to_add:
-            diff += [AddFunArg(arg, context=gather_context(arg))]
+            diff += [AddFunArg(arg.copy(), context=gather_context(arg))]
         if to_remove:
             diff += [RemoveFunArgs(to_remove)]
 
         changed = changed_list(left.arguments, right.arguments,
                                key_getter=lambda t: t.name.value,
                                value_getter=lambda t: t.value.value if t.value else NoDefault)
-        diff += [ChangeArgDefault(el) for el in changed]
+        diff += [ChangeArgDefault(el.copy()) for el in changed]
 
         logging.debug('%s diff fun changed args %r', indent, changed)
     elif isinstance(left, nodes.FromImportNode):
@@ -64,6 +69,28 @@ def compute_diff_one(left, right, indent=""):
     elif isinstance(left, nodes.WithNode):
         if left.contexts.dumps() != right.contexts.dumps():
             diff += [ChangeAttr('contexts', right.contexts.copy())]
+    elif isinstance(left, nodes.AtomtrailersNode):
+        call_el_left = get_call_el(left)
+        call_el_right = get_call_el(right)
+        to_add, to_remove = diff_list(call_el_left, call_el_right,
+                                      key_getter=lambda t: t.name.value)
+        logging.debug('%s diff call new args %r old args %r', indent, to_add, to_remove)
+        for arg in to_add:
+            diff += [AddCallArg(arg.copy(), context=gather_context(arg))]
+        if to_remove:
+            diff += [RemoveCallArgs(to_remove)]
+
+        changed = changed_list(call_el_left, call_el_right,
+                               key_getter=lambda t: t.name.value,
+                               value_getter=lambda t: t.value.value if t.value else NoDefault)
+        diff += [ChangeCallArgDefault(el.copy()) for el in changed]
+    elif isinstance(left, nodes.AssignmentNode):
+        if left.name.value != right.name.value:
+            diff += [ChangeAttr('name', right.name)]
+        if left.value.dumps() != right.value.dumps():
+            el_diff = compute_diff_one(left.value, right.value,
+                                       indent=indent+INDENT)
+            diff += [ChangeAssignmentNode(left, changes=el_diff)]
 
     logging.debug('%s compute_diff_one %r', indent, diff)
     return diff
@@ -72,7 +99,7 @@ def compute_diff_one(left, right, indent=""):
 def create_add_remove(to_add_class, to_add, to_remove_class, to_remove):
     diff = []
     if to_add:
-        diff += [to_add_class(to_add)]
+        diff += [to_add_class([el.copy() for el in to_add])]
     if to_remove:
         diff += [to_remove_class(to_remove)]
     return diff
@@ -181,6 +208,16 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 diff += _changed_el(el_right, stack_left)
             else:
                 logging.debug("%s new class %r", indent+INDENT, el_right.name)
+                add_to_diff(diff, el_right)
+        elif isinstance(el_right, nodes.AtomtrailersNode):
+            if get_call_el(el_right):
+                logging.debug("%s modified call %r", indent+INDENT, el_right.name)
+                el_left = stack_left.pop(0)
+                el_diff = compute_diff_one(el_left, el_right, indent=indent+INDENT)
+                if el_diff:
+                    diff += [context_class(el_left, el_diff, context=gather_context(el_left))]
+            else:
+                logging.debug("%s new AtomtrailersNode %r", indent+INDENT, el_right.name)
                 add_to_diff(diff, el_right)
         elif guess_if_same_el(stack_left[0], el_right):
             # previous_el or

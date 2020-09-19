@@ -6,7 +6,7 @@ from .matcher import (find_context,
 
 def apply_changes(tree, changes):
     for change in changes:
-        # print('applying change', change)
+        print('applying change', change)
         change.apply(tree)
 
 

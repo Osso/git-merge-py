@@ -11,12 +11,18 @@ def _test_merge_changes(base, current, other, expected):
     assert base_ast.dumps() != current_ast.dumps()
 
     changes = compute_diff(base_ast, current_ast)
-    print("======== changes from current ========\n", changes)
+    print("======== changes from current ========")
+    for change in changes:
+        print(change)
+    print("=========")
     apply_changes_safe(base_ast, changes)
-    print("======= changes applied to base =======\n", base_ast.dumps())
+    print("======= changes applied to base =======")
+    print(base_ast.dumps())
+    print("=========")
     assert base_ast.dumps() == current_ast.dumps()
     apply_changes_safe(other_ast, changes)
-    print("======= changes applied to other =======\n", other_ast.dumps())
+    print("======= changes applied to other =======")
+    print(other_ast.dumps())
     assert other_ast.dumps() == expected
 
 
@@ -150,6 +156,58 @@ def renamed_fun():
 
 def fun2():
     pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_fun_args():
+    base = """
+def fun1(arg1, arg2, arg3):
+    pass
+"""
+    current = """
+def fun1(arg1, new_arg2, arg3):
+    pass
+"""
+    other = """
+def fun1(arg1, arg2, new_arg3):
+    pass
+"""
+    expected = """
+def fun1(arg1, new_arg2, new_arg3):
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_call_args():
+    base = """
+fun(arg1, arg2, arg3)
+"""
+    current = """
+fun(arg1, new_arg2, arg3)
+"""
+    other = """
+fun(arg1, arg2, new_arg3)
+"""
+    expected = """
+fun(arg1, new_arg2, new_arg3)
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_call_args_assignment():
+    base = """
+a = fun(arg1, arg2, arg3)
+"""
+    current = """
+a = fun(arg1, new_arg2, arg3)
+"""
+    other = """
+a = fun(arg1, arg2, new_arg3)
+"""
+    expected = """
+a = fun(arg1, new_arg2, new_arg3)
 """
     _test_merge_changes(base, current, other, expected)
 

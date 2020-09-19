@@ -11,6 +11,7 @@ from .matcher import (find_context,
                       same_el)
 from .tools import (append_coma_list,
                     apply_diff_to_list,
+                    get_call_el,
                     iter_coma_list,
                     short_display_el,
                     sort_imports)
@@ -94,9 +95,7 @@ class AddImports:
         for import_el in self.imports:
             if import_el.value not in existing_imports:
                 append_coma_list(tree.targets, import_el)
-        print(tree)
         sort_imports(tree.targets)
-        print(tree)
 
 
 class RemoveImports:
@@ -166,14 +165,22 @@ class ChangeAttr:
 
 class ChangeArgDefault(BaseEl):
 
+    def get_args(self, tree):
+        return tree.arguments
+
     def apply(self, tree):
-        for arg in tree.arguments:
+        for arg in self.get_args(tree):
             if arg.name.value == self.el.name.value:
                 arg.value.value = self.el.value.value
 
     def __repr__(self):
         return "<%s new_param_default=%r>" % (self.__class__.__name__,
                                               self.el)
+
+
+class ChangeCallArgDefault(ChangeArgDefault):
+    def get_args(self, tree):
+        return get_call_el(tree)
 
 
 class ChangeEl(BaseEl):
@@ -224,6 +231,12 @@ class MoveFunction(ChangeEl):
             apply_changes(fun, self.changes)
 
 
+class ChangeAssignmentNode(ChangeEl):
+    def apply(self, tree):
+        print(tree.value)
+        apply_changes(tree.value, self.changes)
+
+
 class AddFunArg:
     def __init__(self, arg, context):
         self.arg = arg
@@ -232,15 +245,35 @@ class AddFunArg:
     def __repr__(self):
         return "<%s arg=%r>" % (self.__class__.__name__, self.arg)
 
+    def get_args(self, tree):
+        return tree.arguments
+
     def apply(self, tree):
+        args = self.get_args(tree)
         if self.context and self.context[-1]:
-            el = find_context(tree.arguments, self.context[-1])
+            el = find_context(args, self.context[-1])
             if el:
-                tree.arguments.insert(tree.arguments.index(el)+1, self.arg)
+                args.insert(args.index(el)+1, self.arg)
             else:
-                tree.arguments.append(self.arg)
+                args.append(self.arg)
         else:
-            tree.arguments.insert(0, self.arg)
+            args.insert(0, self.arg)
+
+
+class AddCallArg(AddFunArg):
+    def get_args(self, tree):
+        return get_call_el(tree)
+
+    def apply(self, tree):
+        args = self.get_args(tree)
+        if self.context and self.context[-1]:
+            el = find_context(args, self.context[-1])
+            if el:
+                args.insert(args.index(el)+1, self.arg)
+            else:
+                args.append(self.arg)
+        else:
+            args.insert(0, self.arg)
 
 
 class RemoveFunArgs:
@@ -248,11 +281,20 @@ class RemoveFunArgs:
         self.args = args
 
     def __repr__(self):
-        return "<%s args=%r>" % (self.__class__.__name__, self.args)
+        return "<%s args=%r>" % (self.__class__.__name__,
+                                 [arg.name.value for arg in self.args])
+
+    def get_args(self, tree):
+        return tree.arguments
 
     def apply(self, tree):
-        apply_diff_to_list(tree.arguments, to_add=[], to_remove=self.args,
+        apply_diff_to_list(self.get_args(tree), to_add=[], to_remove=self.args,
                            key_getter=lambda t: t.name.value)
+
+
+class RemoveCallArgs(RemoveFunArgs):
+    def get_args(self, tree):
+        return get_call_el(tree)
 
 
 class RemoveWith(BaseEl):

@@ -1,5 +1,8 @@
 from redbaron import nodes
 
+from .tools import (get_name_els_from_call,
+                    name_els_to_string)
+
 WHITESPACE_NODES = (nodes.EndlNode, )
 
 
@@ -8,10 +11,16 @@ def guess_if_same_el(left, right):
         return False
     if isinstance(left, nodes.DefNode) and left.name == right.name:
         return True
+    if isinstance(left, nodes.AtomtrailersNode):
+        name_els_left = get_name_els_from_call(left)
+        name_els_right = get_name_els_from_call(right)
+        return name_els_to_string(name_els_left) == name_els_to_string(name_els_right)
     if isinstance(left, nodes.FromImportNode) and set(m.value for m in left.value) == set(m.value for m in right.value):
         return True
     if isinstance(left, nodes.WithNode):
         return True
+    if isinstance(left, nodes.AssignmentNode):
+        return left.name.value == right.name.value
     return False
 
 

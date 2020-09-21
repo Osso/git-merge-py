@@ -10,20 +10,27 @@ from .tools import (changed_list,
                     diff_list,
                     get_call_el,
                     is_iterable)
-from .tree import (AddCallArg,
+from .tree import (AddAllDecoratorArgs,
+                   AddCallArg,
+                   AddDecorator,
                    AddEl,
                    AddFunArg,
                    AddImports,
                    ChangeArgDefault,
                    ChangeAssignmentNode,
+                   ChangeAtomtrailersCall,
                    ChangeAttr,
-                   ChangeCallArgDefault,
+                   ChangeCallArgValue,
+                   ChangeDecorator,
+                   ChangeDecoratorArgValue,
                    ChangeEl,
                    ChangeFun,
                    ChangeValue,
                    MoveFunction,
                    NoDefault,
+                   RemoveAllDecoratorArgs,
                    RemoveCallArgs,
+                   RemoveDecorators,
                    RemoveEl,
                    RemoveFunArgs,
                    RemoveImports,
@@ -45,8 +52,10 @@ def compute_diff_one(left, right, indent=""):
         diff += [ChangeValue(right.value)]
     elif isinstance(left, nodes.DefNode):
         diff = []
+        # Name
         if left.name != right.name:
             diff += [ChangeAttr('name', right.name)]
+        # Args
         to_add, to_remove = diff_list(left.arguments, right.arguments,
                                       key_getter=lambda t: t.name.value)
         logging.debug('%s diff fun new args %r old args %r', indent, to_add, to_remove)
@@ -58,9 +67,31 @@ def compute_diff_one(left, right, indent=""):
         changed = changed_list(left.arguments, right.arguments,
                                key_getter=lambda t: t.name.value,
                                value_getter=lambda t: t.value.value if t.value else NoDefault)
-        diff += [ChangeArgDefault(el.copy()) for el in changed]
-
-        logging.debug('%s diff fun changed args %r', indent, changed)
+        diff += [ChangeArgDefault(el.copy()) for _, el in changed]
+        # Decorators
+        to_add, to_remove = diff_list(left.decorators, right.decorators,
+                                      key_getter=lambda t: t.name.value)
+        for decorator in to_add:
+            diff += [AddDecorator(decorator.copy(),
+                                  context=gather_context(decorator))]
+        if to_remove:
+            diff += [RemoveDecorators(to_remove)]
+        logging.debug('%s diff fun new decorators %r old decorators %r', indent, to_add, to_remove)
+        changed = changed_list(left.decorators, right.decorators,
+                               key_getter=lambda t: t.name.value,
+                               value_getter=lambda t: t.dumps())
+        for left_el, right_el in changed:
+            diff_decorator = []
+            if left_el.call and right_el.call:
+                diff_decorator += [ChangeDecoratorArgValue(el) for el in changed]
+            elif left_el.call:
+                logging.debug('%s diff fun remove decorators %r old decorators %r', indent, to_add, to_remove)
+                diff_decorator += [RemoveAllDecoratorArgs(right_el)]
+            elif right_el.call:
+                diff_decorator += [AddAllDecoratorArgs(right.call)]
+            if diff_decorator:
+                diff += [ChangeDecorator(left, changes=diff_decorator)]
+        logging.debug('%s diff fun changed decorators %r', indent, changed)
     elif isinstance(left, nodes.FromImportNode):
         to_add, to_remove = diff_list(left.targets, right.targets,
                                       key_getter=lambda t: t.value)
@@ -72,7 +103,12 @@ def compute_diff_one(left, right, indent=""):
     elif isinstance(left, nodes.AtomtrailersNode):
         call_el_left = get_call_el(left)
         call_el_right = get_call_el(right)
-        to_add, to_remove = diff_list(call_el_left, call_el_right,
+        el_diff = compute_diff_one(call_el_left, call_el_right,
+                                   indent=indent+INDENT)
+        if el_diff:
+            diff += [ChangeAtomtrailersCall(call_el_left, changes=el_diff)]
+    elif isinstance(left, nodes.CallNode):
+        to_add, to_remove = diff_list(left, right,
                                       key_getter=lambda t: t.name.value)
         logging.debug('%s diff call new args %r old args %r', indent, to_add, to_remove)
         for arg in to_add:
@@ -80,16 +116,17 @@ def compute_diff_one(left, right, indent=""):
         if to_remove:
             diff += [RemoveCallArgs(to_remove)]
 
-        changed = changed_list(call_el_left, call_el_right,
+        changed = changed_list(left, right,
                                key_getter=lambda t: t.name.value,
                                value_getter=lambda t: t.value.value if t.value else NoDefault)
-        diff += [ChangeCallArgDefault(el.copy()) for el in changed]
+        diff += [ChangeCallArgValue(el.copy()) for _, el in changed]
     elif isinstance(left, nodes.AssignmentNode):
         if left.name.value != right.name.value:
             diff += [ChangeAttr('name', right.name)]
-        if left.value.dumps() != right.value.dumps():
-            el_diff = compute_diff_one(left.value, right.value,
-                                       indent=indent+INDENT)
+
+        el_diff = compute_diff_one(left.value, right.value,
+                                   indent=indent+INDENT)
+        if el_diff:
             diff += [ChangeAssignmentNode(left, changes=el_diff)]
 
     logging.debug('%s compute_diff_one %r', indent, diff)

@@ -388,3 +388,91 @@ a = fun(arg)
 a = fun(new_arg)
 """
     _test_apply_changes(base, current)
+
+
+def test_add_decorator():
+    base = """
+def fun():
+    pass
+"""
+    current = """
+@decorator
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_decorator():
+    base = """
+@decorator
+def fun():
+    pass
+"""
+    current = """
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_decorator_first():
+    base = """
+@decorator1
+@decorator2
+def fun():
+    pass
+"""
+    current = """
+@decorator2
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_decorator_first():
+    base = """
+@decorator2
+def fun():
+    pass
+"""
+    current = """
+@decorator1
+@decorator2
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_decorator_last():
+    base = """
+@decorator1
+def fun():
+    pass
+"""
+    current = """
+@decorator1
+@decorator2
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_decorator_middle():
+    base = """
+@decorator1
+@decorator3
+def fun():
+    pass
+"""
+    current = """
+@decorator1
+@decorator2
+@decorator3
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)

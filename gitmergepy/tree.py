@@ -30,6 +30,10 @@ class BaseEl:
                                    short_display_el(self.el))
 
 
+class Conflict(BaseEl):
+    pass
+
+
 class ElWithContext(BaseEl):
     def __init__(self, el, context):
         super().__init__(el)
@@ -178,9 +182,24 @@ class ChangeArgDefault(BaseEl):
                                               self.el)
 
 
-class ChangeCallArgDefault(ChangeArgDefault):
+class RemoveAllDecoratorArgs(BaseEl):
+    def apply(self, tree):
+        tree.call = None
+
+
+class AddAllDecoratorArgs(BaseEl):
+    def apply(self, tree):
+        tree.call = self.el.call
+
+
+class ChangeCallArgValue(ChangeArgDefault):
     def get_args(self, tree):
-        return get_call_el(tree)
+        return tree
+
+
+class ChangeDecoratorArgValue(ChangeArgDefault):
+    def get_args(self, tree):
+        return tree.call
 
 
 class ChangeEl(BaseEl):
@@ -233,8 +252,22 @@ class MoveFunction(ChangeEl):
 
 class ChangeAssignmentNode(ChangeEl):
     def apply(self, tree):
-        print(tree.value)
         apply_changes(tree.value, self.changes)
+
+
+class ChangeAtomtrailersCall(ChangeEl):
+    def apply(self, tree):
+        el = get_call_el(tree)
+        if not el:
+            return [Conflict(tree)]
+        return apply_changes(el, self.changes)
+
+
+class ChangeDecorator(ChangeEl):
+    def apply(self, tree):
+        for decorator in tree.decorators:
+            if decorator.name.value == self.el.name.value:
+                apply_changes(decorator, self.changes)
 
 
 class AddFunArg:
@@ -262,18 +295,7 @@ class AddFunArg:
 
 class AddCallArg(AddFunArg):
     def get_args(self, tree):
-        return get_call_el(tree)
-
-    def apply(self, tree):
-        args = self.get_args(tree)
-        if self.context and self.context[-1]:
-            el = find_context(args, self.context[-1])
-            if el:
-                args.insert(args.index(el)+1, self.arg)
-            else:
-                args.append(self.arg)
-        else:
-            args.insert(0, self.arg)
+        return tree
 
 
 class RemoveFunArgs:
@@ -294,7 +316,22 @@ class RemoveFunArgs:
 
 class RemoveCallArgs(RemoveFunArgs):
     def get_args(self, tree):
-        return get_call_el(tree)
+        return tree
+
+
+class AddDecorator(AddFunArg):
+    def get_args(self, tree):
+        return tree.decorators
+
+
+class RemoveDecorators(RemoveFunArgs):
+    def get_args(self, tree):
+        return tree.decorators
+
+    def apply(self, tree):
+        super().apply(tree)
+        if not tree.decorators and tree.decorators.node_list:
+            tree.decorators.node_list.clear()
 
 
 class RemoveWith(BaseEl):

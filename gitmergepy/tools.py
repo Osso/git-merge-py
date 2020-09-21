@@ -64,7 +64,7 @@ def changed_list(left, right, key_getter, value_getter):
 
     for left_el, right_el in zip(left_els, right_els):
         if value_getter(left_el) != value_getter(right_el):
-            changed.append(right_el)
+            changed.append((left_el, right_el))
 
     return changed
 

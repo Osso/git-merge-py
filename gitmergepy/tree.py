@@ -30,10 +30,6 @@ class BaseEl:
                                    short_display_el(self.el))
 
 
-class Conflict(BaseEl):
-    pass
-
-
 class ElWithContext(BaseEl):
     def __init__(self, el, context):
         super().__init__(el)
@@ -45,7 +41,7 @@ class ElWithContext(BaseEl):
             short_display_el(self.context[-1]) if self.context[-1] else None)
 
 
-class RemoveEl:
+class RemoveEls:
     def __init__(self, to_remove, context):
         self.to_remove = to_remove
         self.context = context
@@ -56,6 +52,7 @@ class RemoveEl:
             short_display_el(self.context[-1]) if self.context[-1] else None)
 
     def apply(self, tree):
+        conflicts = []
         for el_to_remove in self.to_remove:
             logging.debug("removing el %r", short_display_el(el_to_remove))
             if not self.context[-1]:
@@ -73,18 +70,21 @@ class RemoveEl:
 
             el = find_context(tree, self.context[-1])
             if el:
-                # not working everywhere
-                # el_next = el.next
+                # el_next = el.next not working everywhere
+                # Workaround:
                 el_next = tree[tree.index(el)+1]
+
                 if same_el(el_next, el_to_remove):
                     tree.remove(el_next)
-                    return
+                    continue
 
+            conflicts += [Conflict(tree, self)]
             # Default to brute force
-            for el in tree:
-                if same_el(el, el_to_remove):
-                    tree.remove(el)
-                    break
+            # for el in tree:
+            #     if same_el(el, el_to_remove):
+            #         tree.remove(el)
+            #         break
+        return conflicts
 
 
 class AddImports:
@@ -100,6 +100,7 @@ class AddImports:
             if import_el.value not in existing_imports:
                 append_coma_list(tree.targets, import_el)
         sort_imports(tree.targets)
+        return []
 
 
 class RemoveImports:
@@ -112,6 +113,7 @@ class RemoveImports:
     def apply(self, tree):
         apply_diff_to_list(tree.targets, to_add=[], to_remove=self.imports,
                            key_getter=lambda t: t.value)
+        return []
 
 
 class AddEl:
@@ -138,9 +140,11 @@ class AddEl:
                     tree.insert(tree.index(el)+1, el_to_add)
             else:
                 tree.extend(self.to_add)
+                return [Conflict(tree, self)]
         else:
             for el_to_add in reversed(self.to_add):
                 tree.insert(0, el_to_add)
+        return []
 
 
 class ChangeValue:
@@ -149,6 +153,7 @@ class ChangeValue:
 
     def apply(self, tree):
         tree.value = self.new_value
+        return []
 
     def __repr__(self):
         return "<%s new_value=%r>" % (self.__class__.__name__, self.new_value)
@@ -161,6 +166,7 @@ class ChangeAttr:
 
     def apply(self, tree):
         setattr(tree, self.attr_name, self.attr_value)
+        return []
 
     def __repr__(self):
         return "<%s %s=%r>" % (self.__class__.__name__,
@@ -176,6 +182,7 @@ class ChangeArgDefault(BaseEl):
         for arg in self.get_args(tree):
             if arg.name.value == self.el.name.value:
                 arg.value.value = self.el.value.value
+        return []
 
     def __repr__(self):
         return "<%s new_param_default=%r>" % (self.__class__.__name__,
@@ -216,7 +223,12 @@ class ChangeEl(BaseEl):
     def apply(self, tree):
         el = find_el(tree, self.el, self.context)
         if el:
-            apply_changes(el, self.changes)
+            return apply_changes(el, self.changes)
+        return []
+
+
+class Conflict(ChangeEl):
+    pass
 
 
 class ChangeFun(ChangeEl):
@@ -237,37 +249,42 @@ class ChangeFun(ChangeEl):
             el = find_func(tree, tmp_el)
 
         if el:
-            apply_changes(el, self.changes)
+            return apply_changes(el, self.changes)
+        return []
 
 
 class MoveFunction(ChangeEl):
     def apply(self, tree):
+        conflicts = []
         fun = find_func(tree, self.el)
         # If function still exists, move it then apply changes
         if fun:
             tree.remove(fun)
             insert_at_context(fun, self.context, tree)
-            apply_changes(fun, self.changes)
+            conflicts += apply_changes(fun, self.changes)
+        return conflicts
 
 
 class ChangeAssignmentNode(ChangeEl):
     def apply(self, tree):
-        apply_changes(tree.value, self.changes)
+        return apply_changes(tree.value, self.changes)
 
 
 class ChangeAtomtrailersCall(ChangeEl):
     def apply(self, tree):
         el = get_call_el(tree)
         if not el:
-            return [Conflict(tree)]
+            return [Conflict(tree, self)]
         return apply_changes(el, self.changes)
 
 
 class ChangeDecorator(ChangeEl):
     def apply(self, tree):
+        conflicts = []
         for decorator in tree.decorators:
             if decorator.name.value == self.el.name.value:
-                apply_changes(decorator, self.changes)
+                conflicts += apply_changes(decorator, self.changes)
+        return conflicts
 
 
 class AddFunArg:
@@ -291,6 +308,7 @@ class AddFunArg:
                 args.append(self.arg)
         else:
             args.insert(0, self.arg)
+        return []
 
 
 class AddCallArg(AddFunArg):
@@ -312,6 +330,7 @@ class RemoveFunArgs:
     def apply(self, tree):
         apply_diff_to_list(self.get_args(tree), to_add=[], to_remove=self.args,
                            key_getter=lambda t: t.name.value)
+        return []
 
 
 class RemoveCallArgs(RemoveFunArgs):
@@ -332,12 +351,16 @@ class RemoveDecorators(RemoveFunArgs):
         super().apply(tree)
         if not tree.decorators and tree.decorators.node_list:
             tree.decorators.node_list.clear()
+        return []
 
 
 class RemoveWith(BaseEl):
     def apply(self, tree):
         with_node = find_with_node(tree, self.el)
+        if not with_node:
+            return [Conflict(tree, self)]
         with_node.decrease_indentation(4)
         for el in reversed(with_node):
             with_node.insert_after(el)
         tree.remove(with_node)
+        return []

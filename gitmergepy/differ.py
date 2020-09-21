@@ -31,7 +31,7 @@ from .tree import (AddAllDecoratorArgs,
                    RemoveAllDecoratorArgs,
                    RemoveCallArgs,
                    RemoveDecorators,
-                   RemoveEl,
+                   RemoveEls,
                    RemoveFunArgs,
                    RemoveImports,
                    RemoveWith)
@@ -267,7 +267,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
 
     if stack_left:
         logging.debug("%s compute_diff_iterables removing leftover %r", indent, stack_left)
-        diff = [RemoveEl([el], context=gather_context(el)) for el in stack_left] + diff
+        diff = [RemoveEls([el], context=gather_context(el)) for el in stack_left] + diff
 
     logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff

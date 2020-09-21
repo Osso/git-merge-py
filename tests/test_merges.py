@@ -180,6 +180,26 @@ def fun1(arg1, new_arg2, new_arg3):
     _test_merge_changes(base, current, other, expected)
 
 
+def test_already_removed_arg():
+    base = """
+def fun1(arg):
+    pass
+"""
+    current = """
+def fun1():
+    pass
+"""
+    other = """
+def fun1():
+    pass
+"""
+    expected = """
+def fun1():
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_change_call_args():
     base = """
 fun(arg1, arg2, arg3)

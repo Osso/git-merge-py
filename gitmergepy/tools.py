@@ -1,5 +1,8 @@
 from redbaron import nodes
 
+FIRST = object()
+LAST = object()
+
 
 def iter_coma_list(l):
     trimmed_list = l
@@ -40,7 +43,18 @@ def sort_imports(targets):
 def short_display_el(el):
     if isinstance(el, nodes.DefNode):
         return "Fun(\"%s\")" % el.name
-    return type(el).__name__
+    # return type(el).__name__
+    return el.dumps().splitlines()[0]
+
+
+def short_context(context):
+    if context is FIRST:
+        return "first"
+    if context is LAST:
+        return "last"
+    if context is None:
+        return "no context"
+    return context[-1].dumps().splitlines()[-1]
 
 
 def diff_list(left, right, key_getter, value_getter=None):

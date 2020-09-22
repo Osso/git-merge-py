@@ -476,3 +476,16 @@ def fun():
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_decorator_args():
+    base = """
+def fun():
+    pass
+"""
+    current = """
+@decorator(arg1, arg2)
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)

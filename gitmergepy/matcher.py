@@ -1,6 +1,7 @@
 from redbaron import nodes
 
-from .tools import (get_name_els_from_call,
+from .tools import (FIRST,
+                    get_name_els_from_call,
                     name_els_to_string)
 
 WHITESPACE_NODES = (nodes.EndlNode, )
@@ -106,6 +107,8 @@ def gather_context(el):
     while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
         el = el.previous
         context.append(el)
+    if context[-1] is None:
+        return FIRST
     return context
 
 

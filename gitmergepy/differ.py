@@ -6,14 +6,16 @@ from .matcher import (find_func,
                       gather_context,
                       guess_if_same_el,
                       same_el)
-from .tools import (changed_list,
+from .tools import (LAST,
+                    changed_list,
                     diff_list,
                     get_call_el,
-                    is_iterable)
+                    is_iterable,
+                    short_display_el)
 from .tree import (AddAllDecoratorArgs,
                    AddCallArg,
                    AddDecorator,
-                   AddEl,
+                   AddEls,
                    AddFunArg,
                    AddImports,
                    ChangeArgDefault,
@@ -161,17 +163,14 @@ def compute_diff(left, right, indent="", context=None):
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     logging.debug("%s compute_diff_iterables %r <=> %r", indent, type(left).__name__, type(right).__name__)
     stack_left = list(left)
-    previous_el = None
 
     def _changed_el(el, stack_left, context_class=context_class):
-        nonlocal previous_el
         diff = []
         el_diff = compute_diff(stack_left[0], el, indent=indent+INDENT)
-        el_left = stack_left.pop(0)
+        stack_left.pop(0)
 
         if el_diff:
             diff += [context_class(el, el_diff, context=gather_context(el))]
-            previous_el = el_left
 
         return diff
 
@@ -192,11 +191,24 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             diff += [RemoveWith(with_node)]
 
         # Actual processing
+
+        # Direct match
+        max_ahead = min(10, len(stack_left))
         if same_el(stack_left[0], el_right):
             # Exactly same element
-            logging.debug("%s same el %r", indent+INDENT, type(el_right).__name__)
+            logging.debug("%s same el %r", indent+INDENT, el_right.dumps())
             stack_left.pop(0)
-            previous_el = el_right
+        # Look forward a few elements to check if we have a match
+        elif any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
+            logging.debug("%s same el ahead %r", indent+INDENT, el_right.dumps())
+            els = []
+            for _ in range(10):
+                if not stack_left or same_el(stack_left[0], el_right):
+                    break
+                els += [stack_left.pop(0)]
+                logging.debug("%s removing %r", indent+INDENT, els[-1].dumps())
+            stack_left.pop(0)
+            diff += [RemoveEls(els, context=gather_context(el_right))]
         elif isinstance(el_right, nodes.DefNode):
             logging.debug("%s changed fun %r", indent+INDENT, type(el_right).__name__)
             # We have encountered a function
@@ -212,9 +224,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                     el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
                     context = gather_context(el_right)
                     stack_left.remove(el)
-                    diff += [MoveFunction(el,
-                                           changes=el_diff,
-                                           context=context)]
+                    diff += [MoveFunction(el, changes=el_diff,
+                                          context=context)]
                 else:
                     if isinstance(stack_left[0], nodes.DefNode):
                         el = find_func(right, stack_left[0])
@@ -257,24 +268,23 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 logging.debug("%s new AtomtrailersNode %r", indent+INDENT, el_right.name)
                 add_to_diff(diff, el_right)
         elif guess_if_same_el(stack_left[0], el_right):
-            # previous_el or
             logging.debug("%s changed el %r", indent+INDENT, type(el_right).__name__)
             diff += _changed_el(el_right, stack_left)
         else:
-            logging.debug("%s new el %r", indent+INDENT, type(el_right).__name__)
+            logging.debug("%s new el %r", indent+INDENT, el_right.dumps())
             add_to_diff(diff, el_right)
-            previous_el = None
 
     if stack_left:
-        logging.debug("%s compute_diff_iterables removing leftover %r", indent, stack_left)
-        diff = [RemoveEls([el], context=gather_context(el)) for el in stack_left] + diff
+        for el in stack_left:
+            logging.debug("%s removing leftover %r", indent+INDENT, short_display_el(el))
+        diff += [RemoveEls(stack_left, context=LAST)]
 
     logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff
 
 
 def add_to_diff(diff, el):
-    if diff and isinstance(diff[-1], AddEl):
+    if diff and isinstance(diff[-1], AddEls):
         diff[-1].add_el(el)
     else:
-        diff += [AddEl([el], context=gather_context(el))]
+        diff += [AddEls([el], context=gather_context(el))]

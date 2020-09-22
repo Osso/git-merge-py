@@ -13,9 +13,9 @@ def _test_apply_changes(base, current):
 
     changes = compute_diff(base_ast, current_ast)
     logging.debug("applying changes")
-    apply_changes_safe(base_ast, changes)
+    conflicts = apply_changes_safe(base_ast, changes)
     logging.debug("======= new_ast =======\n%s", base_ast.dumps())
-
+    assert not conflicts
     assert base_ast.dumps() == current_ast.dumps()
 
 
@@ -487,5 +487,35 @@ def fun():
 @decorator(arg1, arg2)
 def fun():
     pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_call_call():
+    base = """
+fun()
+"""
+    current = """
+fun(sub())
+"""
+    _test_apply_changes(base, current)
+
+
+def test_call_call_named():
+    base = """
+fun()
+"""
+    current = """
+fun(arg=sub())
+"""
+    _test_apply_changes(base, current)
+
+
+def test_call_change_call():
+    base = """
+fun(arg=sub1())
+"""
+    current = """
+fun(arg=sub2())
 """
     _test_apply_changes(base, current)

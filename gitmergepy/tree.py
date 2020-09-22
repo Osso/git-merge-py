@@ -235,8 +235,16 @@ class ChangeEl(BaseEl):
         return []
 
 
-class Conflict(ChangeEl):
-    pass
+class Conflict(BaseEl):
+    def __init__(self, el, change, reason=''):
+        super().__init__(el)
+        self.change = change
+        self.reason = reason
+
+    def __repr__(self):
+        return "<%s el=\"%s\" change=%r reason=%r>" % (
+            self.__class__.__name__, short_display_el(self.el),
+            self.change, self.reason)
 
 
 class ChangeFun(ChangeEl):
@@ -282,8 +290,8 @@ class ChangeAssignmentNode(ChangeEl):
 class ChangeAtomtrailersCall(ChangeEl):
     def apply(self, tree):
         el = get_call_el(tree)
-        if not el:
-            return [Conflict(tree, self)]
+        if el is None:
+            return [Conflict(tree, self, 'call element not found')]
         return apply_changes(el, self.changes)
 
 
@@ -302,13 +310,16 @@ class AddFunArg:
         self.context = context
 
     def __repr__(self):
-        return "<%s arg=%r>" % (self.__class__.__name__, self.arg)
+        return "<%s arg=%r context=%r>" % (self.__class__.__name__,
+                                           short_display_el(self.arg),
+                                           short_context(self.context))
 
     def get_args(self, tree):
         return tree.arguments
 
     def apply(self, tree):
         args = self.get_args(tree)
+        logging.debug("    adding arg %r to %r", self.arg, args)
         if self.context is FIRST:
             args.insert(0, self.arg)
         elif self.context is LAST:

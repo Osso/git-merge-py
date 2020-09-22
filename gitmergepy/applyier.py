@@ -1,8 +1,10 @@
+import logging
+
 from redbaron import RedBaron
 
-from .matcher import (find_context,
-                      gather_context)
-from .tools import FIRST
+from .matcher import find_context
+from .tools import (FIRST,
+                    short_display_el)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
@@ -11,7 +13,7 @@ def apply_changes(tree, changes):
     conflicts = []
 
     for change in changes:
-        print('applying change', change)
+        logging.debug('applying %r to %r', change, short_display_el(tree))
         conflicts += change.apply(tree)
 
     return conflicts
@@ -36,5 +38,6 @@ def insert_at_context(el, context, tree):
 def apply_changes_safe(tree, changes):
     """Workaround redbaron bug in case of empty tree"""
     tree.append(PLACEHOLDER)
-    apply_changes(tree, changes)
+    conflicts = apply_changes(tree, changes)
     tree.remove(PLACEHOLDER)
+    return conflicts

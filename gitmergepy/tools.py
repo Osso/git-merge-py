@@ -44,7 +44,10 @@ def short_display_el(el):
     if isinstance(el, nodes.DefNode):
         return "Fun(\"%s\")" % el.name
     # return type(el).__name__
-    return el.dumps().splitlines()[0]
+    for line in el.dumps().splitlines():
+        if line.strip():
+            return line
+    return "a bunch of blank lines"
 
 
 def short_context(context):

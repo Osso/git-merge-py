@@ -9,6 +9,7 @@ from .matcher import (find_context,
                       find_el,
                       find_func,
                       find_with_node,
+                      id_from_el,
                       same_el)
 from .tools import (FIRST,
                     LAST,
@@ -19,10 +20,6 @@ from .tools import (FIRST,
                     short_context,
                     short_display_el,
                     sort_imports)
-
-
-class NoDefault:
-    pass
 
 
 class BaseEl:
@@ -164,7 +161,20 @@ class ChangeValue:
         return []
 
     def __repr__(self):
-        return "<%s new_value=%r>" % (self.__class__.__name__, self.new_value)
+        return "<%s new_value=%r>" % (self.__class__.__name__,
+                                      short_display_el(self.new_value))
+
+
+class Replace(ChangeValue):
+    def apply(self, tree):
+        tree.replace(self.new_value)
+        return []
+
+
+class ChangeTarget(ChangeValue):
+    def apply(self, tree):
+        tree.target = self.new_value
+        return []
 
 
 class ChangeAttr:
@@ -181,22 +191,6 @@ class ChangeAttr:
                                self.attr_name, self.attr_value)
 
 
-class ChangeArgDefault(BaseEl):
-
-    def get_args(self, tree):
-        return tree.arguments
-
-    def apply(self, tree):
-        for arg in self.get_args(tree):
-            if arg.name.value == self.el.name.value:
-                arg.value.value = self.el.value.value
-        return []
-
-    def __repr__(self):
-        return "<%s new_param_default=%r>" % (self.__class__.__name__,
-                                              self.el)
-
-
 class RemoveAllDecoratorArgs(BaseEl):
     def apply(self, tree):
         tree.call = None
@@ -204,17 +198,7 @@ class RemoveAllDecoratorArgs(BaseEl):
 
 class AddAllDecoratorArgs(BaseEl):
     def apply(self, tree):
-        tree.call = self.el.call
-
-
-class ChangeCallArgValue(ChangeArgDefault):
-    def get_args(self, tree):
-        return tree
-
-
-class ChangeDecoratorArgValue(ChangeArgDefault):
-    def get_args(self, tree):
-        return tree.call
+        tree.call = self.el.copy()
 
 
 class ChangeEl(BaseEl):
@@ -233,6 +217,37 @@ class ChangeEl(BaseEl):
         if el:
             return apply_changes(el, self.changes)
         return []
+
+
+class ChangeDecoratorArgs(ChangeEl):
+    def apply(self, tree):
+        return apply_changes(tree.call, self.changes)
+
+
+class ChangeArg(ChangeEl):
+    def apply(self, tree):
+        return apply_changes(tree.value, self.changes)
+
+
+class ChangeArgDefault(ChangeEl):
+    def get_args(self, tree):
+        return tree.arguments
+
+    def apply(self, tree):
+        for arg in self.get_args(tree):
+            if id_from_el(arg) == id_from_el(self.el):
+                return apply_changes(arg, self.changes)
+        return []
+
+    def __repr__(self):
+        return "<%s el=%r changes=%r>" % (self.__class__.__name__,
+                                          short_display_el(self.el),
+                                          self.changes)
+
+
+class ChangeCallArgValue(ChangeArgDefault):
+    def get_args(self, tree):
+        return tree
 
 
 class Conflict(BaseEl):
@@ -297,11 +312,10 @@ class ChangeAtomtrailersCall(ChangeEl):
 
 class ChangeDecorator(ChangeEl):
     def apply(self, tree):
-        conflicts = []
         for decorator in tree.decorators:
             if decorator.name.value == self.el.name.value:
-                conflicts += apply_changes(decorator, self.changes)
-        return conflicts
+                return apply_changes(decorator, self.changes)
+        return []
 
 
 class AddFunArg:
@@ -319,15 +333,16 @@ class AddFunArg:
 
     def apply(self, tree):
         args = self.get_args(tree)
+        arg = self.arg.copy()
         logging.debug("    adding arg %r to %r", self.arg, args)
         if self.context is FIRST:
-            args.insert(0, self.arg)
+            args.insert(0, arg)
         elif self.context is LAST:
-            args.append(self.arg)
+            args.append(arg)
         else:
             el = find_context(args, self.context[-1])
             if el:
-                args.insert(args.index(el)+1, self.arg)
+                args.insert(args.index(el)+1, arg)
             else:
                 return [Conflict(tree, self)]
         return []
@@ -350,10 +365,10 @@ class RemoveFunArgs:
         return tree.arguments
 
     def apply(self, tree):
-        to_remove_values = set(el.name.value for el in self.args)
+        to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
         for el in args:
-            if el.name.value in to_remove_values:
+            if id_from_el(el) in to_remove_values:
                 if len(args) == 1:
                     args.node_list.remove(el)
                 else:

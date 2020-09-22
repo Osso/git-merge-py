@@ -232,6 +232,22 @@ a = fun(arg1, new_arg2, new_arg3)
     _test_merge_changes(base, current, other, expected)
 
 
+def test_change_call_fun_arg():
+    base = """
+fun(sub(arg1, arg2))
+"""
+    current = """
+fun(sub(arg1=1, arg2))
+"""
+    other = """
+fun(sub(arg1, arg2=2))
+"""
+    expected = """
+fun(sub(arg1=1, arg2=2))
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 # def test_tmp():
 #     with open('base.py') as f:
 #         base = f.read()

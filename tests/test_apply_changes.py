@@ -491,22 +491,12 @@ def fun():
     _test_apply_changes(base, current)
 
 
-def test_call_call():
+def test_call_replace_call():
     base = """
-fun()
+fun(sub1())
 """
     current = """
-fun(sub())
-"""
-    _test_apply_changes(base, current)
-
-
-def test_call_call_named():
-    base = """
-fun()
-"""
-    current = """
-fun(arg=sub())
+fun(sub2())
 """
     _test_apply_changes(base, current)
 
@@ -517,5 +507,15 @@ fun(arg=sub1())
 """
     current = """
 fun(arg=sub2())
+"""
+    _test_apply_changes(base, current)
+
+
+def test_call_change_call_arg():
+    base = """
+fun(arg=sub(arg1))
+"""
+    current = """
+fun(arg=sub(arg2))
 """
     _test_apply_changes(base, current)

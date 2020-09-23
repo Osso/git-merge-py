@@ -41,3 +41,14 @@ def apply_changes_safe(tree, changes):
     conflicts = apply_changes(tree, changes)
     tree.remove(PLACEHOLDER)
     return conflicts
+
+
+def add_conflict(el, changes):
+    before_text = "<<<<<<<<<<"
+    after_text = ">>>>>>>>>>"
+    el.insert_before("#"+before_text)
+    el.insert_before("# %r" % changes)
+    el.insert_before("#"+after_text)
+    for text in (before_text, after_text):
+        for e in el.parent.find_all('CommentNode', value="#"+text):
+            e.value = text

@@ -30,7 +30,6 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeEl,
                    ChangeFun,
                    ChangeTarget,
-                   ChangeValue,
                    MoveFunction,
                    RemoveAllDecoratorArgs,
                    RemoveCallArgs,
@@ -45,7 +44,6 @@ INDENT = "."
 
 
 def compute_diff_one(left, right, indent=""):
-
     if left.dumps() == right.dumps():
         logging.debug('%s compute_diff_one %s = %s', indent,
                       type(left).__name__, type(right).__name__)
@@ -55,7 +53,7 @@ def compute_diff_one(left, right, indent=""):
     logging.debug('%s compute_diff_one %s != %s', indent,
                   type(left).__name__, type(right).__name__)
     logging.debug('%s compute_diff_one %s != %s', indent,
-                      short_display_el(left), short_display_el(right))
+                  short_display_el(left), short_display_el(right))
     diff = []
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         diff += [Replace(right)]

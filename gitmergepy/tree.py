@@ -3,6 +3,7 @@ import logging
 from redbaron import nodes
 
 from .applyier import (PLACEHOLDER,
+                       add_conflict,
                        apply_changes,
                        insert_at_context)
 from .matcher import (find_context,
@@ -215,7 +216,9 @@ class ChangeEl(BaseEl):
     def apply(self, tree):
         el = find_el(tree, self.el, self.context)
         if el:
-            return apply_changes(el, self.changes)
+            conflicts = apply_changes(el, self.changes)
+            if conflicts:
+                add_conflict(el, self)
         return []
 
 

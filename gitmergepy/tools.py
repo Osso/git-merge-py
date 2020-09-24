@@ -128,3 +128,20 @@ def get_name_els_from_call(el):
 
 def name_els_to_string(els):
     return '.'.join(el.name.value for el in els)
+
+
+def as_from_contexts(contexts):
+    return set(c.as_.value if c.as_ else id_from_el(c.value) for c in contexts)
+
+
+def id_from_el(arg):
+    if isinstance(arg, nodes.CallArgumentNode):
+        return 'func' + id_from_el(arg.target if arg.target else arg.value)
+    if isinstance(arg, nodes.NameNode):
+        return arg.name.value
+    if isinstance(arg, nodes.DefArgumentNode):
+        return arg.name.value
+    if isinstance(arg, nodes.AtomtrailersNode):
+        return '.'.join(id_from_el(el) for el in arg
+                        if not isinstance(el, nodes.CallNode))
+    return arg

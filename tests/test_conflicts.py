@@ -32,9 +32,69 @@ fun(arg1, arg2)
 fun(new_arg1)
 """
     expected = """
-<<<<<<<<<<
-# <ChangeEl el="fun(arg1)" changes=[<ChangeAtomtrailersCall el="(arg1)" changes=[<AddCallArg arg='arg2' context='arg1'>] context='no context'>] context='first'>
->>>>>>>>>>
+# <<<<<<<<<<
+# Reason Argument context has changed
+# <AddCallArg arg='arg2' context='arg1'>
+# fun(arg1, arg2)
+# >>>>>>>>>>
 fun(new_arg1)
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_fun():
+    base = """
+def fun(arg1):
+    pass
+"""
+    current = """
+def fun(arg1, arg2):
+    pass
+"""
+    other = """
+def fun(new_arg1):
+    pass
+"""
+    expected = """
+# <<<<<<<<<<
+# Reason Argument context has changed
+# <AddFunArg arg='arg2' context='arg1'>
+# def fun(arg1, arg2):
+# >>>>>>>>>>
+def fun(new_arg1):
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_with():
+    base = """
+# stuff
+with fun() as out:
+    print('hello')
+"""
+    current = """
+# stuff
+print('hello')
+"""
+    other = """
+# changed stuff
+with fun() as out:
+    print('hello')
+with fun() as out:
+    print('world')
+"""
+    expected = """
+# <<<<<<<<<<
+# Reason Multiple with nodes found
+# <RemoveWith el="with fun() as out:" context='# stuff'>
+# with fun() as out:
+#     print('hello')
+# >>>>>>>>>>
+# changed stuff
+with fun() as out:
+    print('hello')
+with fun() as out:
+    print('world')
 """
     _test_merge_changes(base, current, other, expected)

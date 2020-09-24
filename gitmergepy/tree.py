@@ -4,19 +4,20 @@ from redbaron import nodes
 
 from .applyier import (PLACEHOLDER,
                        add_conflict,
+                       add_conflicts,
                        apply_changes,
                        insert_at_context)
 from .matcher import (find_context,
                       find_el,
                       find_func,
-                      find_with_node,
-                      id_from_el,
                       same_el)
 from .tools import (FIRST,
                     LAST,
                     append_coma_list,
                     apply_diff_to_list,
+                    as_from_contexts,
                     get_call_el,
+                    id_from_el,
                     iter_coma_list,
                     short_context,
                     short_display_el,
@@ -58,7 +59,6 @@ class RemoveEls:
     def apply(self, tree):
         if self.context is FIRST:
             logging.debug("    at beginning")
-
             index = 0
             while isinstance(tree[index], nodes.EndlNode) and not isinstance(self.to_remove[0], nodes.EndlNode):
                 index += 1
@@ -77,7 +77,7 @@ class RemoveEls:
                 index = tree.index(el) + 1
             else:
                 logging.debug("    context not found")
-                return [Conflict(tree, self)]
+                index = tree.index(self.to_remove[0])
 
         for el_to_remove in self.to_remove:
             logging.debug("removing el %r", short_display_el(el_to_remove))
@@ -85,10 +85,8 @@ class RemoveEls:
                 logging.debug("    removing")
                 del tree[index]
             else:
-                print(tree)
-                print(index)
                 logging.debug("    not matching %r", short_display_el(tree[index]))
-                return [Conflict(tree, self)]
+                return []
 
         return []
 
@@ -140,16 +138,14 @@ class AddEls:
             for el_to_add in reversed(self.to_add):
                 tree.insert(0, el_to_add)
         else:
-            logging.debug("adding els %r", short_display_el(self.context[-1]))
             el = find_context(tree, self.context[-1])
             if el:
-                # not working everywhere
-                # el.insert_after(el_to_add)
                 for el_to_add in reversed(self.to_add):
+                    # Workaround redbaron insert_after bug
                     tree.insert(tree.index(el)+1, el_to_add)
             else:
                 tree.extend(self.to_add)
-                return [Conflict(tree, self)]
+                return [Conflict(self.to_add, self)]
         return []
 
 
@@ -203,6 +199,8 @@ class AddAllDecoratorArgs(BaseEl):
 
 
 class ChangeEl(BaseEl):
+    write_conflicts = True
+
     def __init__(self, el, changes, context=None):
         super().__init__(el)
         self.changes = changes
@@ -217,9 +215,15 @@ class ChangeEl(BaseEl):
         el = find_el(tree, self.el, self.context)
         if el:
             conflicts = apply_changes(el, self.changes)
-            if conflicts:
-                add_conflict(el, self)
+            if self.write_conflicts:
+                add_conflicts(el, conflicts)
+            else:
+                return conflicts
         return []
+
+
+class ChangeCall(ChangeEl):
+    write_conflicts = True
 
 
 class ChangeDecoratorArgs(ChangeEl):
@@ -253,15 +257,17 @@ class ChangeCallArgValue(ChangeArgDefault):
         return tree
 
 
-class Conflict(BaseEl):
-    def __init__(self, el, change, reason=''):
-        super().__init__(el)
+class Conflict:
+    def __init__(self, els, change, reason='', insert_before=True):
+        self.els = els
         self.change = change
         self.reason = reason
+        self.insert_before = insert_before
 
     def __repr__(self):
-        return "<%s el=\"%s\" change=%r reason=%r>" % (
-            self.__class__.__name__, short_display_el(self.el),
+        return "<%s els=\"%s\" change=%r reason=%r>" % (
+            self.__class__.__name__,
+            ', '.join(short_display_el(el) for el in self.els),
             self.change, self.reason)
 
 
@@ -283,21 +289,26 @@ class ChangeFun(ChangeEl):
             el = find_func(tree, tmp_el)
 
         if el:
-            return apply_changes(el, self.changes)
+            conflicts = apply_changes(el, self.changes)
+            add_conflicts(el, conflicts)
+
         return []
 
 
 class MoveFunction(ChangeEl):
     def apply(self, tree):
-        conflicts = []
         fun = find_func(tree, self.el)
         # If function still exists, move it then apply changes
         if fun:
             tree.remove(fun)
             if not insert_at_context(fun, self.context, tree):
-                return [Conflict(tree, self)]
-            conflicts += apply_changes(fun, self.changes)
-        return conflicts
+                tree.append(fun)
+                add_conflict(tree, Conflict([], self,
+                                            reason="Context not found, added at the end"))
+                return []
+            conflicts = apply_changes(fun, self.changes)
+            add_conflicts(tree, conflicts)
+        return []
 
 
 class ChangeAssignmentNode(ChangeEl):
@@ -309,7 +320,7 @@ class ChangeAtomtrailersCall(ChangeEl):
     def apply(self, tree):
         el = get_call_el(tree)
         if el is None:
-            return [Conflict(tree, self, 'call element not found')]
+            return [Conflict([self.el], self, 'call element not found')]
         return apply_changes(el, self.changes)
 
 
@@ -338,22 +349,32 @@ class AddFunArg:
         args = self.get_args(tree)
         arg = self.arg.copy()
         logging.debug("    adding arg %r to %r", self.arg, args)
-        if self.context is FIRST:
-            args.insert(0, arg)
-        elif self.context is LAST:
-            args.append(arg)
-        else:
-            el = find_context(args, self.context[-1])
-            if el:
-                args.insert(args.index(el)+1, arg)
-            else:
-                return [Conflict(tree, self)]
+        if not insert_at_context(arg, self.context, args):
+            return [self.make_conflict("Argument context has changed")]
         return []
+
+    def make_conflict(self, reason):
+        el = self.arg.parent.copy()
+        el.decorators.clear()
+        el.node_list.clear()
+        return Conflict([el], self, reason=reason)
 
 
 class AddCallArg(AddFunArg):
     def get_args(self, tree):
         return tree
+
+    def make_conflict(self, reason):
+        return Conflict([self.arg.parent.parent], self, reason=reason)
+
+
+class AddDecorator(ElWithContext):
+    def apply(self, tree):
+        decorator = self.el.copy()
+        logging.debug("    adding decorator %r to %r", self.el, tree)
+        if not insert_at_context(decorator, self.context, tree.decorators):
+            tree.decorators.append(decorator)
+        return []
 
 
 class RemoveFunArgs:
@@ -384,11 +405,6 @@ class RemoveCallArgs(RemoveFunArgs):
         return tree
 
 
-class AddDecorator(AddFunArg):
-    def get_args(self, tree):
-        return tree.decorators
-
-
 class RemoveDecorators(RemoveFunArgs):
     def get_args(self, tree):
         return tree.decorators
@@ -404,11 +420,47 @@ class RemoveDecorators(RemoveFunArgs):
         return []
 
 
-class RemoveWith(BaseEl):
+class RemoveWith(ElWithContext):
     def apply(self, tree):
-        with_node = find_with_node(tree, self.el)
-        if not with_node:
-            return [Conflict(tree, self)]
+        el_node_as = as_from_contexts(self.el.contexts)
+
+        # Similar
+        same_with_nodes = []
+        similar_with_nodes = []
+        context_with_nodes = []
+        previous_el = None
+        for el in tree:
+            if isinstance(el, nodes.WithNode):
+                with_node_as = as_from_contexts(el.contexts)
+                if with_node_as == el_node_as:
+                    same_with_nodes += [el]
+                if with_node_as & el_node_as:
+                    similar_with_nodes += [el]
+                    if self.context:
+                        if (self.context is FIRST and previous_el is None) or \
+                                self.context and same_el(previous_el, self.context[-1]):
+                            context_with_nodes += [el]
+            previous_el = el
+
+        if not similar_with_nodes:
+            logging.debug('.no nodes found')
+            # No with node at all, probably already removed
+            return []
+        elif len(same_with_nodes) == 1:
+            logging.debug('.same node found')
+            with_node = same_with_nodes[0]
+        elif len(similar_with_nodes) == 1:
+            logging.debug('.similar node found')
+            with_node = similar_with_nodes[0]
+        elif len(context_with_nodes) == 1:
+            logging.debug('.similar with context node found')
+            with_node = context_with_nodes[0]
+        else:
+            add_conflict(tree, Conflict([self.el], self,
+                                        reason="Multiple with nodes found",
+                                        insert_before=False))
+            return []
+
         with_node.decrease_indentation(4)
         for el in reversed(with_node):
             with_node.insert_after(el)

@@ -5,12 +5,12 @@ from redbaron import nodes
 from .matcher import (find_func,
                       gather_context,
                       guess_if_same_el,
-                      id_from_el,
                       same_el)
 from .tools import (LAST,
                     changed_list,
                     diff_list,
                     get_call_el,
+                    id_from_el,
                     is_iterable,
                     short_display_el)
 from .tree import (AddAllDecoratorArgs,
@@ -218,11 +218,11 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Pre-processing
         if isinstance(stack_left[0], nodes.WithNode) and not \
                 isinstance(el_right, nodes.WithNode):
-            logging.debug("%s with node removal %r", indent+INDENT, stack_left[0].contexts)
+            logging.debug("%s with node removal %r", indent+INDENT, short_display_el(stack_left[0]))
             with_node = stack_left.pop(0)
             with_node.decrease_indentation(4)
             stack_left = list(with_node) + stack_left
-            diff += [RemoveWith(with_node)]
+            diff += [RemoveWith(with_node, context=gather_context(el_right))]
 
         # Actual processing
 
@@ -249,7 +249,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             if isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
                 # Function has not been moved
                 logging.debug("%s not moved fun %r", indent+INDENT, el_right.name)
-                diff += _changed_el(el_right, stack_left)
+                diff += _changed_el(el_right, stack_left,
+                                    context_class=ChangeFun)
             else:
                 # Function has been moved, look for it
                 el = find_func(stack_left, el_right)

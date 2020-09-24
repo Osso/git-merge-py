@@ -119,21 +119,8 @@ def find_context(tree, target):
     return None
 
 
-def find_with_node(tree, with_node):
+def find_with_node(tree):
     for el in tree:
         if isinstance(el, nodes.WithNode):
             return el
     return None
-
-
-def id_from_el(arg):
-    if isinstance(arg, nodes.CallArgumentNode):
-        return 'func' + id_from_el(arg.target if arg.target else arg.value)
-    if isinstance(arg, nodes.NameNode):
-        return arg.name.value
-    if isinstance(arg, nodes.DefArgumentNode):
-        return arg.name.value
-    if isinstance(arg, nodes.AtomtrailersNode):
-        return '.'.join(id_from_el(el) for el in arg
-                        if not isinstance(el, nodes.CallNode))
-    return arg

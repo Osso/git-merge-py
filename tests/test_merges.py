@@ -90,6 +90,32 @@ def fun1():
     _test_merge_changes(base, current, other, expected)
 
 
+def test_move_function_without_context():
+    base = """
+def fun1():
+    print('hello')
+
+def fun2():
+    pass
+"""
+    current = """
+def fun2():
+    pass
+
+def fun1():
+    print('hello')
+"""
+    other = """
+def fun1():
+    print('hello world')
+"""
+    expected = """
+def fun1():
+    print('hello world')
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_remove_with():
     base = """
 with fun():

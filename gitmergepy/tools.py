@@ -17,7 +17,8 @@ def append_coma_list(l, to_add):
 
     def copy_sep(index):
         """Copy existing element to keep indentation"""
-        return l.node_list[index].copy()
+        return l.middle_separator.copy()
+        # return l.node_list[index].copy()
 
     def copy_import(index):
         """Copy existing element to keep indentation"""
@@ -30,13 +31,15 @@ def append_coma_list(l, to_add):
     if isinstance(l[-1], nodes.RightParenthesisNode):
         sep = copy_sep(index=2)
         new_import = copy_import(index=1)
-
+        is_empty = len(l.data) == 2
         # Workaround redbaron bug: extra separator if last element is a )
         # Insert into data
-        l.data[-2][1] = sep
+        if not is_empty:
+            l.data[-2][1] = sep
         l.data.insert(-1, [new_import, None])
         # Match node_list to data
-        l.node_list.insert(-1, sep)
+        if not is_empty:
+            l.node_list.insert(-1, sep)
         l.node_list.insert(-1, new_import)
     else:
         l.append(copy_import(index=0))
@@ -89,7 +92,7 @@ def diff_list(left, right, key_getter, value_getter=None):
     return to_add, to_remove
 
 
-def changed_list(left, right, key_getter, value_getter):
+def changed_in_list(left, right, key_getter, value_getter):
     left_keys = set(key_getter(i) for i in left)
     right_keys = set(key_getter(i) for i in right)
     both_keys = left_keys & right_keys
@@ -164,3 +167,19 @@ def id_from_el(arg):
         return '.'.join(id_from_el(el) for el in arg
                         if not isinstance(el, nodes.CallNode))
     return arg
+
+
+def match_indentation(import_el, indent_ref):
+    print("match_indentation", indent_ref)
+    if import_el.targets.style == 'flat':
+        existing_imports = import_el.targets
+        import_el.targets = indent_ref.copy()
+        import_el.targets.middle_separator = import_el.targets.node_list[2]
+        clear_coma_list(import_el.targets)
+        for i in existing_imports:
+            append_coma_list(import_el.targets, i)
+
+
+def clear_coma_list(l):
+    del l.data[1:-1]
+    del l.node_list[1:-1]

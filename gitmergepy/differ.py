@@ -7,7 +7,7 @@ from .matcher import (find_func,
                       guess_if_same_el,
                       same_el)
 from .tools import (LAST,
-                    changed_list,
+                    changed_in_list,
                     diff_list,
                     get_call_el,
                     id_from_el,
@@ -81,7 +81,7 @@ def compute_diff_one(left, right, indent=""):
             diff += [AddFunArg(arg, context=gather_context(arg))]
         if to_remove:
             diff += [RemoveFunArgs(to_remove)]
-        changed = changed_list(left.arguments, right.arguments,
+        changed = changed_in_list(left.arguments, right.arguments,
                                key_getter=lambda t: t.name.value,
                                value_getter=lambda t: t.dumps())
         for _, arg in changed:
@@ -100,7 +100,7 @@ def compute_diff_one(left, right, indent=""):
         if to_remove:
             diff += [RemoveDecorators(to_remove)]
         logging.debug('%s fun new decorators %r old decorators %r', indent, to_add, to_remove)
-        changed = changed_list(left.decorators, right.decorators,
+        changed = changed_in_list(left.decorators, right.decorators,
                                key_getter=lambda t: t.name.value,
                                value_getter=lambda t: t.dumps())
         for left_el, right_el in changed:
@@ -122,8 +122,15 @@ def compute_diff_one(left, right, indent=""):
         to_add, to_remove = diff_list(iter_coma_list(left.targets),
                                       iter_coma_list(right.targets),
                                       key_getter=lambda t: t.value)
-        diff += create_add_remove(AddImports, to_add,
-                                  RemoveImports, to_remove)
+        if len(left.targets) > 1:
+            indent_ref = left.targets
+        elif len(right.targets) > 1:
+            indent_ref = right.targets
+        else:
+            indent_ref = None
+        diff += create_add_remove_imports(AddImports, to_add,
+                                  RemoveImports, to_remove,
+                                  indent_ref)
     elif isinstance(left, nodes.WithNode):
         if left.contexts.dumps() != right.contexts.dumps():
             diff += [ChangeAttr('contexts', right.contexts.copy())]
@@ -147,7 +154,7 @@ def compute_diff_one(left, right, indent=""):
         if to_remove:
             diff += [RemoveCallArgs(to_remove)]
 
-        changed = changed_list(left, right,
+        changed = changed_in_list(left, right,
                                key_getter=id_from_el,
                                value_getter=lambda t: t.dumps())
         for _, arg in changed:
@@ -170,10 +177,11 @@ def compute_diff_one(left, right, indent=""):
     return diff
 
 
-def create_add_remove(to_add_class, to_add, to_remove_class, to_remove):
+def create_add_remove_imports(to_add_class, to_add, to_remove_class, to_remove,
+                              indent_ref):
     diff = []
     if to_add:
-        diff += [to_add_class([el.copy() for el in to_add])]
+        diff += [to_add_class([el for el in to_add], indent_ref=indent_ref)]
     if to_remove:
         diff += [to_remove_class(to_remove)]
     return diff

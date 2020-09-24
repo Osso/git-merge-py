@@ -19,6 +19,7 @@ from .tools import (FIRST,
                     get_call_el,
                     id_from_el,
                     iter_coma_list,
+                    match_indentation,
                     short_context,
                     short_display_el,
                     sort_imports)
@@ -92,8 +93,9 @@ class RemoveEls:
 
 
 class AddImports:
-    def __init__(self, imports):
+    def __init__(self, imports, indent_ref):
         self.imports = imports
+        self.indent_ref = indent_ref
 
     def __repr__(self):
         return "<%s imports=%r>" % (self.__class__.__name__,
@@ -102,6 +104,9 @@ class AddImports:
 
     def apply(self, tree):
         existing_imports = set(el.value for el in iter_coma_list(tree.targets))
+        if self.indent_ref:
+            match_indentation(tree, self.indent_ref)
+
         for import_el in self.imports:
             if import_el.value not in existing_imports:
                 append_coma_list(tree.targets, import_el)

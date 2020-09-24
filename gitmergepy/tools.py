@@ -14,15 +14,32 @@ def iter_coma_list(l):
 
 
 def append_coma_list(l, to_add):
+
+    def copy_sep(index):
+        """Copy existing element to keep indentation"""
+        return l.node_list[index].copy()
+
+    def copy_import(index):
+        """Copy existing element to keep indentation"""
+        if l:
+            el = l.node_list[index].copy()
+            el.value = to_add.value
+            return el
+        return to_add.copy()
+
     if isinstance(l[-1], nodes.RightParenthesisNode):
+        sep = copy_sep(index=2)
+        new_import = copy_import(index=1)
+
         # Workaround redbaron bug: extra separator if last element is a )
-        sep = l.node_list[2].copy()
+        # Insert into data
         l.data[-2][1] = sep
-        l.data.insert(-1, [to_add, None])
+        l.data.insert(-1, [new_import, None])
+        # Match node_list to data
         l.node_list.insert(-1, sep)
-        l.node_list.insert(-1, to_add)
+        l.node_list.insert(-1, new_import)
     else:
-        l.append(to_add)
+        l.append(copy_import(index=0))
 
 
 def pop_coma_list(l):
@@ -61,6 +78,8 @@ def short_context(context):
 
 
 def diff_list(left, right, key_getter, value_getter=None):
+    left = list(left)
+    right = list(right)
     left_keys = set(key_getter(i) for i in left)
     right_keys = set(key_getter(i) for i in right)
 

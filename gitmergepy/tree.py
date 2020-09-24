@@ -96,7 +96,9 @@ class AddImports:
         self.imports = imports
 
     def __repr__(self):
-        return "<%s imports=%r>" % (self.__class__.__name__, self.imports)
+        return "<%s imports=%r>" % (self.__class__.__name__,
+                                    ', '.join(short_display_el(el)
+                                              for el in self.imports))
 
     def apply(self, tree):
         existing_imports = set(el.value for el in iter_coma_list(tree.targets))

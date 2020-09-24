@@ -12,6 +12,7 @@ from .tools import (LAST,
                     get_call_el,
                     id_from_el,
                     is_iterable,
+                    iter_coma_list,
                     short_display_el)
 from .tree import (AddAllDecoratorArgs,
                    AddCallArg,
@@ -118,7 +119,8 @@ def compute_diff_one(left, right, indent=""):
                 diff += [ChangeDecorator(left, changes=diff_decorator)]
         logging.debug('%s diff fun changed decorators %r', indent, changed)
     elif isinstance(left, nodes.FromImportNode):
-        to_add, to_remove = diff_list(left.targets, right.targets,
+        to_add, to_remove = diff_list(iter_coma_list(left.targets),
+                                      iter_coma_list(right.targets),
                                       key_getter=lambda t: t.value)
         diff += create_add_remove(AddImports, to_add,
                                   RemoveImports, to_remove)

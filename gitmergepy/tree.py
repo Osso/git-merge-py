@@ -142,11 +142,13 @@ class AddEls:
 
     def apply(self, tree):
         if self.context is FIRST:
+            logging.debug("    adding els %r at the beginning", self.to_add)
             for el_to_add in reversed(self.to_add):
                 tree.insert(0, el_to_add)
         else:
             el = find_context(tree, self.context[-1])
             if el:
+                logging.debug("    adding els %r after %r", self.to_add, el)
                 for el_to_add in reversed(self.to_add):
                     # Workaround redbaron insert_after bug
                     tree.insert(tree.index(el)+1, el_to_add)

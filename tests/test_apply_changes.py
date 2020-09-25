@@ -530,3 +530,54 @@ fun(arg=sub(arg1))
 fun(arg=sub(arg2))
 """
     _test_apply_changes(base, current)
+
+
+def test_class():
+    base = """
+class A:
+    pass
+"""
+    current = """
+class A:
+    print('hello')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_class_def():
+    base = """
+class A:
+    def fun():
+        pass
+"""
+    current = """
+class A:
+    def fun():
+        print('hello')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_class_decorator():
+    base = """
+class A:
+    pass
+"""
+    current = """
+@decorator
+class A:
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_class_name():
+    base = """
+class A:
+    pass
+"""
+    current = """
+class B:
+    pass
+"""
+    _test_apply_changes(base, current)

@@ -25,12 +25,23 @@ def guess_if_same_el(left, right):
     return False
 
 
-def find_func(tree, func):
-    assert isinstance(func, nodes.DefNode)
+def find_func(tree, func_node):
+    assert isinstance(func_node, nodes.DefNode)
 
     for el in tree:
         if isinstance(el, nodes.DefNode):
-            if func.name == el.name:
+            if func_node.name == el.name:
+                return el
+
+    return None
+
+
+def find_class(tree, class_node):
+    assert isinstance(class_node, nodes.ClassNode)
+
+    for el in tree:
+        if isinstance(el, nodes.ClassNode):
+            if class_node.name == el.name:
                 return el
 
     return None
@@ -82,6 +93,11 @@ def find_el(tree, target_el, context):
 
     if isinstance(target_el, nodes.DefNode):
         el = find_func(tree, target_el)
+        if el:
+            return el
+
+    if isinstance(target_el, nodes.ClassNode):
+        el = find_class(tree, target_el)
         if el:
             return el
 

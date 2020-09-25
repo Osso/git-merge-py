@@ -195,6 +195,44 @@ def diff_assignment_node(left, right, indent):
     return diff
 
 
+def diff_class_node(left, right, indent):
+    diff = []
+    # Name
+    if left.name != right.name:
+        diff += [ChangeAttr('name', right.name)]
+    # Decorators
+    to_add, to_remove = diff_list(left.decorators, right.decorators,
+                                  key_getter=lambda t: t.name.value)
+    for decorator in to_add:
+        diff += [AddDecorator(decorator,
+                              context=gather_context(decorator))]
+    if to_remove:
+        diff += [RemoveDecorators(to_remove)]
+    logging.debug('%s fun new decorators %r old decorators %r', indent, to_add, to_remove)
+    changed = changed_in_list(left.decorators, right.decorators,
+                           key_getter=lambda t: t.name.value,
+                           value_getter=lambda t: t.dumps())
+    for left_el, right_el in changed:
+        logging.debug('%s fun changed decorator %r ', indent, right_el)
+        diff_decorator = []
+        if left_el.call and right_el.call:
+            changes = compute_diff(left_el.call, right_el.call,
+                                   indent=indent+INDENT)
+            diff_decorator += [ChangeDecoratorArgs(right_el,
+                                                   changes=changes)]
+        elif left_el.call:
+            diff_decorator += [RemoveAllDecoratorArgs(None)]
+        elif right_el.call:
+            diff_decorator += [AddAllDecoratorArgs(right_el.call)]
+        if diff_decorator:
+            diff += [ChangeDecorator(left, changes=diff_decorator)]
+    logging.debug('%s diff fun changed decorators %r', indent, changed)
+
+    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -208,4 +246,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.AtomtrailersNode: diff_atom_trailer_node,
     nodes.CallNode: diff_call_node,
     nodes.AssignmentNode: diff_assignment_node,
+    nodes.ClassNode: diff_class_node,
 }

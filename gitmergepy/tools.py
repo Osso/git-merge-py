@@ -1,3 +1,5 @@
+import logging
+
 from redbaron import nodes
 
 FIRST = object()
@@ -15,21 +17,23 @@ def iter_coma_list(l):
 
 def append_coma_list(l, to_add):
 
-    def copy_sep(index):
+    def copy_sep():
         """Copy existing element to keep indentation"""
+        if len(l) > 3:
+            return l.node_list[2].copy()
         return l.middle_separator.copy()
-        # return l.node_list[index].copy()
 
     def copy_import(index):
         """Copy existing element to keep indentation"""
         if l:
             el = l.node_list[index].copy()
             el.value = to_add.value
+            el.target = to_add.target
             return el
         return to_add.copy()
 
     if isinstance(l[-1], nodes.RightParenthesisNode):
-        sep = copy_sep(index=2)
+        sep = copy_sep()
         new_import = copy_import(index=1)
         is_empty = len(l.data) == 2
         # Workaround redbaron bug: extra separator if last element is a )
@@ -170,7 +174,7 @@ def id_from_el(arg):
 
 
 def match_indentation(import_el, indent_ref):
-    print("match_indentation", indent_ref)
+    logging.debug("match_indentation %s", short_display_el(indent_ref))
     if import_el.targets.style == 'flat':
         existing_imports = import_el.targets
         import_el.targets = indent_ref.copy()

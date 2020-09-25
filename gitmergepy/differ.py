@@ -122,15 +122,15 @@ def compute_diff_one(left, right, indent=""):
         to_add, to_remove = diff_list(iter_coma_list(left.targets),
                                       iter_coma_list(right.targets),
                                       key_getter=lambda t: t.value)
-        if len(left.targets) > 1:
+        if left.targets.style == 'indented':
             indent_ref = left.targets
-        elif len(right.targets) > 1:
+        elif right.targets.style == 'indented':
             indent_ref = right.targets
         else:
             indent_ref = None
         diff += create_add_remove_imports(AddImports, to_add,
-                                  RemoveImports, to_remove,
-                                  indent_ref)
+                                          RemoveImports, to_remove,
+                                          indent_ref=indent_ref)
     elif isinstance(left, nodes.WithNode):
         if left.contexts.dumps() != right.contexts.dumps():
             diff += [ChangeAttr('contexts', right.contexts.copy())]

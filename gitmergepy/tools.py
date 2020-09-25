@@ -4,6 +4,7 @@ from redbaron import nodes
 
 FIRST = object()
 LAST = object()
+INDENT = "."
 
 
 def iter_coma_list(l):

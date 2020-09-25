@@ -6,188 +6,48 @@ from .matcher import (find_func,
                       gather_context,
                       guess_if_same_el,
                       same_el)
-from .tools import (LAST,
-                    changed_in_list,
-                    diff_list,
+from .tools import (INDENT,
+                    LAST,
                     get_call_el,
-                    id_from_el,
                     is_iterable,
-                    iter_coma_list,
                     short_display_el)
-from .tree import (AddAllDecoratorArgs,
-                   AddCallArg,
-                   AddDecorator,
-                   AddEls,
-                   AddFunArg,
-                   AddImports,
-                   ChangeArg,
-                   ChangeArgDefault,
-                   ChangeAssignmentNode,
-                   ChangeAtomtrailersCall,
-                   ChangeAttr,
-                   ChangeCallArgValue,
-                   ChangeDecorator,
-                   ChangeDecoratorArgs,
+from .tree import (AddEls,
                    ChangeEl,
                    ChangeFun,
-                   ChangeTarget,
                    MoveFunction,
-                   RemoveAllDecoratorArgs,
-                   RemoveCallArgs,
-                   RemoveDecorators,
                    RemoveEls,
-                   RemoveFunArgs,
-                   RemoveImports,
                    RemoveWith,
                    Replace)
 
-INDENT = "."
-
 
 def compute_diff_one(left, right, indent=""):
+    from .differ_calls import COMPUTE_DIFF_ONE_CALLS
+
     if left.dumps() == right.dumps():
         logging.debug('%s compute_diff_one %s = %s', indent,
                       type(left).__name__, type(right).__name__)
         logging.debug('%s compute_diff_one %s = %s', indent,
                       short_display_el(left), short_display_el(right))
         return []
+
     logging.debug('%s compute_diff_one %s != %s', indent,
                   type(left).__name__, type(right).__name__)
     logging.debug('%s compute_diff_one %s != %s', indent,
                   short_display_el(left), short_display_el(right))
-    diff = []
+
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
-        diff += [Replace(right)]
-    if isinstance(left, (nodes.CommentNode,
-                         nodes.AssociativeParenthesisNode,
-                         nodes.IntNode)):
-        diff += [Replace(right)]
-    elif isinstance(left, (nodes.CallArgumentNode, nodes.DefArgumentNode)):
-        if id_from_el(left.target) != id_from_el(right.target):
-            diff += [ChangeTarget(right.target)]
-        changes = compute_diff(left.value, right.value, indent=indent+INDENT)
-        diff += [ChangeArg(right, changes=changes)]
-    elif isinstance(left, nodes.DefNode):
+        diff = [Replace(right)]
+    elif type(left) in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
+        diff = COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent)
+    else:
+        # Unhandled
         diff = []
-        # Name
-        if left.name != right.name:
-            diff += [ChangeAttr('name', right.name)]
-        # Args
-        to_add, to_remove = diff_list(left.arguments, right.arguments,
-                                      key_getter=id_from_el)
-        logging.debug('%s fun new args %r old args %r',
-                      indent, to_add, to_remove)
-        for arg in to_add:
-            diff += [AddFunArg(arg, context=gather_context(arg))]
-        if to_remove:
-            diff += [RemoveFunArgs(to_remove)]
-        changed = changed_in_list(left.arguments, right.arguments,
-                               key_getter=lambda t: t.name.value,
-                               value_getter=lambda t: t.dumps())
-        for _, arg in changed:
-            logging.debug('%s fun changed args %r', indent,
-                          short_display_el(arg))
-        diff += [ChangeArgDefault(el_right,
-                                  changes=compute_diff(el_left, el_right,
-                                                       indent=indent+INDENT))
-                 for el_left, el_right in changed]
-        # Decorators
-        to_add, to_remove = diff_list(left.decorators, right.decorators,
-                                      key_getter=lambda t: t.name.value)
-        for decorator in to_add:
-            diff += [AddDecorator(decorator,
-                                  context=gather_context(decorator))]
-        if to_remove:
-            diff += [RemoveDecorators(to_remove)]
-        logging.debug('%s fun new decorators %r old decorators %r', indent, to_add, to_remove)
-        changed = changed_in_list(left.decorators, right.decorators,
-                               key_getter=lambda t: t.name.value,
-                               value_getter=lambda t: t.dumps())
-        for left_el, right_el in changed:
-            logging.debug('%s fun changed decorator %r ', indent, right_el)
-            diff_decorator = []
-            if left_el.call and right_el.call:
-                changes = compute_diff(left_el.call, right_el.call,
-                                       indent=indent+INDENT)
-                diff_decorator += [ChangeDecoratorArgs(right_el,
-                                                       changes=changes)]
-            elif left_el.call:
-                diff_decorator += [RemoveAllDecoratorArgs(None)]
-            elif right_el.call:
-                diff_decorator += [AddAllDecoratorArgs(right_el.call)]
-            if diff_decorator:
-                diff += [ChangeDecorator(left, changes=diff_decorator)]
-        logging.debug('%s diff fun changed decorators %r', indent, changed)
-    elif isinstance(left, nodes.FromImportNode):
-        to_add, to_remove = diff_list(iter_coma_list(left.targets),
-                                      iter_coma_list(right.targets),
-                                      key_getter=lambda t: t.value)
-        if left.targets.style == 'indented':
-            indent_ref = left.targets
-        elif right.targets.style == 'indented':
-            indent_ref = right.targets
-        else:
-            indent_ref = None
-        diff += create_add_remove_imports(AddImports, to_add,
-                                          RemoveImports, to_remove,
-                                          indent_ref=indent_ref)
-    elif isinstance(left, nodes.WithNode):
-        if left.contexts.dumps() != right.contexts.dumps():
-            diff += [ChangeAttr('contexts', right.contexts.copy())]
-    elif isinstance(left, nodes.AtomtrailersNode):
-        if id_from_el(left) != id_from_el(right):
-            diff += [Replace(right)]
-        else:
-            call_el_left = get_call_el(left)
-            call_el_right = get_call_el(right)
-            el_diff = compute_diff_one(call_el_left, call_el_right,
-                                       indent=indent+INDENT)
-            if el_diff:
-                diff += [ChangeAtomtrailersCall(call_el_left, changes=el_diff)]
-    elif isinstance(left, nodes.CallNode):
-        to_add, to_remove = diff_list(left, right,
-                                      key_getter=id_from_el)
-        logging.debug('%s call new args %r old args %r',
-                      indent, to_add, to_remove)
-        for arg in to_add:
-            diff += [AddCallArg(arg, context=gather_context(arg))]
-        if to_remove:
-            diff += [RemoveCallArgs(to_remove)]
-
-        changed = changed_in_list(left, right,
-                               key_getter=id_from_el,
-                               value_getter=lambda t: t.dumps())
-        for _, arg in changed:
-            logging.debug('%s call changed args %r', indent,
-                          short_display_el(arg))
-        diff += [ChangeCallArgValue(el_right,
-                                    changes=compute_diff(el_left, el_right,
-                                                         indent=indent+INDENT))
-                 for el_left, el_right in changed]
-    elif isinstance(left, nodes.AssignmentNode):
-        if left.name.value != right.name.value:
-            diff += [ChangeAttr('name', right.name)]
-
-        el_diff = compute_diff_one(left.value, right.value,
-                                   indent=indent+INDENT)
-        if el_diff:
-            diff += [ChangeAssignmentNode(left, changes=el_diff)]
 
     logging.debug('%s compute_diff_one %r', indent, diff)
     return diff
 
 
-def create_add_remove_imports(to_add_class, to_add, to_remove_class, to_remove,
-                              indent_ref):
-    diff = []
-    if to_add:
-        diff += [to_add_class([el for el in to_add], indent_ref=indent_ref)]
-    if to_remove:
-        diff += [to_remove_class(to_remove)]
-    return diff
-
-
-def compute_diff(left, right, indent="", context=None):
+def compute_diff(left, right, indent=""):
     # type: (NodeType, NodeType, Optional[Dict[str, int]]) -> None
     """Compare two abstract syntax trees.
     Return `None` if they are equal, and raise an exception otherwise.
@@ -294,7 +154,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                         add_to_diff(diff, el_right)
         elif isinstance(el_right, nodes.ClassNode):
             logging.debug("%s changed class %r", indent+INDENT, type(el_right).__name__)
-            # We have encountered a function
             if isinstance(stack_left[0], nodes.ClassNode) and stack_left[0].name == el_right.name:
                 # Class has not been moved
                 logging.debug("%s not moved class %r", indent+INDENT, el_right.name)

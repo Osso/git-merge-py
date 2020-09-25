@@ -7,7 +7,8 @@ from .applyier import (PLACEHOLDER,
                        add_conflicts,
                        apply_changes,
                        insert_at_context)
-from .matcher import (find_context,
+from .matcher import (find_class,
+                      find_context,
                       find_el,
                       find_func,
                       same_el)
@@ -296,6 +297,30 @@ class ChangeFun(ChangeEl):
             tmp_el = self.el.copy()
             tmp_el.name = self.old_name
             el = find_func(tree, tmp_el)
+
+        if el:
+            conflicts = apply_changes(el, self.changes)
+            add_conflicts(el, conflicts)
+
+        return []
+
+
+class ChangeClass(ChangeEl):
+    def __init__(self, el, changes, context=None, old_name=None):
+        super().__init__(el, changes=changes, context=context)
+        self.old_name = old_name
+
+    def __repr__(self):
+        return "<%s el=\"%s\" changes=%r context=%r old_name=%r>" % (
+            self.__class__.__name__, short_display_el(self.el), self.changes,
+            short_context(self.context), self.old_name)
+
+    def apply(self, tree):
+        el = find_class(tree, self.el)
+        if not el and self.old_name:
+            tmp_el = self.el.copy()
+            tmp_el.name = self.old_name
+            el = find_class(tree, tmp_el)
 
         if el:
             conflicts = apply_changes(el, self.changes)

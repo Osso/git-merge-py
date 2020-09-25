@@ -2,8 +2,7 @@ import logging
 
 from redbaron import nodes
 
-from .matcher import (find_func,
-                      gather_context,
+from .matcher import (gather_context,
                       guess_if_same_el,
                       same_el)
 from .tools import (INDENT,
@@ -12,8 +11,6 @@ from .tools import (INDENT,
                     short_display_el)
 from .tree import (AddEls,
                    ChangeEl,
-                   ChangeFun,
-                   MoveFunction,
                    RemoveEls,
                    RemoveWith,
                    Replace)
@@ -24,7 +21,7 @@ def compute_diff(left, right, indent=""):
     """Compare two abstract syntax trees.
     Return `None` if they are equal, and raise an exception otherwise.
     """
-    from .differ_calls import COMPUTE_DIFF_ONE_CALLS
+    from .differ_one import COMPUTE_DIFF_ONE_CALLS
 
     if left.dumps() == right.dumps():
         logging.debug('%s compute_diff %s = %s', indent,
@@ -52,6 +49,8 @@ def compute_diff(left, right, indent=""):
 
 
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
+    from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
+
     logging.debug("%s compute_diff_iterables %r <=> %r", indent, type(left).__name__, type(right).__name__)
     stack_left = list(left)
 
@@ -100,64 +99,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 logging.debug("%s removing %r", indent+INDENT, els[-1].dumps())
             stack_left.pop(0)
             diff += [RemoveEls(els, context=gather_context(el_right))]
-        elif isinstance(el_right, nodes.DefNode):
-            logging.debug("%s changed fun %r", indent+INDENT, type(el_right).__name__)
-            # We have encountered a function
-            if isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
-                # Function has not been moved
-                logging.debug("%s not moved fun %r", indent+INDENT, el_right.name)
-                diff += _changed_el(el_right, stack_left,
-                                    context_class=ChangeFun)
-            else:
-                # Function has been moved, look for it
-                el = find_func(stack_left, el_right)
-                if el:
-                    logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
-                    el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
-                    context = gather_context(el_right)
-                    stack_left.remove(el)
-                    diff += [MoveFunction(el, changes=el_diff,
-                                          context=context)]
-                else:
-                    if isinstance(stack_left[0], nodes.DefNode):
-                        el = find_func(right, stack_left[0])
-                        if el:
-                            # stack_left[0] is defined somewhere else
-                            # we are not modifying it
-                            logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                            add_to_diff(diff, el_right)
-                        else:
-                            # stack_left[0] is nowhere else
-                            # assume function is modified
-                            logging.debug("%s assumed changed fun %r", indent+INDENT, el_right.name)
-                            old_name = stack_left[0].name
-                            diff_el = _changed_el(el_right, stack_left,
-                                                  context_class=ChangeFun)
-                            if diff_el:
-                                diff_el[0].old_name = old_name
-                                diff += diff_el
-                    else:
-                        logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                        add_to_diff(diff, el_right)
-        elif isinstance(el_right, nodes.ClassNode):
-            logging.debug("%s changed class %r", indent+INDENT, type(el_right).__name__)
-            if isinstance(stack_left[0], nodes.ClassNode) and stack_left[0].name == el_right.name:
-                # Class has not been moved
-                logging.debug("%s not moved class %r", indent+INDENT, el_right.name)
-                diff += _changed_el(el_right, stack_left)
-            else:
-                logging.debug("%s new class %r", indent+INDENT, el_right.name)
-                add_to_diff(diff, el_right)
-        elif isinstance(el_right, nodes.AtomtrailersNode):
-            if get_call_el(el_right):
-                logging.debug("%s modified call %r", indent+INDENT, el_right.name)
-                el_left = stack_left.pop(0)
-                el_diff = compute_diff(el_left, el_right, indent=indent+INDENT)
-                if el_diff:
-                    diff += [context_class(el_left, el_diff, context=gather_context(el_left))]
-            else:
-                logging.debug("%s new AtomtrailersNode %r", indent+INDENT, el_right.name)
-                add_to_diff(diff, el_right)
+        elif type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
+            diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left, el_right, indent, context_class)
         elif guess_if_same_el(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT, type(el_right).__name__)
             diff += _changed_el(el_right, stack_left)

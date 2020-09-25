@@ -1,9 +1,10 @@
 import logging
 
-from redbaron import nodes
+from redbaron import (RedBaron,
+                      nodes)
 
 from .differ import (compute_diff,
-                     compute_diff_one)
+                     compute_diff_iterables)
 from .matcher import gather_context
 from .tools import (INDENT,
                     changed_in_list,
@@ -32,6 +33,10 @@ from .tree import (AddAllDecoratorArgs,
                    RemoveFunArgs,
                    RemoveImports,
                    Replace)
+
+
+def diff_redbaron(left, right, indent):
+    return compute_diff_iterables(left, right, indent=indent+INDENT)
 
 
 def diff_replace(left, right, indent):
@@ -98,6 +103,9 @@ def diff_def_node(left, right, indent):
         if diff_decorator:
             diff += [ChangeDecorator(left, changes=diff_decorator)]
     logging.debug('%s diff fun changed decorators %r', indent, changed)
+
+    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+
     return diff
 
 
@@ -127,9 +135,14 @@ def diff_import_node(left, right, indent):
 
 
 def diff_with_node(left, right, indent):
+    diff = []
     if left.contexts.dumps() != right.contexts.dumps():
-        return [ChangeAttr('contexts', right.contexts.copy())]
-    return []
+        logging.debug('%s changed contexts %r', indent, right.contexts)
+        diff += [ChangeAttr('contexts', right.contexts.copy())]
+
+    diff += compute_diff_iterables(left, right, indent=indent)
+
+    return diff
 
 
 def diff_atom_trailer_node(left, right, indent):
@@ -139,8 +152,8 @@ def diff_atom_trailer_node(left, right, indent):
     else:
         call_el_left = get_call_el(left)
         call_el_right = get_call_el(right)
-        el_diff = compute_diff_one(call_el_left, call_el_right,
-                                   indent=indent+INDENT)
+        el_diff = compute_diff(call_el_left, call_el_right,
+                                   indent=indent)
         if el_diff:
             diff += [ChangeAtomtrailersCall(call_el_left, changes=el_diff)]
     return diff
@@ -175,8 +188,7 @@ def diff_assignment_node(left, right, indent):
     if left.name.value != right.name.value:
         diff += [ChangeAttr('name', right.name)]
 
-    el_diff = compute_diff_one(left.value, right.value,
-                               indent=indent+INDENT)
+    el_diff = compute_diff(left.value, right.value, indent=indent+INDENT)
     if el_diff:
         diff += [ChangeAssignmentNode(left, changes=el_diff)]
 
@@ -184,6 +196,7 @@ def diff_assignment_node(left, right, indent):
 
 
 COMPUTE_DIFF_ONE_CALLS = {
+    RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
     nodes.AssociativeParenthesisNode: diff_replace,
     nodes.IntNode: diff_replace,

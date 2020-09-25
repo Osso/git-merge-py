@@ -9,7 +9,6 @@ from .matcher import (find_func,
 from .tools import (INDENT,
                     LAST,
                     get_call_el,
-                    is_iterable,
                     short_display_el)
 from .tree import (AddEls,
                    ChangeEl,
@@ -20,47 +19,35 @@ from .tree import (AddEls,
                    Replace)
 
 
-def compute_diff_one(left, right, indent=""):
-    from .differ_calls import COMPUTE_DIFF_ONE_CALLS
-
-    if left.dumps() == right.dumps():
-        logging.debug('%s compute_diff_one %s = %s', indent,
-                      type(left).__name__, type(right).__name__)
-        logging.debug('%s compute_diff_one %s = %s', indent,
-                      short_display_el(left), short_display_el(right))
-        return []
-
-    logging.debug('%s compute_diff_one %s != %s', indent,
-                  type(left).__name__, type(right).__name__)
-    logging.debug('%s compute_diff_one %s != %s', indent,
-                  short_display_el(left), short_display_el(right))
-
-    if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
-        diff = [Replace(right)]
-    elif type(left) in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
-        diff = COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent)
-    else:
-        # Unhandled
-        diff = []
-
-    logging.debug('%s compute_diff_one %r', indent, diff)
-    return diff
-
-
 def compute_diff(left, right, indent=""):
     # type: (NodeType, NodeType, Optional[Dict[str, int]]) -> None
     """Compare two abstract syntax trees.
     Return `None` if they are equal, and raise an exception otherwise.
     """
-    logging.debug("%s compute_diff %r <=> %r", indent,
+    from .differ_calls import COMPUTE_DIFF_ONE_CALLS
+
+    if left.dumps() == right.dumps():
+        logging.debug('%s compute_diff %s = %s', indent,
+                      type(left).__name__, type(right).__name__)
+        logging.debug('%s compute_diff %s = %s', indent,
+                      short_display_el(left), short_display_el(right))
+        return []
+
+    logging.debug('%s compute_diff %s != %s', indent,
+                  type(left).__name__, type(right).__name__)
+    logging.debug('%s compute_diff %s != %s', indent,
                   short_display_el(left), short_display_el(right))
 
-    diff = compute_diff_one(left, right, indent=indent+INDENT)
-    if is_iterable(left) and not isinstance(left, nodes.AtomtrailersNode):
-        assert is_iterable(right)
-        diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
+        diff = [Replace(right)]
+    elif type(left) in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
+        diff = COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
+    else:
+        # Unhandled
+        logging.warning("unhandled element type %s", type(left))
+        diff = []
 
-    logging.debug("%s compute_diff %r", indent, diff)
+    logging.debug('%s compute_diff %r', indent, diff)
     return diff
 
 
@@ -165,7 +152,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             if get_call_el(el_right):
                 logging.debug("%s modified call %r", indent+INDENT, el_right.name)
                 el_left = stack_left.pop(0)
-                el_diff = compute_diff_one(el_left, el_right, indent=indent+INDENT)
+                el_diff = compute_diff(el_left, el_right, indent=indent+INDENT)
                 if el_diff:
                     diff += [context_class(el_left, el_diff, context=gather_context(el_left))]
             else:

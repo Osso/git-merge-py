@@ -169,8 +169,9 @@ def id_from_el(arg):
     if isinstance(arg, nodes.DefArgumentNode):
         return arg.name.value
     if isinstance(arg, nodes.AtomtrailersNode):
-        return '.'.join(id_from_el(el) for el in arg
-                        if not isinstance(el, nodes.CallNode))
+        return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
+                        else '()'
+                        for el in arg)
     return arg
 
 

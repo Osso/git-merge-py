@@ -58,7 +58,7 @@ def match_el_with_context(el, target_el, context, previous_el):
         if previous_el is None:
             return True
         previous_el_dumps = previous_el.dumps()
-        context_dumps = context.dumps()
+        context_dumps = context[-1].dumps()
         if previous_el_dumps == context_dumps:
             return True
 

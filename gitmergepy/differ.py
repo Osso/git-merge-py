@@ -57,10 +57,10 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     def _changed_el(el, stack_left, context_class=context_class):
         diff = []
         el_diff = compute_diff(stack_left[0], el, indent=indent+INDENT)
-        stack_left.pop(0)
+        el_left = stack_left.pop(0)
 
         if el_diff:
-            diff += [context_class(el, el_diff, context=gather_context(el))]
+            diff += [context_class(el_left, el_diff, context=gather_context(el))]
 
         return diff
 
@@ -100,7 +100,10 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             stack_left.pop(0)
             diff += [RemoveEls(els, context=gather_context(el_right))]
         elif type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
-            diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left, el_right, indent, context_class)
+            diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left,
+                                                                el_right,
+                                                                indent+INDENT,
+                                                                context_class)
         elif guess_if_same_el(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT, type(el_right).__name__)
             diff += _changed_el(el_right, stack_left)

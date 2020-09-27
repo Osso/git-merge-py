@@ -31,6 +31,7 @@ def insert_at_context(el, context, tree):
         # Look for context
         context_el = find_context(tree, context[-1])
         if context_el:
+            print('args', type(tree))
             # Move function to new position
             # Workaround redbaron insert_after bug
             tree.insert(tree.index(context_el)+1, el)

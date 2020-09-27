@@ -581,3 +581,40 @@ class B:
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_def_multiline():
+    base = """
+def fun(arg1):
+    pass
+"""
+    current = """
+def fun(arg1,
+        arg2):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_def_multiline_first():
+    base = """
+def fun(arg1):
+    pass
+"""
+    current = """
+def fun(arg2,
+        arg1):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_call_multiline():
+    base = """
+fun(arg2):
+"""
+    current = """
+fun(arg1,
+    arg2):
+"""
+    _test_apply_changes(base, current)

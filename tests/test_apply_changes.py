@@ -130,7 +130,8 @@ def test_add_import():
 from module1 import fun1
 """
     current = """
-from module1 import fun1, fun2
+from module1 import (fun1,
+                     fun2)
 """
     _test_apply_changes(base, current)
 
@@ -140,7 +141,8 @@ def test_add_import_as():
 from module1 import fun1 as f1
 """
     current = """
-from module1 import fun1 as f1, fun2
+from module1 import (fun1 as f1,
+                     fun2)
 """
     _test_apply_changes(base, current)
 
@@ -596,14 +598,16 @@ def fun(arg1,
     _test_apply_changes(base, current)
 
 
-def test_def_multiline_first():
+def test_def_multiline_three():
     base = """
-def fun(arg1):
+def fun(arg1,
+        arg2):
     pass
 """
     current = """
-def fun(arg2,
-        arg1):
+def fun(arg1,
+        arg2,
+        arg3):
     pass
 """
     _test_apply_changes(base, current)
@@ -611,10 +615,12 @@ def fun(arg2,
 
 def test_call_multiline():
     base = """
-fun(arg2):
+fun(arg1,
+    arg2)
 """
     current = """
 fun(arg1,
-    arg2):
+    arg2,
+    arg3)
 """
     _test_apply_changes(base, current)

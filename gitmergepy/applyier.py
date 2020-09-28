@@ -5,6 +5,8 @@ from redbaron import RedBaron
 from .matcher import find_context
 from .tools import (FIRST,
                     LAST,
+                    append_coma_list,
+                    insert_coma_list,
                     short_display_el)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
@@ -31,10 +33,29 @@ def insert_at_context(el, context, tree):
         # Look for context
         context_el = find_context(tree, context[-1])
         if context_el:
-            print('args', type(tree))
             # Move function to new position
             # Workaround redbaron insert_after bug
             tree.insert(tree.index(context_el)+1, el)
+        else:
+            return False
+    return True
+
+
+def insert_at_context_coma_list(el, context, tree, new_line=False):
+    if context is FIRST:
+        # insert at the beginning
+        insert_coma_list(tree, position=0, to_add=el, new_line=new_line)
+    elif context is LAST:
+        # insert at the end
+        append_coma_list(tree, el, new_line=new_line)
+    else:
+        # Look for context
+        context_el = find_context(tree, context[-1])
+        if context_el:
+            # Move function to new position
+            # Workaround redbaron insert_after bug
+            insert_coma_list(tree, position=tree.index(context_el)+1,
+                             to_add=el, new_line=new_line)
         else:
             return False
     return True

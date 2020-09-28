@@ -6,7 +6,8 @@ from .applyier import (PLACEHOLDER,
                        add_conflict,
                        add_conflicts,
                        apply_changes,
-                       insert_at_context)
+                       insert_at_context,
+                       insert_at_context_coma_list)
 from .matcher import (find_class,
                       find_context,
                       find_el,
@@ -20,7 +21,7 @@ from .tools import (FIRST,
                     get_call_el,
                     id_from_el,
                     iter_coma_list,
-                    match_indentation,
+                    make_indented,
                     short_context,
                     short_display_el,
                     sort_imports)
@@ -94,9 +95,8 @@ class RemoveEls:
 
 
 class AddImports:
-    def __init__(self, imports, indent_ref):
+    def __init__(self, imports):
         self.imports = imports
-        self.indent_ref = indent_ref
 
     def __repr__(self):
         return "<%s imports=%r>" % (self.__class__.__name__,
@@ -105,8 +105,7 @@ class AddImports:
 
     def apply(self, tree):
         existing_imports = set(el.value for el in iter_coma_list(tree.targets))
-        if self.indent_ref:
-            match_indentation(tree, self.indent_ref)
+        make_indented(tree.targets, handle_brackets=True)
 
         for import_el in self.imports:
             if import_el.value not in existing_imports:
@@ -367,9 +366,10 @@ class ChangeDecorator(ChangeEl):
 
 
 class AddFunArg:
-    def __init__(self, arg, context):
+    def __init__(self, arg, context, new_line):
         self.arg = arg
         self.context = context
+        self.new_line = new_line
 
     def __repr__(self):
         return "<%s arg=%r context=%r>" % (self.__class__.__name__,
@@ -383,7 +383,8 @@ class AddFunArg:
         args = self.get_args(tree)
         arg = self.arg.copy()
         logging.debug("    adding arg %r to %r", self.arg, args)
-        if not insert_at_context(arg, self.context, args):
+        if not insert_at_context_coma_list(arg, self.context, args,
+                                           new_line=self.new_line):
             return [self.make_conflict("Argument context has changed")]
         return []
 

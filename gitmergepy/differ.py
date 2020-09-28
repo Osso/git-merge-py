@@ -7,7 +7,6 @@ from .matcher import (gather_context,
                       same_el)
 from .tools import (INDENT,
                     LAST,
-                    get_call_el,
                     short_display_el)
 from .tree import (AddEls,
                    ChangeEl,

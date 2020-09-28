@@ -63,12 +63,13 @@ def diff_def_node(left, right, indent):
     logging.debug('%s fun new args %r old args %r',
                   indent, to_add, to_remove)
     for arg in to_add:
-        diff += [AddFunArg(arg, context=gather_context(arg))]
+        diff += [AddFunArg(arg, context=gather_context(arg),
+                           new_line=arg.previous.endl if arg.previous else False)]
     if to_remove:
         diff += [RemoveFunArgs(to_remove)]
     changed = changed_in_list(left.arguments, right.arguments,
-                           key_getter=lambda t: t.name.value,
-                           value_getter=lambda t: t.dumps())
+                              key_getter=lambda t: t.name.value,
+                              value_getter=lambda t: t.dumps())
     for _, arg in changed:
         logging.debug('%s fun changed args %r', indent,
                       short_display_el(arg))
@@ -86,8 +87,8 @@ def diff_def_node(left, right, indent):
         diff += [RemoveDecorators(to_remove)]
     logging.debug('%s fun new decorators %r old decorators %r', indent, to_add, to_remove)
     changed = changed_in_list(left.decorators, right.decorators,
-                           key_getter=lambda t: t.name.value,
-                           value_getter=lambda t: t.dumps())
+                              key_getter=lambda t: t.name.value,
+                              value_getter=lambda t: t.dumps())
     for left_el, right_el in changed:
         logging.debug('%s fun changed decorator %r ', indent, right_el)
         diff_decorator = []
@@ -108,11 +109,10 @@ def diff_def_node(left, right, indent):
     return diff
 
 
-def create_add_remove_imports(to_add_class, to_add, to_remove_class, to_remove,
-                              indent_ref):
+def create_add_remove_imports(to_add_class, to_add, to_remove_class, to_remove):
     diff = []
     if to_add:
-        diff += [to_add_class([el for el in to_add], indent_ref=indent_ref)]
+        diff += [to_add_class([el for el in to_add])]
     if to_remove:
         diff += [to_remove_class(to_remove)]
     return diff
@@ -122,15 +122,8 @@ def diff_import_node(left, right, indent):
     to_add, to_remove = diff_list(iter_coma_list(left.targets),
                                   iter_coma_list(right.targets),
                                   key_getter=lambda t: t.value)
-    if left.targets.style == 'indented':
-        indent_ref = left.targets
-    elif right.targets.style == 'indented':
-        indent_ref = right.targets
-    else:
-        indent_ref = None
     return create_add_remove_imports(AddImports, to_add,
-                                     RemoveImports, to_remove,
-                                     indent_ref=indent_ref)
+                                     RemoveImports, to_remove)
 
 
 def diff_with_node(left, right, indent):
@@ -165,7 +158,8 @@ def diff_call_node(left, right, indent):
     logging.debug('%s call new args %r old args %r',
                   indent, to_add, to_remove)
     for arg in to_add:
-        diff += [AddCallArg(arg, context=gather_context(arg))]
+        diff += [AddCallArg(arg, context=gather_context(arg),
+                            new_line=arg.previous.endl if arg.previous else False)]
     if to_remove:
         diff += [RemoveCallArgs(to_remove)]
 

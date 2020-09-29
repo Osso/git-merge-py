@@ -212,17 +212,6 @@ def id_from_el(arg):
 
 
 def make_indented(coma_list, handle_brackets=False):
-    # logging.debug("make_indented %s", short_display_el(indent_ref))
-    # if coma_list.style == 'flat':
-    #     existing_imports = import_el.targets
-    #     import_el.targets = indent_ref.copy()
-    #     import_el.targets.middle_separator = import_el.targets.node_list[2]
-    #     clear_coma_list(import_el.targets)
-    #     for i in existing_imports:
-    #         append_coma_list(import_el.targets, i)
-    # import_el.targets.indented_separator = indent_ref.targets.node_list[2]
-    # coma_list.style = 'indented'
-
     # Enclose in () for multi-line
     if handle_brackets and not isinstance(coma_list[0],
                                           nodes.LeftParenthesisNode):
@@ -252,16 +241,6 @@ def make_indented(coma_list, handle_brackets=False):
 
     coma_list._get_middle_separator = types.MethodType(_get_middle_separator,
                                                        coma_list)
-
-    # coma_list._get_middle_separator()
-
-    # first_el = coma_list[0]
-    # if isinstance(first_el, nodes.LeftParenthesisNode):
-    #     first_el = coma_list[1]
-
-    # coma_list.indented_separator = coma_list.middle_separator.copy()
-    # coma_list.indented_separator.second_formatting = \
-    #     "\n" + (first_el.absolute_bounding_box.top_left.column - 1) * ' '
 
 
 def clear_coma_list(l):

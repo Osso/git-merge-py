@@ -624,3 +624,13 @@ fun(arg1,
     arg3)
 """
     _test_apply_changes(base, current)
+
+
+def test_multi_call():
+    base = """
+fun1().fun2()
+"""
+    current = """
+fun1(arg1).fun2(arg2)
+"""
+    _test_apply_changes(base, current)

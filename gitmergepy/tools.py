@@ -46,7 +46,7 @@ def insert_coma_list(l, position, to_add, new_line=False):
         new_el.on_attribute = l.on_attribute
         return new_el
 
-    if isinstance(l[-1], nodes.RightParenthesisNode):
+    if l and isinstance(l[-1], nodes.RightParenthesisNode):
         sep = copy_sep()
         new_el = copy_el(index=1)
         is_empty = len(l.data) == 2
@@ -66,11 +66,11 @@ def insert_coma_list(l, position, to_add, new_line=False):
     else:
         sep = copy_sep()
         new_el = copy_el(index=0)
+        is_empty = len(l.data) == 0  # pylint: disable=len-as-condition
         if position is LAST:
             l.data.append([new_el, None])
         else:
             l.data.insert(position, [new_el, sep])
-        is_empty = len(l.data) == 0  # pylint: disable=len-as-condition
         if not is_empty and position is LAST:
             l.data[-2][1] = sep
             l.data[-1][1] = None
@@ -169,15 +169,8 @@ def is_iterable(el):
         return True
 
 
-def get_call_el(el):
-    sub_el = None
-    for sub_el in el:
-        if not isinstance(sub_el, nodes.NameNode):
-            break
-
-    if isinstance(sub_el, nodes.CallNode):
-        return sub_el
-    return None
+def get_call_els(atom_trailer_node):
+    return [el for el in atom_trailer_node if isinstance(el, nodes.CallNode)]
 
 
 def get_name_els_from_call(el):

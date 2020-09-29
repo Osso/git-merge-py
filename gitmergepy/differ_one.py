@@ -9,7 +9,7 @@ from .matcher import gather_context
 from .tools import (INDENT,
                     changed_in_list,
                     diff_list,
-                    get_call_el,
+                    get_call_els,
                     id_from_el,
                     iter_coma_list,
                     short_display_el)
@@ -142,12 +142,14 @@ def diff_atom_trailer_node(left, right, indent):
     if id_from_el(left) != id_from_el(right):
         diff += [Replace(right)]
     else:
-        call_el_left = get_call_el(left)
-        call_el_right = get_call_el(right)
-        el_diff = compute_diff(call_el_left, call_el_right,
-                                   indent=indent)
-        if el_diff:
-            diff += [ChangeAtomtrailersCall(call_el_left, changes=el_diff)]
+        calls_diff = []
+        calls_els_left = get_call_els(left)
+        calls_els_right = get_call_els(right)
+        for index, (el_left, el_right) in enumerate(zip(calls_els_left, calls_els_right)):
+            calls_diff = compute_diff(el_left, el_right, indent=indent)
+            if calls_diff:
+                diff += [ChangeAtomtrailersCall(el_left, index=index,
+                                                changes=calls_diff)]
     return diff
 
 

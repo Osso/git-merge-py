@@ -18,7 +18,7 @@ from .tools import (FIRST,
                     append_coma_list,
                     apply_diff_to_list,
                     as_from_contexts,
-                    get_call_el,
+                    get_call_els,
                     id_from_el,
                     iter_coma_list,
                     make_indented,
@@ -350,10 +350,17 @@ class ChangeAssignmentNode(ChangeEl):
 
 
 class ChangeAtomtrailersCall(ChangeEl):
+    def __init__(self, el, changes, index):
+        super().__init__(el, changes=changes)
+        self.index = index
+
     def apply(self, tree):
-        el = get_call_el(tree)
-        if el is None:
-            return [Conflict([self.el], self, 'call element not found')]
+        calls_els = get_call_els(tree)
+        try:
+            el = calls_els[self.index]
+        except IndexError:
+            return [Conflict([self.el], self, 'calls elements not matching')]
+
         return apply_changes(el, self.changes)
 
 
@@ -382,7 +389,8 @@ class AddFunArg:
     def apply(self, tree):
         args = self.get_args(tree)
         arg = self.arg.copy()
-        logging.debug("    adding arg %r to %r", self.arg, args)
+        logging.debug("    adding arg %r to %r",
+                      short_display_el(self.arg), short_display_el(args))
         if not insert_at_context_coma_list(arg, self.context, args,
                                            new_line=self.new_line):
             return [self.make_conflict("Argument context has changed")]

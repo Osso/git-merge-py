@@ -104,6 +104,16 @@ def diff_def_node(left, right, indent):
         if diff_decorator:
             diff += [ChangeDecorator(left, changes=diff_decorator)]
 
+    # Remove extra newlines that should have been in parent
+    # left_copy = left.copy()
+    # while isinstance(left_copy.data[-1][0], nodes.EndlNode):
+    #     left_copy.data.pop()
+
+    # right_copy = right.copy()
+    # while isinstance(right_copy.data[-1][0], nodes.EndlNode):
+    #     right_copy.data.pop()
+
+    # diff += compute_diff_iterables(left_copy, right_copy, indent=indent)
     diff += compute_diff_iterables(left, right, indent=indent)
 
     return diff

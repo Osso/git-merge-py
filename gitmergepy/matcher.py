@@ -101,12 +101,23 @@ def find_el(tree, target_el, context):
         if el:
             return el
 
-    el = _find_el(match_el_with_context)
+    if context is FIRST:
+        index = 0
+        while isinstance(tree.node_list[index], nodes.EndlNode) and not isinstance(target_el, nodes.EndlNode):
+            index += 1
+        if same_el(target_el, tree.node_list[index]):
+            el = tree.node_list[index]
+        else:
+            el = None
+    else:
+        el = _find_el(match_el_with_context)
     if el:
         return el
+
     el = _find_el(match_el_without_context)
     if el:
         return el
+
     el = _find_el(match_el_guess)
     if el:
         return el

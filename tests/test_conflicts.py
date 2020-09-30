@@ -68,24 +68,20 @@ def fun(new_arg1):
 
 
 def test_change_with():
-    base = """
-# stuff
+    base = """# stuff
 with fun() as out:
     print('hello')
 """
-    current = """
-# stuff
+    current = """# stuff
 print('hello')
 """
-    other = """
-# changed stuff
+    other = """# changed stuff
 with fun() as out:
     print('hello')
 with fun() as out:
     print('world')
 """
-    expected = """
-# <<<<<<<<<<
+    expected = """# <<<<<<<<<<
 # Reason Multiple with nodes found
 # <RemoveWith el="with fun() as out:" context='# stuff'>
 # with fun() as out:

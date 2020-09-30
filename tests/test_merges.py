@@ -63,29 +63,25 @@ from module1 import (fun2,
 
 
 def test_move_function():
-    base = """
-def fun1():
+    base = """def fun1():
     print('hello')
 
 def fun2():
     pass
 """
-    current = """
-def fun2():
+    current = """def fun2():
     pass
 
 def fun1():
     print('hello')
 """
-    other = """
-def fun1():
+    other = """def fun1():
     print('hello world')
 
 def fun2():
     pass
 """
-    expected = """
-def fun2():
+    expected = """def fun2():
     pass
 
 def fun1():
@@ -95,26 +91,22 @@ def fun1():
 
 
 def test_move_function_without_context():
-    base = """
-def fun1():
+    base = """def fun1():
     print('hello')
 
 def fun2():
     pass
 """
-    current = """
-def fun2():
+    current = """def fun2():
     pass
 
 def fun1():
     print('hello')
 """
-    other = """
-def fun1():
+    other = """def fun1():
     print('hello world')
 """
-    expected = """
-def fun1():
+    expected = """def fun1():
     print('hello world')
 """
     _test_merge_changes(base, current, other, expected)

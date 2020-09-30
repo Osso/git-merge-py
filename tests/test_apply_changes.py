@@ -108,15 +108,13 @@ def test_change_line_middle():
 
 
 def test_move_function():
-    base = """
-def fun1():
+    base = """def fun1():
     print('fun1')
 
 def fun2():
     print('fun2')
 """
-    current = """
-def fun2():
+    current = """def fun2():
     print('fun2')
 
 def fun1():
@@ -574,12 +572,10 @@ class A:
 
 
 def test_class_name():
-    base = """
-class A:
+    base = """class A:
     pass
 """
-    current = """
-class B:
+    current = """class B:
     pass
 """
     _test_apply_changes(base, current)
@@ -632,5 +628,16 @@ fun1().fun2()
 """
     current = """
 fun1(arg1).fun2(arg2)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_line_with_comment():
+    base = """
+# comment
+"""
+    current = """
+# comment
+a = 1  # assignment
 """
     _test_apply_changes(base, current)

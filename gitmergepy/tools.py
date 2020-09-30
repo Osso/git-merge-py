@@ -239,3 +239,9 @@ def make_indented(coma_list, handle_brackets=False):
 def clear_coma_list(l):
     del l.data[1:-1]
     del l.node_list[1:-1]
+
+
+def needs_indent(el):
+    return not isinstance(el, (nodes.EndlNode,
+                               nodes.ClassNode,
+                               nodes.DefNode))

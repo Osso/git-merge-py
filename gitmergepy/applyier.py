@@ -4,11 +4,11 @@ from redbaron import (RedBaron,
                       nodes)
 
 from .matcher import find_context
-from .tools import (FIRST,
-                    LAST,
+from .tools import (LAST,
                     append_coma_list,
                     insert_coma_list,
-                    short_display_el)
+                    short_display_el,
+                    skip_context_endl)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
@@ -19,21 +19,15 @@ def apply_changes(tree, changes):
     for change in changes:
         logging.debug('applying %r to %r', change, short_display_el(tree))
         conflicts += change.apply(tree)
+        # print("====")
+        # print(tree.dumps())
 
     return conflicts
 
 
 def insert_at_context(el, context, tree, node_list_workaround=False,
                       endl=None):
-    if context is FIRST:
-        # insert at the beginning
-        if node_list_workaround:
-            tree.node_list.insert(0, el)
-            if endl is not None:
-                tree.node_list.insert(0, endl)
-        else:
-            tree.insert(0, el)
-    elif context is LAST:
+    if context is LAST:
         # insert at the end
         if node_list_workaround:
             if endl is not None:
@@ -41,6 +35,15 @@ def insert_at_context(el, context, tree, node_list_workaround=False,
             tree.node_list.append(el)
         else:
             tree.append(el)
+    elif context[-1] is None:
+        # insert at the beginning
+        if node_list_workaround:
+            index = skip_context_endl(tree, context)
+            tree.node_list.insert(index, el)
+            if endl is not None:
+                tree.node_list.insert(index, endl)
+        else:
+            tree.insert(0, el)
     else:
         # Look for context
         context_el = find_context(tree, context[-1])
@@ -64,9 +67,10 @@ def insert_at_context(el, context, tree, node_list_workaround=False,
 
 
 def insert_at_context_coma_list(el, context, tree, new_line=False):
-    if context is FIRST:
+    if context[-1] is None:
         # insert at the beginning
-        insert_coma_list(tree, position=0, to_add=el, new_line=new_line)
+        insert_coma_list(tree, position=skip_context_endl(tree, context),
+                         to_add=el, new_line=new_line)
     elif context is LAST:
         # insert at the end
         append_coma_list(tree, el, new_line=new_line)

@@ -1,8 +1,8 @@
 from redbaron import nodes
 
-from .tools import (FIRST,
-                    get_name_els_from_call,
-                    name_els_to_string)
+from .tools import (get_name_els_from_call,
+                    name_els_to_string,
+                    skip_context_endl)
 
 WHITESPACE_NODES = (nodes.EndlNode, )
 
@@ -101,18 +101,15 @@ def find_el(tree, target_el, context):
         if el:
             return el
 
-    if context is FIRST:
-        index = 0
-        while isinstance(tree.node_list[index], nodes.EndlNode) and not isinstance(target_el, nodes.EndlNode):
-            index += 1
-        if same_el(target_el, tree.node_list[index]):
-            el = tree.node_list[index]
-        else:
-            el = None
+    if context[-1] is None:
+        index = skip_context_endl(tree, context)
+        el = tree.node_list[index]
+        if same_el(target_el, el):
+            return el
     else:
         el = _find_el(match_el_with_context)
-    if el:
-        return el
+        if el:
+            return el
 
     el = _find_el(match_el_without_context)
     if el:
@@ -134,13 +131,11 @@ def gather_context(el):
     while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
         el = el.previous
         context.append(el)
-    if context[-1] is None:
-        return FIRST
     return context
 
 
 def find_context(tree, target):
-    for el in tree:
+    for el in tree.node_list:
         if same_el(target, el):
             return el
     return None

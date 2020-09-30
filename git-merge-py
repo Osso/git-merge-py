@@ -2,15 +2,10 @@
 import logging
 import sys
 
-from redbaron import (RedBaron,
-                      nodes)
+from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff_iterables
-
-VALUES_NODES = (nodes.CommentNode,
-                nodes.AssociativeParenthesisNode)
-INDENT = "   "
 
 
 def parse_file(filename):

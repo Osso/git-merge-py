@@ -13,8 +13,7 @@ from .matcher import (find_class,
                       find_el,
                       find_func,
                       same_el)
-from .tools import (FIRST,
-                    LAST,
+from .tools import (LAST,
                     append_coma_list,
                     apply_diff_to_list,
                     as_from_contexts,
@@ -22,9 +21,10 @@ from .tools import (FIRST,
                     id_from_el,
                     iter_coma_list,
                     make_indented,
-                    needs_indent,
+                    remove_coma_list,
                     short_context,
                     short_display_el,
+                    skip_context_endl,
                     sort_imports)
 
 
@@ -61,27 +61,17 @@ class RemoveEls:
             short_context(self.context))
 
     def apply(self, tree):
-        if self.context is FIRST:
-            logging.debug("    at beginning")
-            index = 0
-            while isinstance(tree.node_list[index], nodes.EndlNode) and not isinstance(self.to_remove[0], nodes.EndlNode):
-                index += 1
-                if index >= len(tree.node_list):
-                    break
-        elif self.context is LAST:
+        if self.context is LAST:
             logging.debug("    at the end")
             index = len(tree.node_list)
             if same_el(tree.node_list[-1], PLACEHOLDER):
                 index -= 1
             while isinstance(tree.node_list[index-1], nodes.EndlNode) and not isinstance(self.to_remove[0], nodes.EndlNode):
                 index -= 1
-            for el in self.to_remove:
-                if needs_indent(el):
-                    index -= 1
-                index -= 1
-            # Re-adjust to leave it in the proper position for same_el
-            if needs_indent(self.to_remove[0]):
-                index += 1
+            index -= len(self.to_remove)
+        elif self.context[-1] is None:
+            logging.debug("    at beginning")
+            index = skip_context_endl(tree, self.context)
         else:
             el = find_context(tree, self.context[-1])
             if el:
@@ -96,11 +86,7 @@ class RemoveEls:
         for el_to_remove in self.to_remove:
             if same_el(tree.node_list[index], el_to_remove):
                 logging.debug("    removing el %r", short_display_el(el_to_remove))
-                # To match workaround in AddEls
-                # del tree[index]
                 del tree.node_list[index]
-                if needs_indent(el_to_remove):
-                    del tree.node_list[index - 1]
             else:
                 logging.debug("    not matching %r", short_display_el(tree.node_list[index]))
                 return []
@@ -120,7 +106,6 @@ class AddImports:
     def apply(self, tree):
         existing_imports = set(el.value for el in iter_coma_list(tree.targets))
         make_indented(tree.targets, handle_brackets=True)
-
         for import_el in self.imports:
             if import_el.value not in existing_imports:
                 append_coma_list(tree.targets, import_el)
@@ -156,54 +141,24 @@ class AddEls:
         self.to_add.append(el)
 
     def apply(self, tree):
-        def _needs_indent(el):
-            # no indentation for empty lines
-            # special handling of indentation for def/class node
-            if not needs_indent(el_to_add):
-                return False
-
-            # no new line for root element
-            if tree.parent is None and self.context is FIRST:
-                return False
-
-            return True
-
-        if isinstance(tree.node_list[0], nodes.EndlNode):
-            endl = tree.node_list[0].copy()
-        else:
-            endl = tree._convert_input_to_node_object("\n",
-                                                      parent=tree.node_list,
-                                                      on_attribute=tree.on_attribute)
-
-        if self.context is FIRST:
-            for el_to_add in reversed(self.to_add):
-                logging.debug("    adding el %r at the beginning",
-                              short_display_el(el_to_add))
-                tree.node_list.insert(0, el_to_add)
-                # New line with indentation
-                if _needs_indent(el_to_add):
-                    tree.node_list.insert(0, endl)
-                print(tree.node_list)
+        # Make it one insert branch by using index
+        if self.context[-1] is None:
+            index = skip_context_endl(tree, self.context)
+            where = "at the beginning"
         else:
             el = find_context(tree, self.context[-1])
-            if el:
-                # Workaround redbaron insert_after bug
-                index = tree.node_list.index(el) + 1
-                for el_to_add in reversed(self.to_add):
-                    logging.debug("    adding el %r after %r",
-                                  short_display_el(el_to_add),
-                                  short_display_el(el))
-                    # Workaround redbaron insert bug adding new lines for
-                    # a = 1  # comment
-                    tree.node_list.insert(index, el_to_add)
-                    if _needs_indent(el_to_add):
-                        tree.node_list.insert(index, endl)
-            else:
-                for el_to_add in self.to_add:
-                    if _needs_indent(el_to_add):
-                        tree.node_list.append(index, endl)
-                    tree.node_list.append(el_to_add)
+            if not el:
                 return [Conflict(self.to_add, self)]
+            # Workaround redbaron insert_after bug
+            index = tree.node_list.index(el) + len(self.context)
+            where = "after %r" % short_display_el(el)
+
+        for el_to_add in self.to_add:
+            logging.debug("    adding el %r %s",
+                          short_display_el(el_to_add), where)
+            tree.node_list.insert(index, el_to_add)
+            index += 1
+
         return []
 
 
@@ -504,10 +459,7 @@ class RemoveFunArgs:
         args = self.get_args(tree)
         for el in args:
             if id_from_el(el) in to_remove_values:
-                if len(args) == 1:
-                    args.node_list.remove(el)
-                else:
-                    args.remove(el)
+                remove_coma_list(args, el)
         return []
 
 
@@ -548,12 +500,12 @@ class RemoveWith(ElWithContext):
                 if with_node_as & el_node_as:
                     similar_with_nodes += [el]
                     if self.context:
-                        if (self.context is FIRST and previous_el is None) or \
-                                self.context and self.context is not LAST and \
-                                 self.context is not FIRST and \
-                                 same_el(previous_el, self.context[-1]):
+                        if (self.context[-1] is None and previous_el is None or
+                           (self.context[-1] and
+                                same_el(previous_el, self.context[-1]))):
                             context_with_nodes += [el]
-            previous_el = el
+            if not isinstance(el, nodes.EndlNode):
+                previous_el = el
 
         if not similar_with_nodes:
             logging.debug('.no nodes found')

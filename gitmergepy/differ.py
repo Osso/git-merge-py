@@ -51,7 +51,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
     logging.debug("%s compute_diff_iterables %r <=> %r", indent, type(left).__name__, type(right).__name__)
-    stack_left = list(left)
+    stack_left = list(left.node_list)
 
     def _changed_el(el, stack_left, context_class=context_class):
         diff = []
@@ -64,7 +64,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         return diff
 
     diff = []
-    for el_right in right:
+    for el_right in right.node_list:
         if not stack_left:
             logging.debug("%s stack_left empty, new el %r", indent+INDENT, type(el_right).__name__)
             add_to_diff(diff, el_right)

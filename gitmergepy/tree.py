@@ -356,9 +356,11 @@ class ChangeClass(ChangeEl):
             el = find_class(tree, tmp_el)
 
         if el:
+            logging.debug("    changing class %r", short_display_el(el))
             conflicts = apply_changes(el, self.changes)
             add_conflicts(el, conflicts)
-
+        else:
+            logging.debug("    class not found %r", short_display_el(self.el))
         return []
 
 

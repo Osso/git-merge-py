@@ -23,14 +23,14 @@ def compute_diff(left, right, indent=""):
     from .differ_one import COMPUTE_DIFF_ONE_CALLS
 
     if left.dumps() == right.dumps():
-        logging.debug('%s compute_diff %s = %s', indent,
-                      type(left).__name__, type(right).__name__)
+        # logging.debug('%s compute_diff %s = %s', indent,
+        #               type(left).__name__, type(right).__name__)
         logging.debug('%s compute_diff %s = %s', indent,
                       short_display_el(left), short_display_el(right))
         return []
 
-    logging.debug('%s compute_diff %s != %s', indent,
-                  type(left).__name__, type(right).__name__)
+    # logging.debug('%s compute_diff %s != %s', indent,
+    #               type(left).__name__, type(right).__name__)
     logging.debug('%s compute_diff %s != %s', indent,
                   short_display_el(left), short_display_el(right))
 
@@ -43,19 +43,20 @@ def compute_diff(left, right, indent=""):
         logging.warning("unhandled element type %s", type(left))
         diff = []
 
-    logging.debug('%s compute_diff %r', indent, diff)
+    logging.debug('%s compute_diff diff=%r', indent, diff)
     return diff
 
 
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
-    logging.debug("%s compute_diff_iterables %r <=> %r", indent, type(left).__name__, type(right).__name__)
+    logging.debug("%s compute_diff_iterables %r <=> %r", indent,
+                  type(left).__name__, type(right).__name__)
     stack_left = list(left.node_list)
 
     def _changed_el(el, stack_left, context_class=context_class):
         diff = []
-        el_diff = compute_diff(stack_left[0], el, indent=indent+INDENT)
+        el_diff = compute_diff(stack_left[0], el, indent=indent+2*INDENT)
         el_left = stack_left.pop(0)
 
         if el_diff:
@@ -66,7 +67,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     diff = []
     for el_right in right.node_list:
         if not stack_left:
-            logging.debug("%s stack_left empty, new el %r", indent+INDENT, type(el_right).__name__)
+            logging.debug("%s stack_left empty, new el %r", indent+INDENT,
+                          short_display_el(el_right))
             add_to_diff(diff, el_right)
             continue
 
@@ -85,7 +87,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         max_ahead = min(10, len(stack_left))
         if same_el(stack_left[0], el_right):
             # Exactly same element
-            logging.debug("%s same el %r", indent+INDENT, el_right.dumps())
+            logging.debug("%s same el %r", indent+INDENT,
+                          short_display_el(el_right))
             stack_left.pop(0)
         # Look forward a few elements to check if we have a match
         elif any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
@@ -94,8 +97,10 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             for _ in range(10):
                 if not stack_left or same_el(stack_left[0], el_right):
                     break
-                els += [stack_left.pop(0)]
-                logging.debug("%s removing %r", indent+INDENT, els[-1].dumps())
+                el = stack_left.pop(0)
+                logging.debug("%s removing %r", indent+INDENT,
+                              short_display_el(el))
+                els.append(el)
             stack_left.pop(0)
             diff += [RemoveEls(els, context=gather_context(el_right))]
         elif type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
@@ -104,15 +109,18 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                                                 indent+INDENT,
                                                                 context_class)
         elif guess_if_same_el(stack_left[0], el_right):
-            logging.debug("%s changed el %r", indent+INDENT, type(el_right).__name__)
+            logging.debug("%s changed el %r", indent+INDENT,
+                          short_display_el(el_right))
             diff += _changed_el(el_right, stack_left)
         else:
-            logging.debug("%s new el %r", indent+INDENT, el_right.dumps())
+            logging.debug("%s new el %r", indent+INDENT,
+                          short_display_el(el_right))
             add_to_diff(diff, el_right)
 
     if stack_left:
         for el in stack_left:
-            logging.debug("%s removing leftover %r", indent+INDENT, short_display_el(el))
+            logging.debug("%s removing leftover %r", indent+INDENT,
+                          short_display_el(el))
         diff += [RemoveEls(stack_left, context=LAST)]
 
     logging.debug("%s compute_diff_iterables %r", indent, diff)

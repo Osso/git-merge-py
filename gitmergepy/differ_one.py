@@ -60,8 +60,10 @@ def diff_def_node(left, right, indent):
     # Args
     to_add, to_remove = diff_list(left.arguments, right.arguments,
                                   key_getter=id_from_el)
-    logging.debug('%s fun new args %r old args %r',
-                  indent, to_add, to_remove)
+    for arg in to_add:
+        logging.debug('%s fun new arg %r', indent, short_display_el(arg))
+    for arg in to_remove:
+        logging.debug('%s fun old arg %r', indent, short_display_el(arg))
     for arg in to_add:
         diff += [AddFunArg(arg, context=gather_context(arg),
                            new_line=arg.previous.endl if arg.previous else False)]
@@ -85,7 +87,10 @@ def diff_def_node(left, right, indent):
                               context=gather_context(decorator))]
     if to_remove:
         diff += [RemoveDecorators(to_remove)]
-    logging.debug('%s fun new decorators %r old decorators %r', indent, to_add, to_remove)
+    for arg in to_add:
+        logging.debug('%s fun new decorator %r', indent, short_display_el(arg))
+    for arg in to_remove:
+        logging.debug('%s fun old decorator %r', indent, short_display_el(arg))
     changed = changed_in_list(left.decorators, right.decorators,
                               key_getter=lambda t: t.name.value,
                               value_getter=lambda t: t.dumps())
@@ -213,8 +218,10 @@ def diff_class_node(left, right, indent):
                               context=gather_context(decorator))]
     if to_remove:
         diff += [RemoveDecorators(to_remove)]
-    logging.debug('%s class new decorators %r', indent, to_add)
-    logging.debug('%s class old decorators %r', indent, to_remove)
+    if to_add:
+        logging.debug('%s class new decorators %r', indent, to_add)
+    if to_remove:
+        logging.debug('%s class old decorators %r', indent, to_remove)
     changed = changed_in_list(left.decorators, right.decorators,
                            key_getter=lambda t: t.name.value,
                            value_getter=lambda t: t.dumps())

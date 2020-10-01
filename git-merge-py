@@ -33,9 +33,8 @@ def merge_files(base_file, current_file, other_file):
 
 def merge_ast(base_ast, current_ast, other_ast):
     changes = compute_diff_iterables(base_ast, current_ast)
-    logging.info("Changes %r", changes)
+    # logging.info("Changes %r", changes)
     apply_changes(other_ast, changes)
-    logging.info("Result %r", other_ast)
 
 
 if __name__ == '__main__':

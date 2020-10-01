@@ -17,7 +17,7 @@ def apply_changes(tree, changes):
     conflicts = []
 
     for change in changes:
-        logging.debug('applying %r to %r', change, short_display_el(tree))
+        # logging.debug('applying %r to %r', change, short_display_el(tree))
         conflicts += change.apply(tree)
         # print("====")
         # print(tree.dumps())
@@ -123,8 +123,10 @@ def add_conflict(source_el, conflict):
                                                       parent=tree.node_list,
                                                       on_attribute=tree.on_attribute)
             _index = tree.node_list.index(source_el)
-            tree.node_list.insert(_index, text_el)
+            # if isinstance(tree.node_list[_index - 1], nodes.EndlNode):
+            #     _index -= 1
             tree.node_list.insert(_index, endl)
+            tree.node_list.insert(_index, text_el)
         else:
             text_el = source_el._convert_input_to_node_object(text,
                                                               parent=source_el.node_list,
@@ -132,8 +134,8 @@ def add_conflict(source_el, conflict):
             endl = source_el._convert_input_to_node_object("\n",
                                                            parent=source_el.node_list,
                                                            on_attribute=source_el.on_attribute)
-            source_el.node_list.insert(index, text_el)
             source_el.node_list.insert(index, endl)
+            source_el.node_list.insert(index, text_el)
             index += 2
 
     before_text = "<<<<<<<<<<"

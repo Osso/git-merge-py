@@ -7,7 +7,8 @@ from .differ import (add_to_diff,
 from .matcher import (find_func,
                       gather_context)
 from .tools import (INDENT,
-                    id_from_el)
+                    id_from_el,
+                    short_display_el)
 from .tree import (ChangeClass,
                    ChangeFun,
                    MoveFunction)
@@ -25,13 +26,13 @@ def _changed_el(el, stack_left, indent, context_class):
 
 
 def diff_def_node(stack_left, el_right, indent, context_class):
-    logging.debug("%s changed fun %r", indent, type(el_right).__name__)
+    logging.debug("%s changed fun %r", indent, short_display_el(el_right))
     diff = []
 
     # We have encountered a function
     if isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
         # Function has not been moved
-        logging.debug("%s not moved fun %r", indent+INDENT, el_right.name)
+        logging.debug("%s not moved fun", indent+INDENT)
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeFun)
     else:

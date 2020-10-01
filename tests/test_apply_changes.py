@@ -663,3 +663,18 @@ if cond:
     print('hello')
 """
     _test_apply_changes(base, current)
+
+
+def test_class_def_decorator():
+    base = """
+class A:
+    def fun():
+        pass
+"""
+    current = """
+class A:
+    @decorator
+    def fun():
+        pass
+"""
+    _test_apply_changes(base, current)

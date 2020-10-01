@@ -24,6 +24,7 @@ from .tools import (LAST,
                     remove_coma_list,
                     short_context,
                     short_display_el,
+                    short_display_list,
                     skip_context_endl,
                     sort_imports)
 
@@ -56,11 +57,11 @@ class RemoveEls:
 
     def __repr__(self):
         return "<%s to_remove=\"%s\" context=%r>" % (
-            self.__class__.__name__,
-            ', '.join(short_display_el(el) for el in self.to_remove),
+            self.__class__.__name__, short_display_list(self.to_remove),
             short_context(self.context))
 
     def apply(self, tree):
+        logging.debug("removing els %s", short_display_list(self.to_remove))
         # We modify this
         to_remove = self.to_remove.copy()
 
@@ -71,11 +72,11 @@ class RemoveEls:
                 index -= 1
             while isinstance(tree.node_list[index-1], nodes.EndlNode) and not isinstance(self.to_remove[0], nodes.EndlNode):
                 index -= 1
-            to_remove = self.to_remove.copy()
+            tmp_to_remove = self.to_remove.copy()
             if not isinstance(self.to_remove[0], nodes.EndlNode):
-                while isinstance(to_remove[-1], nodes.EndlNode):
-                    to_remove.pop()
-            index -= len(to_remove)
+                while isinstance(tmp_to_remove[-1], nodes.EndlNode):
+                    tmp_to_remove.pop()
+            index -= len(tmp_to_remove)
         elif self.context[-1] is None:
             logging.debug("    at beginning")
             index = skip_context_endl(tree, self.context)

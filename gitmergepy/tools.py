@@ -93,6 +93,10 @@ def short_display_el(el):
     return "a bunch of blank lines"
 
 
+def short_display_list(l):
+    return ', '.join(short_display_el(el) for el in l)
+
+
 def short_context(context):
     if context is None:
         return "no context"

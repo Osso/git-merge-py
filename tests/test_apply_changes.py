@@ -641,3 +641,13 @@ def test_line_with_comment():
 a = 1  # assignment
 """
     _test_apply_changes(base, current)
+
+
+def test_star_args():
+    base = """
+fun(arg1, *args, **kwargs)
+"""
+    current = """
+fun(arg1, arg2, *args, **kwargs)
+"""
+    _test_apply_changes(base, current)

@@ -175,6 +175,10 @@ def as_from_contexts(contexts):
 def id_from_el(arg):
     if isinstance(arg, nodes.CallArgumentNode):
         return 'func' + id_from_el(arg.target if arg.target else arg.value)
+    if isinstance(arg, nodes.ListArgumentNode):
+        return '*' + arg.name.value
+    if isinstance(arg, nodes.DictArgumentNode):
+        return '**' + arg.name.value
     if isinstance(arg, nodes.NameNode):
         return arg.name.value
     if isinstance(arg, nodes.DefArgumentNode):

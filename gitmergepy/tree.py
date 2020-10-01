@@ -183,12 +183,12 @@ class AddEls:
         return []
 
 
-class ChangeValue:
+class Replace:
     def __init__(self, new_value):
         self.new_value = new_value
 
     def apply(self, tree):
-        tree.value = self.new_value
+        tree.replace(self.new_value)
         return []
 
     def __repr__(self):
@@ -196,13 +196,7 @@ class ChangeValue:
                                       short_display_el(self.new_value))
 
 
-class Replace(ChangeValue):
-    def apply(self, tree):
-        tree.replace(self.new_value)
-        return []
-
-
-class ChangeTarget(ChangeValue):
+class ReplaceTarget(Replace):
     def apply(self, tree):
         tree.target = self.new_value
         return []
@@ -254,6 +248,11 @@ class ChangeEl(BaseEl):
             else:
                 return conflicts
         return []
+
+
+class ChangeValue(ChangeEl):
+    def apply(self, tree):
+        return apply_changes(tree.value, self.changes)
 
 
 class ChangeCall(ChangeEl):

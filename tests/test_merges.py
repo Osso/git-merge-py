@@ -287,3 +287,23 @@ def test_already_removed_el():
 # el 3
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_if():
+    base = """
+if cond:
+    pass
+"""
+    current = """
+if cond:
+    print('hello')
+"""
+    other = """
+if cond2:
+    pass
+"""
+    expected = """
+if cond2:
+    print('hello')
+"""
+    _test_merge_changes(base, current, other, expected)

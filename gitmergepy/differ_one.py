@@ -26,13 +26,14 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeCallArgValue,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
-                   ChangeTarget,
+                   ChangeValue,
                    RemoveAllDecoratorArgs,
                    RemoveCallArgs,
                    RemoveDecorators,
                    RemoveFunArgs,
                    RemoveImports,
-                   Replace)
+                   Replace,
+                   ReplaceTarget)
 
 
 def diff_redbaron(left, right, indent):
@@ -46,7 +47,7 @@ def diff_replace(left, right, indent):
 def diff_arg_node(left, right, indent):
     diff = []
     if id_from_el(left.target) != id_from_el(right.target):
-        diff += [ChangeTarget(right.target)]
+        diff += [ReplaceTarget(right.target)]
     changes = compute_diff(left.value, right.value, indent=indent+INDENT)
     diff += [ChangeArg(right, changes=changes)]
     return diff
@@ -245,6 +246,22 @@ def diff_class_node(left, right, indent):
     return diff
 
 
+def diff_if_else_block_node(left, right, indent):
+    diff = compute_diff_iterables(left.value, right.value, indent+INDENT)
+    if diff:
+        return [ChangeValue(right, changes=diff)]
+    return []
+
+
+def diff_if_node(left, right, indent):
+    diff = []
+    if left.test.value != right.test.value:
+        diff += [ChangeAttr('test', right.test)]
+
+    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -259,4 +276,6 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.CallNode: diff_call_node,
     nodes.AssignmentNode: diff_assignment_node,
     nodes.ClassNode: diff_class_node,
+    nodes.IfelseblockNode: diff_if_else_block_node,
+    nodes.IfNode: diff_if_node,
 }

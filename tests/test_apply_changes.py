@@ -651,3 +651,15 @@ fun(arg1, *args, **kwargs)
 fun(arg1, arg2, *args, **kwargs)
 """
     _test_apply_changes(base, current)
+
+
+def test_if():
+    base = """
+if cond:
+    pass
+"""
+    current = """
+if cond:
+    print('hello')
+"""
+    _test_apply_changes(base, current)

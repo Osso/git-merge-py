@@ -86,6 +86,15 @@ def short_display_el(el):
     if isinstance(el, nodes.DefNode):
         return "Fun(\"%s\")" % el.name
 
+    if isinstance(el, nodes.ClassNode):
+        return "Class(\"%s\")" % el.name
+
+    if isinstance(el, nodes.ClassNode):
+        return "Class(\"%s\")" % el.name
+
+    if isinstance(el, nodes.EndlNode):
+        return "new line"
+
     for line in el.dumps().splitlines():
         if line.strip():
             return line

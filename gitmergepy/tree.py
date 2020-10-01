@@ -61,6 +61,9 @@ class RemoveEls:
             short_context(self.context))
 
     def apply(self, tree):
+        # We modify this
+        to_remove = self.to_remove.copy()
+
         if self.context is LAST:
             logging.debug("    at the end")
             index = len(tree.node_list)
@@ -81,9 +84,17 @@ class RemoveEls:
                 index = tree.node_list.index(el) + 1
             else:
                 logging.debug("    context not found")
-                index = tree.node_list.index(self.to_remove[0])
+                for el in to_remove:
+                    try:
+                        index = tree.node_list.index(el)
+                    except ValueError:
+                        logging.debug("    already deleted %s",
+                                      short_display_el(el))
+                        to_remove.remove(el)
+                    else:
+                        break
 
-        for el_to_remove in self.to_remove:
+        for el_to_remove in to_remove:
             if same_el(tree.node_list[index], el_to_remove):
                 logging.debug("    removing el %r", short_display_el(el_to_remove))
                 del tree.node_list[index]

@@ -268,13 +268,3 @@ fun(sub(arg1, arg2=2))
 fun(sub(arg1=1, arg2=2))
 """
     _test_merge_changes(base, current, other, expected)
-
-
-# def test_tmp():
-#     with open('base.py') as f:
-#         base = f.read()
-#     with open('current.py') as f:
-#         current = f.read()
-#     other = base
-#     expected = current
-#     _test_merge_changes(base, current, other, expected)

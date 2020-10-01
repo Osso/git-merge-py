@@ -32,7 +32,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
     # We have encountered a function
     if isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
         # Function has not been moved
-        logging.debug("%s not moved fun", indent+INDENT)
+        logging.debug("%s not moved", indent+INDENT)
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeFun)
     else:
@@ -69,12 +69,13 @@ def diff_def_node(stack_left, el_right, indent, context_class):
 
 
 def diff_class_node(stack_left, el_right, indent, context_class):
-    logging.debug("%s changed class %r", indent+INDENT, type(el_right).__name__)
+    logging.debug("%s changed class %r", indent,
+                  short_display_el(el_right))
     diff = []
 
     if isinstance(stack_left[0], nodes.ClassNode) and stack_left[0].name == el_right.name:
         # Class has not been moved
-        logging.debug("%s not moved class %r", indent+INDENT, el_right.name)
+        logging.debug("%s not moved", indent+INDENT)
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeClass)
     else:

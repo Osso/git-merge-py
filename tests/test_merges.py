@@ -274,14 +274,16 @@ def test_already_removed_el():
     base = """
 # el 1
 # el 2
+# el 3
 """
     current = """
 # el 1
+# el 3
 """
     other = """
-# el 1
+# el 3
 """
     expected = """
-# el 1
+# el 3
 """
     _test_merge_changes(base, current, other, expected)

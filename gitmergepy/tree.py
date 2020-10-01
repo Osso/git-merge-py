@@ -86,6 +86,7 @@ class RemoveEls:
                 # el.next not working everywhere
                 # Workaround:
                 index = tree.node_list.index(el) + 1
+                index = skip_context_endl(tree, self.context, index)
             else:
                 logging.debug("    context not found")
                 for el in to_remove:
@@ -95,8 +96,12 @@ class RemoveEls:
                         logging.debug("    already deleted %s",
                                       short_display_el(el))
                         to_remove.remove(el)
+                        index = None
                     else:
                         break
+
+        if index is None:
+            return []
 
         for el_to_remove in to_remove:
             if same_el(tree.node_list[index], el_to_remove):

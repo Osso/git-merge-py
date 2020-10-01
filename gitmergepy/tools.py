@@ -223,14 +223,13 @@ def clear_coma_list(l):
     del l.node_list[1:-1]
 
 
-def skip_context_endl(tree, context):
+def skip_context_endl(tree, context, index=0):
     if len(tree.node_list) == 0:  # pylint: disable=len-as-condition
         return 0
 
-    index = 0
     while isinstance(tree.node_list[index], nodes.EndlNode):
         index += 1
-        if index >= len(tree.node_list) or len(context) == index:
+        if index >= len(tree.node_list):
             break
     return index
 

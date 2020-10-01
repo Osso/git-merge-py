@@ -16,8 +16,8 @@ def parse_file(filename):
 def main():
     logging.basicConfig(level=logging.DEBUG, format='%(message)s')
     logging.debug("args %r", sys.argv)
-    base_file = sys.argv[1]
-    current_file = sys.argv[2]
+    current_file = sys.argv[1]
+    base_file = sys.argv[2]
     other_file = sys.argv[3]
     merge_files(base_file, current_file, other_file)
 

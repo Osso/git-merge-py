@@ -123,8 +123,8 @@ def add_conflict(source_el, conflict):
                                                       parent=tree.node_list,
                                                       on_attribute=tree.on_attribute)
             _index = tree.node_list.index(source_el)
-            tree.node_list.insert(_index, endl)
             tree.node_list.insert(_index, text_el)
+            tree.node_list.insert(_index, endl)
         else:
             text_el = source_el._convert_input_to_node_object(text,
                                                               parent=source_el.node_list,
@@ -132,8 +132,8 @@ def add_conflict(source_el, conflict):
             endl = source_el._convert_input_to_node_object("\n",
                                                            parent=source_el.node_list,
                                                            on_attribute=source_el.on_attribute)
-            source_el.node_list.insert(index, endl)
             source_el.node_list.insert(index, text_el)
+            source_el.node_list.insert(index, endl)
             index += 2
 
     before_text = "<<<<<<<<<<"

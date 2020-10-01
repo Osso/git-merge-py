@@ -302,8 +302,13 @@ class ChangeFun(ChangeEl):
             el = find_func(tree, tmp_el)
 
         if el:
-            assert isinstance(el.node_list[-1], nodes.EndlNode)
-            endl = el.node_list[-1]
+            # print(el)
+            # print(el.node_list)
+            # assert isinstance(el.node_list[0], nodes.EndlNode)
+            # endl = el.node_list[0]
+            endl = el._convert_input_to_node_object("\n",
+                parent=el.node_list, on_attribute=el.on_attribute)
+
             conflicts = apply_changes(el, self.changes)
             # Make sure we keep a newline at the end of a function
             # If remove empty lines after a function and tree has no

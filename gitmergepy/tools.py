@@ -27,16 +27,12 @@ def insert_coma_list(l, position, to_add, new_line=False):
 
     def copy_sep():
         """Copy existing element to keep indentation"""
-        if new_line:
-            middle_separator = l.middle_separator
-        else:
-            middle_separator = l._get_middle_separator()
+        middle_separator = l._get_middle_separator()
         separator = with_parent(l, middle_separator)
-        seps = [separator]
         if new_line:
+            separator.second_formatting.insert(0, new_line.copy())
             separator.second_formatting.pop()
-            seps.append(new_line)
-        return nodes.NodeList(seps)
+        return nodes.NodeList([separator])
 
     index = len(l.node_list) if position is LAST else 2 * position - 1
     if position == 0:
@@ -55,10 +51,10 @@ def insert_coma_list(l, position, to_add, new_line=False):
     l.data.insert(data_index, [new_el, []])
 
     if not is_empty and position == 0:
-        l.node_list.insert(index, sep)
+        l.node_list.insert(index, sep[0])
     l.node_list.insert(index, new_el)
     if not is_empty and (position is LAST or position > 0):
-        l.node_list.insert(index, sep)
+        l.node_list.insert(index, sep[0])
 
 
 def pop_coma_list(l):

@@ -113,7 +113,7 @@ def short_context(context):
         return "last"
     if context[-1] is None:
         return "first +%d" % (len(context) - 1)
-    return context[-1].dumps().splitlines()[-1]
+    return short_display_el(context[-1])
 
 
 def diff_list(left, right, key_getter, value_getter=None):

@@ -116,15 +116,19 @@ def add_conflict(source_el, conflict):
 
         if conflict.insert_before:
             tree = source_el.parent
+            _index = tree.node_list.index(source_el)
+
             text_el = tree._convert_input_to_node_object(text,
                                                          parent=tree.node_list,
                                                          on_attribute=tree.on_attribute)
-            endl = tree._convert_input_to_node_object("\n",
-                                                      parent=tree.node_list,
-                                                      on_attribute=tree.on_attribute)
-            _index = tree.node_list.index(source_el)
-            # if isinstance(tree.node_list[_index - 1], nodes.EndlNode):
-            #     _index -= 1
+            # Copy indentation
+            if _index > 0 and isinstance(tree.node_list[_index-1], nodes.EndlNode):
+                endl = tree.node_list[_index-1].copy()
+            else:
+                endl = tree._convert_input_to_node_object("\n",
+                                                          parent=tree.node_list,
+                                                          on_attribute=tree.on_attribute)
+                endl.indent += source_el.indentation
             tree.node_list.insert(_index, endl)
             tree.node_list.insert(_index, text_el)
         else:
@@ -134,6 +138,7 @@ def add_conflict(source_el, conflict):
             endl = source_el._convert_input_to_node_object("\n",
                                                            parent=source_el.node_list,
                                                            on_attribute=source_el.on_attribute)
+            endl.indent += source_el.indentation
             source_el.node_list.insert(index, endl)
             source_el.node_list.insert(index, text_el)
             index += 2

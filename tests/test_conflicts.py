@@ -94,3 +94,24 @@ with fun() as out:
     print('world')
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_change_call_args_indented():
+    base = """
+    fun(arg1)
+"""
+    current = """
+    fun(arg1, arg2)
+"""
+    other = """
+    fun(new_arg1)
+"""
+    expected = """
+    # <<<<<<<<<<
+    # Reason Argument context has changed
+    # <AddCallArg arg='arg2' context='arg1'>
+    # fun(arg1, arg2)
+    # >>>>>>>>>>
+    fun(new_arg1)
+"""
+    _test_merge_changes(base, current, other, expected)

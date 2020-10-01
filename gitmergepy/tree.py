@@ -169,7 +169,8 @@ class AddEls:
         else:
             el = find_context(tree, self.context[-1])
             if not el:
-                return [Conflict(self.to_add, self)]
+                return [Conflict(self.to_add, self,
+                                 reason="context not found")]
             # Workaround redbaron insert_after bug
             index = tree.node_list.index(el) + len(self.context)
             where = "after %r" % short_display_el(el)
@@ -251,6 +252,8 @@ class ChangeEl(BaseEl):
 
 
 class ChangeValue(ChangeEl):
+    write_conflicts = False
+
     def apply(self, tree):
         return apply_changes(tree.value, self.changes)
 

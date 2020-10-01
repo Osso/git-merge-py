@@ -71,7 +71,11 @@ class RemoveEls:
                 index -= 1
             while isinstance(tree.node_list[index-1], nodes.EndlNode) and not isinstance(self.to_remove[0], nodes.EndlNode):
                 index -= 1
-            index -= len(self.to_remove)
+            to_remove = self.to_remove.copy()
+            if not isinstance(self.to_remove[0], nodes.EndlNode):
+                while isinstance(to_remove[-1], nodes.EndlNode):
+                    to_remove.pop()
+            index -= len(to_remove)
         elif self.context[-1] is None:
             logging.debug("    at beginning")
             index = skip_context_endl(tree, self.context)

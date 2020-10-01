@@ -268,3 +268,20 @@ fun(sub(arg1, arg2=2))
 fun(sub(arg1=1, arg2=2))
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_already_removed_el():
+    base = """
+# el 1
+# el 2
+"""
+    current = """
+# el 1
+"""
+    other = """
+# el 1
+"""
+    expected = """
+# el 1
+"""
+    _test_merge_changes(base, current, other, expected)

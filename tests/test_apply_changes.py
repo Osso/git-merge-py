@@ -678,3 +678,24 @@ class A:
         pass
 """
     _test_apply_changes(base, current)
+
+
+def test_with_keeps_indentation():
+    base = """
+    def fun1():
+        with f:
+            if cond:
+                pass
+
+    def fun2():
+        pass
+"""
+    current = """
+    def fun1():
+        if cond:
+            pass
+
+    def fun2():
+        pass
+"""
+    _test_apply_changes(base, current)

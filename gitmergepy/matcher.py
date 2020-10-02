@@ -24,6 +24,8 @@ def guess_if_same_el(left, right):
         return True
     if isinstance(left, nodes.AssignmentNode):
         return left.name.value == right.name.value
+    if isinstance(left, nodes.EndlNode):
+        return True
     return False
 
 

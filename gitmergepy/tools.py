@@ -255,3 +255,40 @@ def with_parent(tree, el):
     el.parent = tree.node_list
     el.on_attribute = tree.on_attribute
     return el
+
+
+def decrease_indentation(tree):
+    """Workaround redbaron de-indent bug"""
+    def _shift(el):
+        el.indent = el.indent[:-4]
+
+    if isinstance(tree, nodes.IfelseblockNode):
+        decrease_indentation(tree.value)
+        return
+    if not hasattr(tree, 'node_list'):
+        return
+
+    indentation = None
+    for el in tree.node_list:
+        print('el', short_display_el(el))
+        if not isinstance(el, nodes.EndlNode):
+            decrease_indentation(el)
+        else:
+            if indentation is None:
+                indentation = el.indent
+            if el.indent < indentation:
+                break
+            _shift(el)
+
+
+def find_indentation(el):
+    tree = el.parent
+    if tree is None:
+        return ""
+
+    index = tree.node_list.index(el)
+    if index > 0:
+        endl = tree.node_list[index-1]
+        if isinstance(endl, nodes.EndlNode):
+            return endl.indent
+    return ""

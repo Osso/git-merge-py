@@ -77,7 +77,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 isinstance(el_right, nodes.WithNode):
             logging.debug("%s with node removal %r", indent+INDENT, short_display_el(stack_left[0]))
             with_node = stack_left.pop(0)
-            with_node.decrease_indentation(4)
             stack_left = list(with_node) + stack_left
             diff += [RemoveWith(with_node, context=gather_context(el_right))]
 

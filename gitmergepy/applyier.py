@@ -1,13 +1,11 @@
-import logging
-
 from redbaron import (RedBaron,
                       nodes)
 
 from .matcher import find_context
 from .tools import (LAST,
                     append_coma_list,
+                    find_indentation,
                     insert_coma_list,
-                    short_display_el,
                     skip_context_endl)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
@@ -93,7 +91,28 @@ def apply_changes_safe(tree, changes):
     conflicts = apply_changes(tree, changes)
     tree.node_list.remove(PLACEHOLDER)
     remove_trailing_empty_lines(tree)
+    add_final_endl(tree)
     return conflicts
+
+
+def check_for_endl(tree):
+    last_el = tree.node_list[-1]
+    if isinstance(last_el, nodes.EndlNode):
+        return True
+    if isinstance(last_el, nodes.IfelseblockNode):
+        return check_for_endl(last_el.value)
+    if isinstance(last_el, (nodes.DefNode, nodes.WithNode, nodes.ClassNode,
+                            nodes.IfNode)):
+        return check_for_endl(last_el)
+    return False
+
+
+def add_final_endl(tree):
+    endl = tree._convert_input_to_node_object("\n",
+        parent=None, on_attribute=None)
+
+    if not check_for_endl(tree):
+        tree.node_list.append(endl)
 
 
 def remove_trailing_empty_lines(tree):
@@ -128,7 +147,7 @@ def add_conflict(source_el, conflict):
                 endl = tree._convert_input_to_node_object("\n",
                                                           parent=tree.node_list,
                                                           on_attribute=tree.on_attribute)
-                endl.indent += source_el.indentation
+                endl.indent = find_indentation(source_el)
             tree.node_list.insert(_index, endl)
             tree.node_list.insert(_index, text_el)
         else:
@@ -138,7 +157,7 @@ def add_conflict(source_el, conflict):
             endl = source_el._convert_input_to_node_object("\n",
                                                            parent=source_el.node_list,
                                                            on_attribute=source_el.on_attribute)
-            endl.indent += source_el.indentation
+            endl.indent = find_indentation(source_el)
             source_el.node_list.insert(index, endl)
             source_el.node_list.insert(index, text_el)
             index += 2

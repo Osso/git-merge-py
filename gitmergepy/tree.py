@@ -17,6 +17,7 @@ from .tools import (LAST,
                     append_coma_list,
                     apply_diff_to_list,
                     as_from_contexts,
+                    decrease_indentation,
                     get_call_els,
                     id_from_el,
                     iter_coma_list,
@@ -325,16 +326,16 @@ class ChangeFun(ChangeEl):
             el = find_func(tree, tmp_el)
 
         if el:
-            endl = el._convert_input_to_node_object("\n",
-                parent=el.node_list, on_attribute=el.on_attribute)
+            # endl = el._convert_input_to_node_object("\n",
+            #     parent=el.node_list, on_attribute=el.on_attribute)
 
             conflicts = apply_changes(el, self.changes)
             # Make sure we keep a newline at the end of a function
             # If remove empty lines after a function and tree has no
             # newlines after the function already then we would end up
             # without any newline
-            if not isinstance(el.node_list[-1], nodes.EndlNode):
-                el.node_list.append(endl)
+            # if not isinstance(el.node_list[-1], nodes.EndlNode):
+            #     el.node_list.append(endl)
 
             add_conflicts(el, conflicts)
 
@@ -552,8 +553,8 @@ class RemoveWith(ElWithContext):
                                         insert_before=False))
             return []
 
-        with_node.decrease_indentation(4)
-        index = with_node.parent.index(with_node) + 1
+        decrease_indentation(with_node)
+        index = with_node.parent.node_list.index(with_node) + 1
         for el in reversed(with_node.node_list[1:]):
             with_node.parent.node_list.insert(index, el)
         tree.node_list.remove(with_node)

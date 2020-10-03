@@ -284,11 +284,29 @@ def decrease_indentation(tree):
 def find_indentation(el):
     tree = el.parent
     if tree is None:
-        return ""
+        return None
 
     index = tree.node_list.index(el)
     if index > 0:
-        endl = tree.node_list[index-1]
-        if isinstance(endl, nodes.EndlNode):
-            return endl.indent
-    return ""
+        node = tree.node_list[index-1]
+        endl = find_endl(node)
+        return endl
+    return None
+
+
+def find_endl(tree):
+    if isinstance(tree, nodes.EndlNode):
+        return tree
+    if isinstance(tree, nodes.IfelseblockNode):
+        return find_endl(tree.value)
+    if isinstance(tree, (nodes.DefNode, nodes.WithNode, nodes.ClassNode,
+                         nodes.IfNode, RedBaron, nodes.NodeList)):
+        last_el = tree.node_list[-1]
+        return find_endl(last_el)
+
+    return None
+
+
+def make_endl(tree):
+    return tree._convert_input_to_node_object("\n",
+        parent=tree.node_list, on_attribute=tree.on_attribute)

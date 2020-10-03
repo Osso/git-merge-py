@@ -4,8 +4,10 @@ from redbaron import (RedBaron,
 from .matcher import find_context
 from .tools import (LAST,
                     append_coma_list,
+                    find_endl,
                     find_indentation,
                     insert_coma_list,
+                    make_endl,
                     skip_context_endl)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
@@ -95,23 +97,10 @@ def apply_changes_safe(tree, changes):
     return conflicts
 
 
-def check_for_endl(tree):
-    last_el = tree.node_list[-1]
-    if isinstance(last_el, nodes.EndlNode):
-        return True
-    if isinstance(last_el, nodes.IfelseblockNode):
-        return check_for_endl(last_el.value)
-    if isinstance(last_el, (nodes.DefNode, nodes.WithNode, nodes.ClassNode,
-                            nodes.IfNode)):
-        return check_for_endl(last_el)
-    return False
-
-
 def add_final_endl(tree):
-    endl = tree._convert_input_to_node_object("\n",
-        parent=None, on_attribute=None)
+    endl = make_endl(tree)
 
-    if not check_for_endl(tree):
+    if find_endl(tree) is None:
         tree.node_list.append(endl)
 
 
@@ -128,43 +117,37 @@ def add_conflicts(source_el, conflicts):
 
 
 def add_conflict(source_el, conflict):
-    index = 0
+    if isinstance(source_el.parent, nodes.IfelseblockNode):
+        source_el = source_el.parent
 
-    def _insert(text):
+    if conflict.insert_before and source_el.parent is not None:
+        tree = source_el.parent
+        index = tree.node_list.index(source_el)
+    else:
+        tree = source_el
+        index = 0
+
+    # Copy indentation
+    endl = find_indentation(source_el)
+    if endl is None:
+        endl = make_endl(tree)
+        skip_first_endl = (tree.parent is None and index == 0)
+    else:
+        skip_first_endl = True
+
+    def _insert(text, skip_indentation=False):
         nonlocal index
-
-        if conflict.insert_before:
-            tree = source_el.parent
-            _index = tree.node_list.index(source_el)
-
-            text_el = tree._convert_input_to_node_object(text,
-                                                         parent=tree.node_list,
-                                                         on_attribute=tree.on_attribute)
-            # Copy indentation
-            if _index > 0 and isinstance(tree.node_list[_index-1], nodes.EndlNode):
-                endl = tree.node_list[_index-1].copy()
-            else:
-                endl = tree._convert_input_to_node_object("\n",
-                                                          parent=tree.node_list,
-                                                          on_attribute=tree.on_attribute)
-                endl.indent = find_indentation(source_el)
-            tree.node_list.insert(_index, endl)
-            tree.node_list.insert(_index, text_el)
-        else:
-            text_el = source_el._convert_input_to_node_object(text,
-                                                              parent=source_el.node_list,
-                                                              on_attribute=source_el.on_attribute)
-            endl = source_el._convert_input_to_node_object("\n",
-                                                           parent=source_el.node_list,
-                                                           on_attribute=source_el.on_attribute)
-            endl.indent = find_indentation(source_el)
-            source_el.node_list.insert(index, endl)
-            source_el.node_list.insert(index, text_el)
-            index += 2
+        text_el = tree._convert_input_to_node_object(text,
+            parent=tree.node_list, on_attribute=tree.on_attribute)
+        if not skip_indentation:
+            tree.node_list.insert(index, endl.copy())
+            index += 1
+        tree.node_list.insert(index, text_el)
+        index += 1
 
     before_text = "<<<<<<<<<<"
     after_text = ">>>>>>>>>>"
-    _insert("# "+before_text)
+    _insert("# "+before_text, skip_indentation=skip_first_endl)
     if conflict.reason:
         _insert("# Reason %s" % conflict.reason)
     if conflict.change:
@@ -175,6 +158,8 @@ def add_conflict(source_el, conflict):
                 line = "# %s" % line
                 _insert(line.strip())
     _insert("# "+after_text)
+    # if skip_first_endl:
+    tree.node_list.insert(index, endl.copy())
     # Remove # in front
     # for text in (before_text, after_text):
     #     for e in el.parent.find_all('CommentNode', value="# "+text):

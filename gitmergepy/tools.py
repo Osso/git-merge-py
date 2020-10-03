@@ -267,6 +267,21 @@ def decrease_indentation(tree):
     if isinstance(tree, nodes.IfelseblockNode):
         decrease_indentation(tree.value)
         return
+    if isinstance(tree, nodes.AssignmentNode):
+        decrease_indentation(tree.value)
+        return
+    if isinstance(tree, nodes.AtomtrailersNode):
+        for call_el in get_call_els(tree):
+            # import pdb; pdb.set_trace()
+            decrease_indentation(call_el)
+        return
+    if isinstance(tree, nodes.CallNode):
+        for el in tree.node_list:
+            if isinstance(el, nodes.CommaNode):
+                for _el in el.second_formatting:
+                    if isinstance(_el, nodes.EndlNode):
+                        _shift(_el)
+        return
     if not hasattr(tree, 'node_list'):
         return
 

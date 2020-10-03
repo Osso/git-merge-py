@@ -701,20 +701,15 @@ def test_with_keeps_indentation():
     _test_apply_changes(base, current)
 
 
-def test_addd_method_param():
+def test_with_remove_multiline_args():
     base = """
-    def fun1():
-        if cond:
-            call()
-            a = klass.method(arg1=1)
+with f:
+    a = klass.method(arg1=1,
+                     arg2=2)
 """
     current = """
-    def fun1():
-        if cond:
-            call()
-            a = klass.method(arg1=1,
-                             arg2=2,
-                             arg3=3)
+a = klass.method(arg1=1,
+                 arg2=2)
 """
     _test_apply_changes(base, current)
 

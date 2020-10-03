@@ -3,6 +3,8 @@ import types
 from redbaron import (RedBaron,
                       nodes)
 
+import baron
+
 FIRST = object()
 LAST = object()
 INDENT = "."
@@ -270,7 +272,6 @@ def decrease_indentation(tree):
 
     indentation = None
     for el in tree.node_list:
-        print('el', short_display_el(el))
         if not isinstance(el, nodes.EndlNode):
             decrease_indentation(el)
         else:
@@ -310,3 +311,8 @@ def find_endl(tree):
 def make_endl(tree):
     return tree._convert_input_to_node_object("\n",
         parent=tree.node_list, on_attribute=tree.on_attribute)
+
+
+def make_node(text, parent, on_attribute):
+    return nodes.Node.from_fst(baron.parse(text)[0],
+                               parent=parent, on_attribute=on_attribute)

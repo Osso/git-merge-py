@@ -699,3 +699,37 @@ def test_with_keeps_indentation():
         pass
 """
     _test_apply_changes(base, current)
+
+
+def test_addd_method_param():
+    base = """
+    def fun1():
+        if cond:
+            call()
+            a = klass.method(arg1=1)
+"""
+    current = """
+    def fun1():
+        if cond:
+            call()
+            a = klass.method(arg1=1,
+                             arg2=2,
+                             arg3=3)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_if_match_cond():
+    base = """
+    if cond1:
+        pass
+    if cond2:
+        pass
+"""
+    current = """
+    if cond1:
+        pass
+    if cond2:
+        print('hello')
+"""
+    _test_apply_changes(base, current)

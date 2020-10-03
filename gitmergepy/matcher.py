@@ -82,6 +82,21 @@ def match_el_without_context(el, target_el, context, previous_el):
     return False
 
 
+def match_el_with_if_condition(el, target_el, context, previous_el):
+    if not isinstance(el, nodes.IfelseblockNode):
+        return False
+
+    el_if = el.value[0]
+    assert isinstance(el_if, nodes.IfNode)
+    target_el_if = target_el.value[0]
+    assert isinstance(target_el_if, nodes.IfNode)
+
+    if el_if.test.dumps() == target_el_if.test.dumps():
+        return True
+
+    return False
+
+
 def match_el_guess(el, target_el, context, previous_el):
     return guess_if_same_el(el, target_el)
 
@@ -118,6 +133,11 @@ def find_el(tree, target_el, context):
     el = _find_el(match_el_without_context)
     if el:
         return el
+
+    if isinstance(target_el, nodes.IfelseblockNode):
+        el = _find_el(match_el_with_if_condition)
+        if el:
+            return el
 
     el = _find_el(match_el_guess)
     if el:

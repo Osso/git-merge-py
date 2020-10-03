@@ -8,6 +8,7 @@ from .tools import (LAST,
                     find_indentation,
                     insert_coma_list,
                     make_endl,
+                    make_node,
                     skip_context_endl)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
@@ -137,8 +138,8 @@ def add_conflict(source_el, conflict):
 
     def _insert(text, skip_indentation=False):
         nonlocal index
-        text_el = tree._convert_input_to_node_object(text,
-            parent=tree.node_list, on_attribute=tree.on_attribute)
+        text_el = make_node(text, parent=tree.node_list,
+                            on_attribute=tree.on_attribute)
         if not skip_indentation:
             tree.node_list.insert(index, endl.copy())
             index += 1

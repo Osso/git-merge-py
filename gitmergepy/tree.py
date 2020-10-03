@@ -242,8 +242,11 @@ class ChangeEl(BaseEl):
             self.changes, short_context(self.context))
 
     def apply(self, tree):
+        logging.debug("changing %s at %s", short_display_el(self.el),
+                      short_context(self.context))
         el = find_el(tree, self.el, self.context)
         if el:
+            logging.debug("    found")
             conflicts = apply_changes(el, self.changes)
             if self.write_conflicts:
                 add_conflicts(el, conflicts)
@@ -319,6 +322,7 @@ class ChangeFun(ChangeEl):
             short_context(self.context), self.old_name)
 
     def apply(self, tree):
+        logging.debug("changing fun %r", short_display_el(self.el))
         el = find_func(tree, self.el)
         if not el and self.old_name:
             tmp_el = self.el.copy()
@@ -326,6 +330,7 @@ class ChangeFun(ChangeEl):
             el = find_func(tree, tmp_el)
 
         if el:
+            logging.debug("    found")
             # endl = el._convert_input_to_node_object("\n",
             #     parent=el.node_list, on_attribute=el.on_attribute)
 
@@ -360,11 +365,11 @@ class ChangeClass(ChangeEl):
             el = find_class(tree, tmp_el)
 
         if el:
-            logging.debug("    changing class %r", short_display_el(el))
+            logging.debug("changing class %r", short_display_el(el))
             conflicts = apply_changes(el, self.changes)
             add_conflicts(el, conflicts)
         else:
-            logging.debug("    class not found %r", short_display_el(self.el))
+            logging.debug("    not found %r", short_display_el(self.el))
         return []
 
 

@@ -173,8 +173,10 @@ def diff_call_node(left, right, indent):
     diff = []
     to_add, to_remove = diff_list(left, right,
                                   key_getter=id_from_el)
-    logging.debug('%s call new args %r old args %r',
-                  indent, to_add, to_remove)
+    for arg in to_add:
+        logging.debug('%s call new arg %r', indent, short_display_el(arg))
+    for arg in to_remove:
+        logging.debug('%s call old arg %r', indent, short_display_el(arg))
     for arg in to_add:
         diff += [AddCallArg(arg, context=gather_context(arg),
                             new_line=arg.previous.endl if arg.previous else False)]
@@ -255,8 +257,8 @@ def diff_if_else_block_node(left, right, indent):
 
 def diff_if_node(left, right, indent):
     diff = []
-    if left.test.value != right.test.value:
-        diff += [ChangeAttr('test', right.test)]
+    if left.test.dumps() != right.test.dumps():
+        diff += [ChangeAttr('test', right.test.copy())]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
     return diff

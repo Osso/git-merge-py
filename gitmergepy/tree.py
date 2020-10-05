@@ -71,7 +71,8 @@ class RemoveEls:
             index = len(tree.node_list)
             if same_el(tree.node_list[-1], PLACEHOLDER):
                 index -= 1
-            while isinstance(tree.node_list[index-1], nodes.EndlNode) and not isinstance(self.to_remove[0], nodes.EndlNode):
+            while isinstance(tree.node_list[index-1], nodes.EndlNode) and \
+                    not isinstance(self.to_remove[0], nodes.EndlNode):
                 index -= 1
             tmp_to_remove = self.to_remove.copy()
             if not isinstance(self.to_remove[0], nodes.EndlNode):

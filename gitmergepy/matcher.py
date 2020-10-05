@@ -1,6 +1,7 @@
 from redbaron import nodes
 
-from .tools import (get_name_els_from_call,
+from .tools import (LAST,
+                    get_name_els_from_call,
                     name_els_to_string,
                     skip_context_endl)
 
@@ -60,7 +61,7 @@ def match_el_with_context(el, target_el, context, previous_el):
 
     if el_dumps == target_dumps:
         if previous_el is None:
-            return True
+            return False
         previous_el_dumps = previous_el.dumps()
         context_dumps = context[-1].dumps()
         if previous_el_dumps == context_dumps:
@@ -102,6 +103,8 @@ def match_el_guess(el, target_el, context, previous_el):
 
 
 def find_el(tree, target_el, context):
+    assert context is not LAST
+
     def _find_el(func):
         previous_el = None
         for el in tree:

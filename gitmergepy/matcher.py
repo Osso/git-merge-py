@@ -124,7 +124,10 @@ def find_el(tree, target_el, context):
             return el
 
     if context[-1] is None:
-        index = skip_context_endl(tree, context)
+        if isinstance(target_el, nodes.EndlNode):
+            index = 0
+        else:
+            index = skip_context_endl(tree, context)
         el = tree.node_list[index]
         if same_el(target_el, el):
             return el

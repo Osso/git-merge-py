@@ -26,6 +26,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeCallArgValue,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
+                   ChangeIndentation,
                    ChangeValue,
                    RemoveAllDecoratorArgs,
                    RemoveCallArgs,
@@ -264,6 +265,14 @@ def diff_if_node(left, right, indent):
     return diff
 
 
+def diff_endl_node(left, right, indent):
+    diff = []
+    if left.indent != right.indent:
+        diff += [ChangeIndentation(right.indent)]
+
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -280,4 +289,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.ClassNode: diff_class_node,
     nodes.IfelseblockNode: diff_if_else_block_node,
     nodes.IfNode: diff_if_node,
+    nodes.EndlNode: diff_endl_node,
 }

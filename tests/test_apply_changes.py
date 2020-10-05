@@ -680,7 +680,7 @@ class A:
     _test_apply_changes(base, current)
 
 
-def test_with_keeps_indentation():
+def test_with_removal_keeps_indentation():
     base = """
     def fun1():
         with f:
@@ -725,6 +725,16 @@ def test_if_match_cond():
     if cond1:
         pass
     if cond2:
+        print('hello')
+"""
+    _test_apply_changes(base, current)
+
+
+def test_change_indentation():
+    base = """
+    print('hello')
+"""
+    current = """
         print('hello')
 """
     _test_apply_changes(base, current)

@@ -564,3 +564,18 @@ class RemoveWith(ElWithContext):
             with_node.parent.node_list.insert(index, el)
         tree.node_list.remove(with_node)
         return []
+
+
+class ChangeIndentation:
+    def __init__(self, new_indentation):
+        self.new_indentation = new_indentation
+
+    def apply(self, tree):
+        logging.debug('.indentation %d to %d' % (len(tree.indent),
+                                                 len(self.new_indentation)))
+        tree.indent = self.new_indentation
+        return []
+
+    def __repr__(self):
+        return "<%s new_indentation=\"%s\">" % (self.__class__.__name__,
+                                                len(self.new_indentation))

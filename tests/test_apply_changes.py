@@ -13,10 +13,11 @@ def _test_apply_changes(base, current):
 
     changes = compute_diff(base_ast, current_ast)
     logging.debug("applying changes")
-    conflicts = apply_changes_safe(base_ast, changes)
+    base_ast_patched = RedBaron(base)
+    conflicts = apply_changes_safe(base_ast_patched, changes)
     logging.debug("======= new_ast =======\n%s", base_ast.dumps())
     assert not conflicts
-    assert base_ast.dumps() == current_ast.dumps()
+    assert base_ast_patched.dumps() == current_ast.dumps()
 
 
 def test_change_first_line():

@@ -23,97 +23,35 @@ def _test_merge_changes(base, current, other, expected):
     assert other_ast.dumps() == expected
 
 
-def test_change_call_args():
-    base = """
-fun(arg1)
-"""
-    current = """
-fun(arg1, arg2)
-"""
-    other = """
-fun(new_arg1)
-"""
-    expected = """
-# <<<<<<<<<<
-# Reason Argument context has changed
-# <AddCallArg arg='arg2' context='arg1|, '>
-# fun(arg1, arg2)
-# >>>>>>>>>>
-fun(new_arg1)
-"""
-    _test_merge_changes(base, current, other, expected)
-
-
-def test_change_fun():
-    base = """
-def fun(arg1):
-    pass
-"""
-    current = """
-def fun(arg1, arg2):
-    pass
-"""
-    other = """
-def fun(new_arg1):
-    pass
-"""
-    expected = """
-# <<<<<<<<<<
-# Reason Argument context has changed
-# <AddFunArg arg='arg2' context='arg1|, '>
-# def fun(arg1, arg2):
-# >>>>>>>>>>
-def fun(new_arg1):
-    pass
-"""
-    _test_merge_changes(base, current, other, expected)
-
-
 def test_change_with():
     base = """# stuff
 with fun() as out:
     call('hello')
+# more stuff
 """
     current = """# stuff
 call('hello')
+# more stuff
 """
     other = """# changed stuff
 with fun() as out:
     call('hello')
 with fun() as out:
     call('world')
+# more stuff
 """
     expected = """# <<<<<<<<<<
 # Reason Multiple with nodes found
 # <RemoveWith el="with fun() as out:" context='# stuff|new line indent=0'>
 # with fun() as out:
 #     call('hello')
+# # more stuff
 # >>>>>>>>>>
 # changed stuff
 with fun() as out:
     call('hello')
 with fun() as out:
     call('world')
-"""
-    _test_merge_changes(base, current, other, expected)
-
-
-def test_change_call_args_indented():
-    base = """
-    fun(arg1)
-"""
-    current = """
-    fun(arg1, arg2)
-"""
-    other = """
-    fun(new_arg1)
-"""
-    expected = """
-    # <<<<<<<<<<
-    # Reason Argument context has changed
-    # <AddCallArg arg='arg2' context='arg1|, '>
-    # fun(arg1, arg2)
-    # >>>>>>>>>>
-    fun(new_arg1)
+# more stuff
 """
     _test_merge_changes(base, current, other, expected)

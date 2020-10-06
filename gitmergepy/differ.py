@@ -2,10 +2,10 @@ import logging
 
 from redbaron import nodes
 
-from .context import gather_context
+from .context import (AfterContext,
+                      gather_context)
 from .matcher import guess_if_same_el
 from .tools import (INDENT,
-                    LAST,
                     decrease_indentation,
                     same_el,
                     short_context,
@@ -100,7 +100,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                           short_display_el(el_right))
             stack_left.pop(0)
         # Look forward a few elements to check if we have a match
-        elif any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
+        elif not isinstance(el_right, nodes.EndlNode) and \
+               any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
             for _ in range(10):
@@ -132,7 +133,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         for el in stack_left:
             logging.debug("%s removing leftover %r", indent+INDENT,
                           short_display_el(el))
-        diff += [RemoveEls(stack_left, context=LAST)]
+        diff += [RemoveEls(stack_left, context=AfterContext([None]))]
 
     logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff

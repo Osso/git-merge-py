@@ -13,6 +13,9 @@ WHITESPACE_NODES = (nodes.EndlNode, )
 
 def iter_coma_list(l):
     trimmed_list = l.node_list
+    if not trimmed_list:
+        return
+
     if isinstance(trimmed_list[0], nodes.LeftParenthesisNode):
         trimmed_list = trimmed_list[1:]
     if isinstance(trimmed_list[-1], nodes.RightParenthesisNode):
@@ -77,7 +80,7 @@ def remove_coma_list(l, el):
     del l.node_list[index]
     if index > 0:
         del l.node_list[index - 1]
-    if index == 0:
+    if index == 0 and l.node_list:
         del l.node_list[index]
 
 
@@ -88,6 +91,9 @@ def sort_imports(targets):
 
 
 def short_display_el(el):
+    if el is None:
+        return "None"
+
     if isinstance(el, nodes.DefNode):
         return "Fun(\"%s\")" % el.name
 
@@ -119,12 +125,12 @@ def short_context(context):
 
     from .context import AfterContext
     if isinstance(context, AfterContext):
-        if context[-1] is None:
-            return "last -%d" % (len(context) - 1)
+        # if context[-1] is None:
+        #     return "last -%d" % (len(context) - 1)
         return 'after ' + '|'.join(short_display_el(el) for el in context)
 
-    if context[-1] is None:
-        return "first +%d" % (len(context) - 1)
+    # if context[-1] is None:
+    #     return "first +%d" % (len(context) - 1)
     return '|'.join(short_display_el(el) for el in reversed(context))
 
 
@@ -233,19 +239,20 @@ def make_indented(coma_list, handle_brackets=False):
 
     # Indentation
     def _get_middle_separator(self):
-        first_el = self[0]
+        first_el = self.node_list[0]
         if isinstance(first_el, nodes.LeftParenthesisNode):
-            first_el = self[1]
+            first_el = self.node_list[1]
 
         column = first_el.absolute_bounding_box.top_left.column - 1
 
-        return nodes.CommaNode({
+        node = nodes.CommaNode({
             "type": "comma",
             "first_formatting": [],
             "second_formatting": [{
                 "type": "endl",
                 "indent": column * " ",
                 "formatting": [], "value": "\n"}]})
+        return with_parent(self, node)
 
     coma_list._get_middle_separator = types.MethodType(_get_middle_separator,
                                                        coma_list)

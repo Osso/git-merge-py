@@ -1,12 +1,8 @@
 from redbaron import nodes
 
-from .context import (AfterContext,
-                      match_after_context,
-                      match_before_context)
 from .tools import (get_name_els_from_call,
                     name_els_to_string,
-                    same_el,
-                    skip_context_endl)
+                    same_el)
 
 
 def guess_if_same_el(left, right):
@@ -98,14 +94,8 @@ def match_el_guess(left, right, context):
     return False
 
 
-def find_el(tree, target_el, context):  # pylint: disable=too-many-return-statements
-    def _find_el(func):
-        for el in tree.node_list:
-            if func(el, target_el, context):
-                return el
-        return None
-
-    # Strong matches: match with an id
+def find_el_strong(tree, target_el, context):
+    """Strong matches: match with an id"""
     if isinstance(target_el, nodes.DefNode):
         el = find_func(tree, target_el)
         if el:
@@ -125,40 +115,29 @@ def find_el(tree, target_el, context):  # pylint: disable=too-many-return-statem
         el = tree.node_list[-1]
         return el if isinstance(el, nodes.ElseNode) else None
 
-    # Match with exact element + context
-    if isinstance(context, AfterContext):
-        if context[-1] is None:
-            index = len(tree.node_list) - len(context)
-            if match_after_context(tree, index, context) and \
-                    same_el(tree.node_list[index], target_el):
-                return tree.node_list[index]
-        else:
-            el = find_el_with_context(tree, target_el, context)
-            if el:
-                return el
-    else:
-        if context[-1] is None:
-            if isinstance(target_el, nodes.EndlNode):
-                index = len(context) - 1
-                if match_before_context(tree, index, context) and \
-                        same_el(tree.node_list[index], target_el):
-                    return tree.node_list[index]
-            else:
-                # We can have a less strict match
-                index = skip_context_endl(tree, context)
-                el = tree.node_list[index]
-                if same_el(target_el, el):
-                    return el
-        else:
-            el = find_el_with_context(tree, target_el, context)
-            if el:
-                return el
+    return None
+
+
+def find_el(tree, target_el, context):
+    el = find_el_strong(tree, target_el, context)
+    if el is not None:
+        return el
+
+    el = find_el_exact_match_with_context(tree, target_el, context)
+    if el is not None:
+        return el
 
     # Require context for indentation
     if isinstance(target_el, nodes.EndlNode):
         return None
 
     # Match with exact element
+    def _find_el(func):
+        for el in tree.node_list:
+            if func(el, target_el, context):
+                return el
+        return None
+
     el = _find_el(match_el_without_context)
     if el:
         return el
@@ -191,9 +170,8 @@ def find_with_node(tree):
     return None
 
 
-def find_el_with_context(tree, target_el, context):
+def find_el_exact_match_with_context(tree, target_el, context):
     for el in tree.node_list:
-        index = tree.node_list.index(el)
-        if same_el(el, target_el) and context.match(tree, index):
+        if same_el(el, target_el) and context.match_el(tree, el):
             return el
     return None

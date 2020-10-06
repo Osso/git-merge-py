@@ -2,17 +2,26 @@ from redbaron import nodes
 
 from .tools import (WHITESPACE_NODES,
                     iter_coma_list,
-                    same_el,
-                    short_context)
+                    same_el)
 
 
 class BeforeContext(list):
+    def match_el(self, tree, el, node_list_workaround=True):
+        index = tree.node_list.index(el)
+        return self.match(tree, index,
+                          node_list_workaround=node_list_workaround)
+
     def match(self, tree, index, node_list_workaround=True):
         return match_before_context(tree, index, self,
                                     node_list_workaround=node_list_workaround)
 
 
 class AfterContext(list):
+    def match_el(self, tree, el, node_list_workaround=True):
+        index = tree.node_list.index(el) + 1
+        return self.match(tree, index,
+                          node_list_workaround=node_list_workaround)
+
     def match(self, tree, index, node_list_workaround=True):
         return match_after_context(tree, index, self,
                                    node_list_workaround=node_list_workaround)
@@ -24,6 +33,8 @@ def match_before_context(tree, index, context, node_list_workaround=True):
     if context[-1] is None:
         start_index += 1
         context = context[:-1]
+        if start_index != 0:
+            return False
     if start_index < 0:
         return False
 
@@ -44,10 +55,6 @@ def match_before_context(tree, index, context, node_list_workaround=True):
 
 
 def match_after_context(tree, index, context, node_list_workaround=True):
-    print('match_after_context', tree.node_list)
-    print('index', index)
-    print('len(tree)', len(tree.node_list))
-    print('context', short_context(context))
     assert context
 
     if context[-1] is None:
@@ -56,22 +63,18 @@ def match_after_context(tree, index, context, node_list_workaround=True):
             return False
 
     end_index = index + len(context)
-    print('end_index', end_index)
 
     if node_list_workaround:
         nodes_list = tree.node_list
     else:
         nodes_list = tree
     els = nodes_list[index:end_index]
-    print('els', els)
 
     if len(els) != len(context):
-        print('lens differ')
         return False
 
     for context_el, el in zip(context, els):
         if not same_el(context_el, el):
-            print('not same')
             return False
 
     return True

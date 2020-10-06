@@ -17,7 +17,7 @@ def _test_merge_changes(base, current, other, expected):
     for change in changes:
         logging.debug(change)
     logging.debug("=========")
-    base_ast_patched = base_ast.copy()
+    base_ast_patched = RedBaron(base)
     apply_changes_safe(base_ast_patched, changes)
     logging.debug("======= changes applied to base =======")
     logging.debug(base_ast_patched.dumps())
@@ -205,6 +205,26 @@ def fun1(arg1, new_arg2, new_arg3):
     _test_merge_changes(base, current, other, expected)
 
 
+def test_change_fun_args_append_on_miss():
+    base = """
+def fun1(arg1):
+    pass
+"""
+    current = """
+def fun1(arg1, arg2):
+    pass
+"""
+    other = """
+def fun1(new_arg1, arg3):
+    pass
+"""
+    expected = """
+def fun1(new_arg1, arg3, arg2):
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_already_removed_arg():
     base = """
 def fun1(arg):
@@ -237,6 +257,22 @@ fun(arg1, arg2, new_arg3)
 """
     expected = """
 fun(arg1, new_arg2, new_arg3)
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_call_args_append_on_miss():
+    base = """
+fun(arg1)
+"""
+    current = """
+fun(arg1, arg2)
+"""
+    other = """
+fun(new_arg1, arg3)
+"""
+    expected = """
+fun(new_arg1, arg3, arg2)
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -370,5 +406,21 @@ else:
     # passing here
     pass
     call('hello')
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_call_args_indented():
+    base = """
+    fun(arg1)
+"""
+    current = """
+    fun(arg1, arg2)
+"""
+    other = """
+    fun(new_arg1, arg3)
+"""
+    expected = """
+    fun(new_arg1, arg3, arg2)
 """
     _test_merge_changes(base, current, other, expected)

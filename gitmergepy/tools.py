@@ -11,58 +11,6 @@ INDENT = "."
 WHITESPACE_NODES = (nodes.EndlNode, )
 
 
-class BeforeContext(list):
-    def match(self, tree, index, node_list_workaround=True):
-        return match_before_context(tree, index, self,
-                                    node_list_workaround=node_list_workaround)
-
-
-class AfterContext(list):
-    def match(self, tree, index, node_list_workaround=True):
-        return match_after_context(tree, index, self,
-                                   node_list_workaround=node_list_workaround)
-
-
-def match_before_context(tree, index, context, node_list_workaround=True):
-    assert context
-    start_index = index - len(context)
-    if context[-1] is None:
-        start_index += 1
-    if start_index < 0:
-        return False
-
-    if node_list_workaround:
-        nodes_list = tree.node_list
-    else:
-        nodes_list = tree
-    els = nodes_list[start_index:index]
-
-    for context_el, el in zip(reversed(context), els):
-        if not same_el(context_el, el):
-            return False
-
-    return True
-
-
-def match_after_context(tree, index, context, node_list_workaround=True):
-    assert context
-
-    if node_list_workaround:
-        nodes_list = tree.node_list
-    else:
-        nodes_list = tree
-    els = nodes_list[index+1:index+1+len(context)]
-
-    if not els:
-        return False
-
-    for context_el, el in zip(context, els):
-        if not same_el(context_el, el):
-            return False
-
-    return True
-
-
 def iter_coma_list(l):
     trimmed_list = l.node_list
     if isinstance(trimmed_list[0], nodes.LeftParenthesisNode):
@@ -129,6 +77,8 @@ def remove_coma_list(l, el):
     del l.node_list[index]
     if index > 0:
         del l.node_list[index - 1]
+    if index == 0:
+        del l.node_list[index]
 
 
 def sort_imports(targets):
@@ -167,6 +117,7 @@ def short_context(context):
     if context is LAST:
         return "last"
 
+    from .context import AfterContext
     if isinstance(context, AfterContext):
         if context[-1] is None:
             return "last -%d" % (len(context) - 1)
@@ -396,38 +347,6 @@ def make_node(text, parent, on_attribute):
                                parent=parent, on_attribute=on_attribute)
 
 
-def gather_context(el):
-    after_context = gather_after_context(el)
-    if after_context[-1] is None:
-        return after_context
-
-    el = el.previous
-    context = BeforeContext([el])
-    while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
-        el = el.previous
-        context.append(el)
-    return context
-
-
-def gather_after_context(el):
-    tree = el.parent
-    index = tree.node_list.index(el) + 1
-
-    try:
-        el = tree.node_list[index]
-    except IndexError:
-        el = None
-    context = AfterContext([el])
-    while isinstance(context[-1], WHITESPACE_NODES):
-        index += 1
-        try:
-            el = tree.node_list[index]
-        except IndexError:
-            el = None
-        context.append(el)
-    return context
-
-
 def same_el(left, right):
     # For speed
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
@@ -441,8 +360,3 @@ def empty_lines(els):
         if not isinstance(el, nodes.EndlNode):
             return False
     return True
-
-
-def is_last(el):
-    context = gather_after_context(el)
-    return context[-1] is None

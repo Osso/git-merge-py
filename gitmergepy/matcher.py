@@ -1,10 +1,9 @@
 from redbaron import nodes
 
-from .tools import (AfterContext,
-                    get_name_els_from_call,
-                    iter_coma_list,
-                    match_after_context,
-                    match_before_context,
+from .context import (AfterContext,
+                      match_after_context,
+                      match_before_context)
+from .tools import (get_name_els_from_call,
                     name_els_to_string,
                     same_el,
                     skip_context_endl)
@@ -182,25 +181,6 @@ def find_el(tree, target_el, context):  # pylint: disable=too-many-return-statem
     el = _find_el(match_el_guess)
     if el:
         return el
-    return None
-
-
-def find_context(tree, context, node_list_workaround=True):
-    nodes_list = tree
-    if node_list_workaround:
-        nodes_list = tree.node_list
-
-    for index in range(len(nodes_list) + 1):
-        if context.match(tree, index,
-                         node_list_workaround=node_list_workaround):
-            return index
-    return None
-
-
-def find_context_coma_list(tree, context):
-    for index, el in enumerate(iter_coma_list(tree)):
-        if same_el(el, context[-1]):
-            return index + 1
     return None
 
 

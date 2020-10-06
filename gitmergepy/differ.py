@@ -2,12 +2,11 @@ import logging
 
 from redbaron import nodes
 
+from .context import gather_context
 from .matcher import guess_if_same_el
 from .tools import (INDENT,
                     LAST,
                     decrease_indentation,
-                    gather_after_context,
-                    gather_context,
                     same_el,
                     short_context,
                     short_display_el)

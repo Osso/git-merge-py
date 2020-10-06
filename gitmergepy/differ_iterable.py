@@ -2,11 +2,11 @@ import logging
 
 from redbaron import nodes
 
+from .context import gather_context
 from .differ import (add_to_diff,
                      compute_diff)
 from .matcher import find_func
 from .tools import (INDENT,
-                    gather_context,
                     id_from_el,
                     short_display_el)
 from .tree import (ChangeClass,

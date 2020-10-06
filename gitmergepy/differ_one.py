@@ -3,12 +3,12 @@ import logging
 from redbaron import (RedBaron,
                       nodes)
 
+from .context import gather_context
 from .differ import (compute_diff,
                      compute_diff_iterables)
 from .tools import (INDENT,
                     changed_in_list,
                     diff_list,
-                    gather_context,
                     get_call_els,
                     id_from_el,
                     iter_coma_list,

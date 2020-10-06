@@ -1,7 +1,8 @@
 from redbaron import (RedBaron,
                       nodes)
 
-from .matcher import (find_context,
+from .context import (AfterContext,
+                      find_context,
                       find_context_coma_list)
 from .tools import (LAST,
                     append_coma_list,
@@ -62,7 +63,10 @@ def insert_at_context(el, context, tree, node_list_workaround=False,
 
 
 def insert_at_context_coma_list(el, context, tree, new_line=False):
-    if context[-1] is None:
+    if context is LAST or isinstance(context, AfterContext) and context[-1] is None:
+        # insert at the end
+        append_coma_list(tree, el, new_line=new_line)
+    elif context[-1] is None:
         # insert at the beginning
         insert_coma_list(tree, position=skip_context_endl(tree, context),
                          to_add=el, new_line=new_line)

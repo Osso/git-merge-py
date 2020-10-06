@@ -8,21 +8,19 @@ from .applyier import (PLACEHOLDER,
                        apply_changes,
                        insert_at_context,
                        insert_at_context_coma_list)
+from .context import (AfterContext,
+                      BeforeContext,
+                      find_context)
 from .matcher import (find_class,
-                      find_context,
                       find_el,
                       find_func)
 from .tools import (LAST,
-                    AfterContext,
-                    BeforeContext,
                     append_coma_list,
                     apply_diff_to_list,
                     as_from_contexts,
                     decrease_indentation,
-                    find_indentation,
                     get_call_els,
                     id_from_el,
-                    is_last,
                     iter_coma_list,
                     make_indented,
                     remove_coma_list,
@@ -170,7 +168,7 @@ class AddEls:
     def apply(self, tree):
         logging.debug("adding els")
         # Make it one insert branch by using index
-        if self.context[-1] is None:
+        if self.context[-1] is None and False:
             if isinstance(self.context, AfterContext):
                 logging.debug("    at the end")
                 index = len(tree.node_list)
@@ -527,6 +525,8 @@ class RemoveFunArgs:
         to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
         for el in args:
+            logging.debug("    removing arg %r to %r",
+                          short_display_el(el), short_display_el(tree))
             if id_from_el(el) in to_remove_values:
                 remove_coma_list(args, el)
         return []

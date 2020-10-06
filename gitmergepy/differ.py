@@ -5,6 +5,7 @@ from redbaron import nodes
 from .matcher import guess_if_same_el
 from .tools import (INDENT,
                     LAST,
+                    decrease_indentation,
                     gather_after_context,
                     gather_context,
                     same_el,
@@ -83,9 +84,11 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         if isinstance(stack_left[0], nodes.WithNode) and not \
                 isinstance(el_right, nodes.WithNode):
             logging.debug("%s with node removal %r", indent+INDENT, short_display_el(stack_left[0]))
-            with_node = stack_left.pop(0)
+            orig_with_node = stack_left.pop(0)
+            with_node = orig_with_node.copy()
+            decrease_indentation(with_node)
             stack_left = list(with_node.node_list[1:]) + stack_left
-            diff += [RemoveWith(with_node, context=gather_context(el_right))]
+            diff += [RemoveWith(orig_with_node, context=gather_context(el_right))]
 
         # Actual processing
 
@@ -109,7 +112,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                               short_display_el(el))
                 els.append(el)
             stack_left.pop(0)
-            diff += [RemoveEls(els, context=gather_context(el_right))]
+            if els:
+                diff += [RemoveEls(els, context=gather_context(els[0]))]
         elif type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
             diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left,
                                                                 el_right,
@@ -138,9 +142,9 @@ def add_to_diff(diff, el, indent):
     if diff and isinstance(diff[-1], AddEls):
         diff[-1].add_el(el)
     else:
-        if isinstance(el, nodes.EndlNode):
-            context = gather_after_context(el)
-        else:
-            context = gather_context(el)
-        logging.debug("%s after context %r", indent, short_context(context))
+        # if isinstance(el, nodes.EndlNode):
+        #     context = gather_after_context(el)
+        # else:
+        context = gather_context(el)
+        logging.debug("%s context %r", indent, short_context(context))
         diff += [AddEls([el], context=context)]

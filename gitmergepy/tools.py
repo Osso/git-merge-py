@@ -27,6 +27,8 @@ class AfterContext(list):
 def match_before_context(tree, index, context, node_list_workaround=True):
     assert context
     start_index = index - len(context)
+    if context[-1] is None:
+        start_index += 1
     if start_index < 0:
         return False
 
@@ -35,9 +37,6 @@ def match_before_context(tree, index, context, node_list_workaround=True):
     else:
         nodes_list = tree
     els = nodes_list[start_index:index]
-
-    if not els:
-        return False
 
     for context_el, el in zip(reversed(context), els):
         if not same_el(context_el, el):
@@ -168,9 +167,13 @@ def short_context(context):
         return "no context"
     if context is LAST:
         return "last"
-    if isinstance(context, BeforeContext) and context[-1] is None:
-        return "first +%d" % (len(context) - 1)
-    if isinstance(context, AfterContext) and context[-1] is None:
+
+    if isinstance(context, AfterContext):
+        if context[-1] is None:
+            return "last -%d" % (len(context) - 1)
+        return 'after ' + '|'.join(short_display_el(el) for el in context)
+
+    if context[-1] is None:
         return "first +%d" % (len(context) - 1)
     return '|'.join(short_display_el(el) for el in reversed(context))
 

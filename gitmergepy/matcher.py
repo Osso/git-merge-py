@@ -19,8 +19,8 @@ def guess_if_same_el(left, right):
         return True
     if isinstance(left, (nodes.IfelseblockNode, nodes.IfNode)):
         return True
-    if isinstance(left, nodes.EndlNode):
-        return True
+    # if isinstance(left, nodes.EndlNode):
+    #     return True
     if match_el_guess(left, right, None):
         return True
 

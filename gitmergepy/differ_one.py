@@ -5,10 +5,10 @@ from redbaron import (RedBaron,
 
 from .differ import (compute_diff,
                      compute_diff_iterables)
-from .matcher import gather_context
 from .tools import (INDENT,
                     changed_in_list,
                     diff_list,
+                    gather_context,
                     get_call_els,
                     id_from_el,
                     iter_coma_list,
@@ -146,7 +146,7 @@ def diff_import_node(left, right, indent):
 def diff_with_node(left, right, indent):
     diff = []
     if left.contexts.dumps() != right.contexts.dumps():
-        logging.debug('%s changed contexts %r', indent, right.contexts)
+        logging.debug('%s changed contexts %r', indent, short_display_el(right.contexts))
         diff += [ChangeAttr('contexts', right.contexts.copy())]
 
     diff += compute_diff_iterables(left, right, indent=indent)
@@ -268,6 +268,8 @@ def diff_if_node(left, right, indent):
 def diff_endl_node(left, right, indent):
     diff = []
     if left.indent != right.indent:
+        logging.debug('%s changed indentation %d to %d', indent,
+                      len(left.indent), len(right.indent))
         diff += [ChangeIndentation(right.indent)]
 
     return diff

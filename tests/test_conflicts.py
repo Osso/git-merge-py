@@ -34,7 +34,7 @@ fun(new_arg1)
     expected = """
 # <<<<<<<<<<
 # Reason Argument context has changed
-# <AddCallArg arg='arg2' context='arg1'>
+# <AddCallArg arg='arg2' context='arg1|, '>
 # fun(arg1, arg2)
 # >>>>>>>>>>
 fun(new_arg1)
@@ -58,7 +58,7 @@ def fun(new_arg1):
     expected = """
 # <<<<<<<<<<
 # Reason Argument context has changed
-# <AddFunArg arg='arg2' context='arg1'>
+# <AddFunArg arg='arg2' context='arg1|, '>
 # def fun(arg1, arg2):
 # >>>>>>>>>>
 def fun(new_arg1):
@@ -83,7 +83,7 @@ with fun() as out:
 """
     expected = """# <<<<<<<<<<
 # Reason Multiple with nodes found
-# <RemoveWith el="with fun() as out:" context='# stuff'>
+# <RemoveWith el="with fun() as out:" context='# stuff|new line indent=0'>
 # with fun() as out:
 #     print('hello')
 # >>>>>>>>>>
@@ -109,7 +109,7 @@ def test_change_call_args_indented():
     expected = """
     # <<<<<<<<<<
     # Reason Argument context has changed
-    # <AddCallArg arg='arg2' context='arg1'>
+    # <AddCallArg arg='arg2' context='arg1|, '>
     # fun(arg1, arg2)
     # >>>>>>>>>>
     fun(new_arg1)

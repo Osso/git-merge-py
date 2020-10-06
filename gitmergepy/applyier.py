@@ -1,7 +1,8 @@
 from redbaron import (RedBaron,
                       nodes)
 
-from .matcher import find_context
+from .matcher import (find_context,
+                      find_context_coma_list)
 from .tools import (LAST,
                     append_coma_list,
                     find_endl,
@@ -20,8 +21,6 @@ def apply_changes(tree, changes):
     for change in changes:
         # logging.debug('applying %r to %r', change, short_display_el(tree))
         conflicts += change.apply(tree)
-        # print("====")
-        # print(tree.dumps())
 
     return conflicts
 
@@ -47,15 +46,10 @@ def insert_at_context(el, context, tree, node_list_workaround=False,
             tree.insert(0, el)
     else:
         # Look for context
-        context_el = find_context(tree, context[-1])
-        if context_el:
+        index = find_context(tree, context,
+                             node_list_workaround=node_list_workaround)
+        if index:
             # Move function to new position
-            # Workaround redbaron insert_after bug
-            if node_list_workaround:
-                index = tree.node_list.index(context_el) + 1
-            else:
-                index = tree.index(context_el) + 1
-            # Workaround redbaron bug with new lines on insert
             if node_list_workaround:
                 tree.node_list.insert(index, el)
                 if endl is not None:
@@ -77,11 +71,11 @@ def insert_at_context_coma_list(el, context, tree, new_line=False):
         append_coma_list(tree, el, new_line=new_line)
     else:
         # Look for context
-        context_el = find_context(tree, context[-1])
-        if context_el:
+        index = find_context_coma_list(tree, context)
+        if index:
             # Move function to new position
             # Workaround redbaron insert_after bug
-            insert_coma_list(tree, position=tree.index(context_el)+1,
+            insert_coma_list(tree, position=index,
                              to_add=el, new_line=new_line)
         else:
             return False

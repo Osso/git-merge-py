@@ -4,9 +4,9 @@ from redbaron import nodes
 
 from .differ import (add_to_diff,
                      compute_diff)
-from .matcher import (find_func,
-                      gather_context)
+from .matcher import find_func
 from .tools import (INDENT,
+                    gather_context,
                     id_from_el,
                     short_display_el)
 from .tree import (ChangeClass,
@@ -51,7 +51,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                     # stack_left[0] is defined somewhere else
                     # we are not modifying it
                     logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                    add_to_diff(diff, el_right)
+                    add_to_diff(diff, el_right, indent+2*INDENT)
                 else:
                     # stack_left[0] is nowhere else
                     # assume function is modified
@@ -64,7 +64,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                         diff += diff_el
             else:
                 logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                add_to_diff(diff, el_right)
+                add_to_diff(diff, el_right, indent+2*INDENT)
     return diff
 
 
@@ -80,7 +80,7 @@ def diff_class_node(stack_left, el_right, indent, context_class):
                             context_class=ChangeClass)
     else:
         logging.debug("%s new class %r", indent+INDENT, el_right.name)
-        add_to_diff(diff, el_right)
+        add_to_diff(diff, el_right, indent+2*INDENT)
 
     return diff
 
@@ -97,7 +97,7 @@ def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
         logging.debug("%s modified call diff %r", indent+INDENT, diff)
     else:
         logging.debug("%s new AtomtrailersNode %r", indent+INDENT, el_right.name)
-        add_to_diff(diff, el_right)
+        add_to_diff(diff, el_right, indent+2*INDENT)
 
     return diff
 

@@ -2,11 +2,13 @@ import logging
 
 from redbaron import nodes
 
-from .matcher import (gather_context,
-                      guess_if_same_el,
-                      same_el)
+from .matcher import guess_if_same_el
 from .tools import (INDENT,
                     LAST,
+                    gather_after_context,
+                    gather_context,
+                    same_el,
+                    short_context,
                     short_display_el)
 from .tree import (AddEls,
                    ChangeEl,
@@ -60,16 +62,21 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         el_left = stack_left.pop(0)
 
         if el_diff:
-            diff += [context_class(el_left, el_diff, context=gather_context(el))]
+            if isinstance(el, nodes.EndlNode):
+                context = gather_after_context(el)
+            else:
+                context = gather_context(el)
+            logging.debug("%s context %r", indent+INDENT, context)
+            diff += [context_class(el_left, el_diff, context=context)]
 
         return diff
 
     diff = []
     for el_right in right.node_list:
         if not stack_left:
-            logging.debug("%s stack_left empty, new el %r", indent+INDENT,
+            logging.debug("%s stack left empty, new el %r", indent+INDENT,
                           short_display_el(el_right))
-            add_to_diff(diff, el_right)
+            add_to_diff(diff, el_right, indent)
             continue
 
         # Pre-processing
@@ -77,7 +84,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 isinstance(el_right, nodes.WithNode):
             logging.debug("%s with node removal %r", indent+INDENT, short_display_el(stack_left[0]))
             with_node = stack_left.pop(0)
-            stack_left = list(with_node) + stack_left
+            stack_left = list(with_node.node_list[1:]) + stack_left
             diff += [RemoveWith(with_node, context=gather_context(el_right))]
 
         # Actual processing
@@ -115,7 +122,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         else:
             logging.debug("%s new el %r", indent+INDENT,
                           short_display_el(el_right))
-            add_to_diff(diff, el_right)
+            add_to_diff(diff, el_right, indent+2*INDENT)
 
     if stack_left:
         for el in stack_left:
@@ -127,8 +134,13 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     return diff
 
 
-def add_to_diff(diff, el):
+def add_to_diff(diff, el, indent):
     if diff and isinstance(diff[-1], AddEls):
         diff[-1].add_el(el)
     else:
-        diff += [AddEls([el], context=gather_context(el))]
+        if isinstance(el, nodes.EndlNode):
+            context = gather_after_context(el)
+        else:
+            context = gather_context(el)
+        logging.debug("%s after context %r", indent, short_context(context))
+        diff += [AddEls([el], context=context)]

@@ -7,7 +7,62 @@ import baron
 
 FIRST = object()
 LAST = object()
+ANY = object()
 INDENT = "."
+WHITESPACE_NODES = (nodes.EndlNode, )
+
+
+class BeforeContext(list):
+    def match(self, tree, index, node_list_workaround=True):
+        return match_before_context(tree, index, self,
+                                    node_list_workaround=node_list_workaround)
+
+
+class AfterContext(list):
+    def match(self, tree, index, node_list_workaround=True):
+        return match_after_context(tree, index, self,
+                                   node_list_workaround=node_list_workaround)
+
+
+def match_before_context(tree, index, context, node_list_workaround=True):
+    assert context
+    start_index = index - len(context)
+    if start_index < 0:
+        return False
+
+    if node_list_workaround:
+        nodes_list = tree.node_list
+    else:
+        nodes_list = tree
+    els = nodes_list[start_index:index]
+
+    if not els:
+        return False
+
+    for context_el, el in zip(reversed(context), els):
+        if not same_el(context_el, el):
+            return False
+
+    return True
+
+
+def match_after_context(tree, index, context, node_list_workaround=True):
+    assert context
+
+    if node_list_workaround:
+        nodes_list = tree.node_list
+    else:
+        nodes_list = tree
+    els = nodes_list[index+1:index+1+len(context)]
+
+    if not els:
+        return False
+
+    for context_el, el in zip(context, els):
+        if not same_el(context_el, el):
+            return False
+
+    return True
 
 
 def iter_coma_list(l):
@@ -95,7 +150,7 @@ def short_display_el(el):
         return "Class(\"%s\")" % el.name
 
     if isinstance(el, nodes.EndlNode):
-        return "new line"
+        return "new line indent=%d" % len(el.indent)
 
     for line in el.dumps().splitlines():
         if line.strip():
@@ -113,9 +168,11 @@ def short_context(context):
         return "no context"
     if context is LAST:
         return "last"
-    if context[-1] is None:
+    if isinstance(context, BeforeContext) and context[-1] is None:
         return "first +%d" % (len(context) - 1)
-    return short_display_el(context[-1])
+    if isinstance(context, AfterContext) and context[-1] is None:
+        return "first +%d" % (len(context) - 1)
+    return '|'.join(short_display_el(el) for el in reversed(context))
 
 
 def diff_list(left, right, key_getter, value_getter=None):
@@ -272,7 +329,6 @@ def decrease_indentation(tree):
         return
     if isinstance(tree, nodes.AtomtrailersNode):
         for call_el in get_call_els(tree):
-            # import pdb; pdb.set_trace()
             decrease_indentation(call_el)
         return
     if isinstance(tree, nodes.CallNode):
@@ -331,3 +387,49 @@ def make_endl(tree):
 def make_node(text, parent, on_attribute):
     return nodes.Node.from_fst(baron.parse(text)[0],
                                parent=parent, on_attribute=on_attribute)
+
+
+def gather_context(el):
+    el = el.previous
+    context = BeforeContext([el])
+    while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
+        el = el.previous
+        context.append(el)
+    return context
+
+
+def gather_after_context(el):
+    tree = el.parent
+    index = tree.node_list.index(el) + 1
+
+    try:
+        el = tree.node_list[index]
+    except IndexError:
+        el = None
+    context = AfterContext([el])
+    while isinstance(context[-1], WHITESPACE_NODES):
+        index += 1
+        try:
+            el = tree.node_list[index]
+        except IndexError:
+            el = None
+        context.append(el)
+    return context
+
+
+def same_el(left, right):
+    if left is ANY or right is ANY:
+        return True
+
+    # For speed
+    if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
+        return False
+
+    return left.dumps() == right.dumps()
+
+
+def empty_lines(els):
+    for el in els:
+        if not isinstance(el, nodes.EndlNode):
+            return False
+    return True

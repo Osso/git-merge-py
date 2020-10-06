@@ -11,9 +11,11 @@ from .applyier import (PLACEHOLDER,
 from .matcher import (find_class,
                       find_context,
                       find_el,
-                      find_func,
-                      same_el)
-from .tools import (LAST,
+                      find_func)
+from .tools import (ANY,
+                    LAST,
+                    AfterContext,
+                    BeforeContext,
                     append_coma_list,
                     apply_diff_to_list,
                     as_from_contexts,
@@ -23,6 +25,7 @@ from .tools import (LAST,
                     iter_coma_list,
                     make_indented,
                     remove_coma_list,
+                    same_el,
                     short_context,
                     short_display_el,
                     short_display_list,
@@ -69,49 +72,44 @@ class RemoveEls:
         if self.context is LAST:
             logging.debug("    at the end")
             index = len(tree.node_list)
-            if same_el(tree.node_list[-1], PLACEHOLDER):
+            if same_el(tree.node_list[index-1], PLACEHOLDER):
                 index -= 1
-            while isinstance(tree.node_list[index-1], nodes.EndlNode) and \
-                    not isinstance(self.to_remove[0], nodes.EndlNode):
+            # Ignore trailing empty lines when matching tree
+            while isinstance(tree.node_list[index-1], nodes.EndlNode):
                 index -= 1
+            # Ignore trailing empty lines when matching removed els
             tmp_to_remove = self.to_remove.copy()
-            if not isinstance(self.to_remove[0], nodes.EndlNode):
-                while isinstance(tmp_to_remove[-1], nodes.EndlNode):
-                    tmp_to_remove.pop()
+            while tmp_to_remove and isinstance(tmp_to_remove[-1], nodes.EndlNode):
+                tmp_to_remove.pop()
             index -= len(tmp_to_remove)
-        elif self.context[-1] is None:
-            logging.debug("    at beginning")
-            index = skip_context_endl(tree, self.context)
         else:
-            el = find_context(tree, self.context[-1])
-            if el:
-                logging.debug("    found context")
-                # el.next not working everywhere
-                # Workaround:
-                index = tree.node_list.index(el) + 1
-                index = skip_context_endl(tree, self.context, index)
-            else:
-                logging.debug("    context not found")
-                for el in to_remove:
-                    try:
-                        index = tree.node_list.index(el)
-                    except ValueError:
-                        logging.debug("    already deleted %s",
-                                      short_display_el(el))
-                        to_remove.remove(el)
-                        index = None
-                    else:
-                        break
+            if self.context[-1] is None:
+                logging.debug("    at beginning")
+            for el_to_remove in to_remove:
+                logging.debug("    looking for el %r",
+                              short_display_el(el_to_remove))
+                index = None
+                el = find_el(tree, el_to_remove, self.context)
+                if el:
+                    logging.debug("    found context %r",
+                                  short_context(self.context))
+                    index = tree.node_list.index(el)
+                    break
+                else:
+                    logging.debug("    context not found %r",
+                                  short_context(self.context))
+                    to_remove.remove(el_to_remove)
 
         if index is None:
             return []
 
         for el_to_remove in to_remove:
-            if same_el(tree.node_list[index], el_to_remove):
-                logging.debug("    removing el %r", short_display_el(el_to_remove))
+            el = tree.node_list[index]
+            logging.debug("    removing el %r", short_display_el(el_to_remove))
+            if same_el(el, el_to_remove):
                 del tree.node_list[index]
             else:
-                logging.debug("    not matching %r", short_display_el(tree.node_list[index]))
+                logging.debug("        not matching %r", short_display_el(el))
                 return []
 
         return []
@@ -164,22 +162,31 @@ class AddEls:
         self.to_add.append(el)
 
     def apply(self, tree):
+        logging.debug("adding els")
+        # import pdb; pdb.set_trace()
         # Make it one insert branch by using index
         if self.context[-1] is None:
-            index = skip_context_endl(tree, self.context)
-            where = "at the beginning"
+            if isinstance(self.context, AfterContext):
+                logging.debug("    at the end")
+                index = -1
+            else:
+                logging.debug("    at the beginning")
+                index = skip_context_endl(tree, self.context)
         else:
-            el = find_context(tree, self.context[-1])
-            if not el:
+            logging.debug("    context %r", short_context(self.context))
+            index = find_context(tree, self.context)
+            if not index:
                 return [Conflict(self.to_add, self,
                                  reason="context not found")]
-            # Workaround redbaron insert_after bug
-            index = tree.node_list.index(el) + len(self.context)
-            where = "after %r" % short_display_el(el)
+            if index == 0:
+                at = "the beginning"
+            else:
+                el = tree.node_list[index-1]
+                at = short_display_el(el)
+            logging.debug("    after %r", at)
 
         for el_to_add in self.to_add:
-            logging.debug("    adding el %r %s",
-                          short_display_el(el_to_add), where)
+            logging.debug("    el %r", short_display_el(el_to_add))
             tree.node_list.insert(index, el_to_add)
             index += 1
 
@@ -211,12 +218,24 @@ class ChangeAttr:
         self.attr_value = attr_value
 
     def apply(self, tree):
+        logging.debug("changing %s to %s", self.attr_name, self.value_str)
         setattr(tree, self.attr_name, self.attr_value)
         return []
 
+    @property
+    def value_str(self):
+        try:
+            self.attr_value.dumps
+        except AttributeError:
+            value = self.attr_value
+        else:
+            value = short_display_el(self.attr_value)
+        return value
+
     def __repr__(self):
-        return "<%s %s=%r>" % (self.__class__.__name__,
-                               self.attr_name, self.attr_value)
+
+        return "<%s %s=%r>" % (self.__class__.__name__, self.attr_name,
+                               self.value_str)
 
 
 class RemoveAllDecoratorArgs(BaseEl):
@@ -246,7 +265,9 @@ class ChangeEl(BaseEl):
         logging.debug("changing %s at %s", short_display_el(self.el),
                       short_context(self.context))
         el = find_el(tree, self.el, self.context)
-        if el:
+        if el is None:
+            logging.debug("    not found")
+        else:
             logging.debug("    found")
             conflicts = apply_changes(el, self.changes)
             if self.write_conflicts:
@@ -471,7 +492,8 @@ class AddDecorator(ElWithContext):
     def apply(self, tree):
         decorator = self.el.copy()
         logging.debug("    adding decorator %r to %r", self.el, tree)
-        if not insert_at_context(decorator, self.context, tree.decorators):
+        if not insert_at_context(decorator, BeforeContext(self.context[-1:]), tree.decorators,
+                                 node_list_workaround=False):
             tree.decorators.append(decorator)
         return []
 
@@ -572,8 +594,8 @@ class ChangeIndentation:
         self.new_indentation = new_indentation
 
     def apply(self, tree):
-        logging.debug('.indentation %d to %d' % (len(tree.indent),
-                                                 len(self.new_indentation)))
+        logging.debug('.indentation %d to %d',
+                      len(tree.indent), len(self.new_indentation))
         tree.indent = self.new_indentation
         return []
 

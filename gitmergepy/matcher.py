@@ -7,7 +7,6 @@ from .tools import (AfterContext,
                     match_before_context,
                     name_els_to_string,
                     same_el,
-                    short_display_el,
                     skip_context_endl)
 
 
@@ -17,7 +16,7 @@ def guess_if_same_el(left, right):
 
     if isinstance(left, nodes.WithNode):
         return True
-    if isinstance(left, (nodes.IfelseblockNode, nodes.IfNode)):
+    if isinstance(left, nodes.IfelseblockNode):
         return True
     # if isinstance(left, nodes.EndlNode):
     #     return True
@@ -94,11 +93,13 @@ def match_el_guess(left, right, context):
         return left.name.value == right.name.value
     if isinstance(left, nodes.WithNode):
         return left.contexts.dumps() == right.contexts.dumps()
+    if isinstance(left, (nodes.IfNode, nodes.ElseNode)):
+        return True
 
     return False
 
 
-def find_el(tree, target_el, context):
+def find_el(tree, target_el, context):  # pylint: disable=too-many-return-statements
     def _find_el(func):
         for el in tree.node_list:
             if func(el, target_el, context):
@@ -120,6 +121,10 @@ def find_el(tree, target_el, context):
         el = tree.node_list[0]
         assert isinstance(el, nodes.IfNode)
         return el
+
+    if isinstance(target_el, nodes.ElseNode):
+        el = tree.node_list[-1]
+        return el if isinstance(el, nodes.ElseNode) else None
 
     # Match with exact element + context
     if isinstance(context, AfterContext):

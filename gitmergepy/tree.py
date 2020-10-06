@@ -163,7 +163,6 @@ class AddEls:
 
     def apply(self, tree):
         logging.debug("adding els")
-        # import pdb; pdb.set_trace()
         # Make it one insert branch by using index
         if self.context[-1] is None:
             if isinstance(self.context, AfterContext):
@@ -189,6 +188,11 @@ class AddEls:
             logging.debug("    el %r", short_display_el(el_to_add))
             tree.node_list.insert(index, el_to_add)
             index += 1
+
+        # if isinstance(tree.node_list[index-1], nodes.EndlNode) and \
+        #         not isinstance(tree.node_list[index], nodes.EndlNode):
+        #     # We are possibly messing the indentation
+        #     tree.node_list[index-1].indent = tree.indentation + '    '
 
         return []
 

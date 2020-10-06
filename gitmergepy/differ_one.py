@@ -265,6 +265,10 @@ def diff_if_node(left, right, indent):
     return diff
 
 
+def diff_else_node(left, right, indent):
+    return compute_diff_iterables(left, right, indent=indent+INDENT)
+
+
 def diff_endl_node(left, right, indent):
     diff = []
     if left.indent != right.indent:
@@ -292,4 +296,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.IfelseblockNode: diff_if_else_block_node,
     nodes.IfNode: diff_if_node,
     nodes.EndlNode: diff_endl_node,
+    nodes.ElseNode: diff_else_node,
 }

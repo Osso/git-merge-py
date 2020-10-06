@@ -19,6 +19,9 @@ def _test_merge_changes(base, current, other, expected):
     print("======= changes applied to base =======")
     print(base_ast.dumps())
     print("=========")
+    print(base_ast.node_list[1].node_list[1].node_list)
+    print(base_ast.node_list)
+    print(current_ast.node_list)
     assert base_ast.dumps() == current_ast.dumps()
     apply_changes_safe(other_ast, changes)
     print("======= changes applied to other =======")
@@ -304,6 +307,68 @@ if cond2:
 """
     expected = """
 if cond2:
+    print('hello')
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_if_else():
+    base = """
+if cond:
+    pass
+else:
+    pass
+"""
+    current = """
+if cond:
+    pass
+else:
+    print('hello')
+"""
+    other = """
+if cond:
+    pass
+else:
+    # passing here
+    pass
+"""
+    expected = """
+if cond:
+    pass
+else:
+    print('hello')
+    # passing here
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_if_else_2():
+    base = """
+if cond:
+    pass
+else:
+    pass
+"""
+    current = """
+if cond:
+    pass
+else:
+    pass
+    print('hello')
+"""
+    other = """
+if cond:
+    pass
+else:
+    # passing here
+    pass
+"""
+    expected = """
+if cond:
+    pass
+else:
+    # passing here
+    pass
     print('hello')
 """
     _test_merge_changes(base, current, other, expected)

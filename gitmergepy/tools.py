@@ -375,7 +375,8 @@ def find_endl(tree):
     if isinstance(tree, nodes.IfelseblockNode):
         return find_endl(tree.value)
     if isinstance(tree, (nodes.DefNode, nodes.WithNode, nodes.ClassNode,
-                         nodes.IfNode, RedBaron, nodes.NodeList)):
+                         nodes.IfNode, RedBaron, nodes.NodeList,
+                         nodes.ElifNode, nodes.ElseNode)):
         last_el = tree.node_list[-1]
         return find_endl(last_el)
 

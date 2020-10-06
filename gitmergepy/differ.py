@@ -102,7 +102,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Look forward a few elements to check if we have a match
         elif not isinstance(el_right, nodes.EndlNode) and \
                any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
-            logging.debug("%s same el ahead %r", indent+INDENT, el_right.dumps())
+            logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
             for _ in range(10):
                 if not stack_left or same_el(stack_left[0], el_right):

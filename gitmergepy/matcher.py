@@ -123,7 +123,19 @@ def find_el(tree, target_el, context):
     if el is not None:
         return el
 
+    # Match full context
     el = find_el_exact_match_with_context(tree, target_el, context)
+    if el is not None:
+        return el
+
+    # Match context with endl
+    smaller_context = context.copy()
+    while isinstance(smaller_context[0], nodes.EndlNode):
+        del smaller_context[0]
+    from .tools import short_context
+    import logging
+    logging.debug("smaller_context %r", short_context(smaller_context))
+    el = find_el_exact_match_with_context(tree, target_el, smaller_context)
     if el is not None:
         return el
 

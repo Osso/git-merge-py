@@ -175,9 +175,17 @@ class AddEls:
         else:
             logging.debug("    context %r", short_context(self.context))
             index = find_context(tree, self.context)
-            if not index:
-                return [Conflict(self.to_add, self,
-                                 reason="context not found")]
+            if index is None:
+                # Try smaller context
+                smaller_context = self.context.copy()
+                while isinstance(smaller_context[0], nodes.EndlNode):
+                    del smaller_context[0]
+                logging.debug("smaller_context %r", short_context(smaller_context))
+                index = find_context(tree, smaller_context)
+                if index is None:
+                    logging.debug("    context not found")
+                    return [Conflict(self.to_add, self,
+                                     reason="context not found")]
             if index == 0:
                 at = "the beginning"
             else:
@@ -503,7 +511,7 @@ class AddDecorator(ElWithContext):
         decorator = self.el.copy()
         logging.debug(". adding decorator %r to %r",
                       short_display_el(self.el), short_display_el(tree))
-        context = type(self.context)(self.context)
+        context = self.context.copy()
         if isinstance(context[0], nodes.EndlNode):
             del context[0]
         logging.debug(".. context %s", short_context(context))

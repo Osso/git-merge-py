@@ -15,6 +15,9 @@ class BeforeContext(list):
         return match_before_context(tree, index, self,
                                     node_list_workaround=node_list_workaround)
 
+    def copy(self):
+        return BeforeContext(self)
+
 
 class AfterContext(list):
     def match_el(self, tree, el, node_list_workaround=True):
@@ -25,6 +28,9 @@ class AfterContext(list):
     def match(self, tree, index, node_list_workaround=True):
         return match_after_context(tree, index, self,
                                    node_list_workaround=node_list_workaround)
+
+    def copy(self):
+        return AfterContext(self)
 
 
 def match_before_context(tree, index, context, node_list_workaround=True):

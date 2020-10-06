@@ -7,7 +7,6 @@ import baron
 
 FIRST = object()
 LAST = object()
-ANY = object()
 INDENT = "."
 WHITESPACE_NODES = (nodes.EndlNode, )
 
@@ -249,7 +248,9 @@ def as_from_contexts(contexts):
 
 def id_from_el(arg):
     if isinstance(arg, nodes.CallArgumentNode):
-        return 'func' + id_from_el(arg.target if arg.target else arg.value)
+        if arg.target is not None:
+            return id_from_el(arg.target)
+        return id_from_el(arg.value)
     if isinstance(arg, nodes.ListArgumentNode):
         return '*' + arg.name.value
     if isinstance(arg, nodes.DictArgumentNode):
@@ -258,6 +259,8 @@ def id_from_el(arg):
         return arg.name.value
     if isinstance(arg, nodes.DefArgumentNode):
         return arg.name.value
+    if isinstance(arg, nodes.StringNode):
+        return arg.value
     if isinstance(arg, nodes.AtomtrailersNode):
         return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
                         else '()'
@@ -394,6 +397,10 @@ def make_node(text, parent, on_attribute):
 
 
 def gather_context(el):
+    after_context = gather_after_context(el)
+    if after_context[-1] is None:
+        return after_context
+
     el = el.previous
     context = BeforeContext([el])
     while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
@@ -422,9 +429,6 @@ def gather_after_context(el):
 
 
 def same_el(left, right):
-    if left is ANY or right is ANY:
-        return True
-
     # For speed
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
@@ -437,3 +441,8 @@ def empty_lines(els):
         if not isinstance(el, nodes.EndlNode):
             return False
     return True
+
+
+def is_last(el):
+    context = gather_after_context(el)
+    return context[-1] is None

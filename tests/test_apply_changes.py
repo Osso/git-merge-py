@@ -22,11 +22,11 @@ def _test_apply_changes(base, current):
 def test_change_first_line():
     base = """
 def fun():
-    print('hello')
+    call('hello')
 """
     current = """
 def fun():
-    print('hello world')
+    call('hello world')
 """
     _test_apply_changes(base, current)
 
@@ -82,13 +82,13 @@ def fun(arg=2):
 def test_change_line_with_context():
     base = """
 def fun():
-    # Printing hello
-    print('hello')
+    # calling hello
+    call('hello')
 """
     current = """
 def fun():
-    # Printing hello
-    print('hello world')
+    # calling hello
+    call('hello world')
 """
     _test_apply_changes(base, current)
 
@@ -109,16 +109,16 @@ def test_change_line_middle():
 
 def test_move_function():
     base = """def fun1():
-    print('fun1')
+    call('fun1')
 
 def fun2():
-    print('fun2')
+    call('fun2')
 """
     current = """def fun2():
-    print('fun2')
+    call('fun2')
 
 def fun1():
-    print('fun1')
+    call('fun1')
 """
     _test_apply_changes(base, current)
 
@@ -213,10 +213,10 @@ from module1 import fun1, fun3
 def test_remove_with():
     base = """
 with fun():
-    print('hello')
+    call('hello')
 """
     current = """
-print('hello')
+call('hello')
 """
     _test_apply_changes(base, current)
 
@@ -224,11 +224,11 @@ print('hello')
 def test_change_with():
     base = """
 with fun():
-    print('hello')
+    call('hello')
 """
     current = """
 with fun2():
-    print('hello')
+    call('hello')
 """
     _test_apply_changes(base, current)
 
@@ -236,11 +236,11 @@ with fun2():
 def test_change_with_double():
     base = """
 with fun() as f, fun2() as f2:
-    print('hello')
+    call('hello')
 """
     current = """
 with fun3() as f3:
-    print('hello')
+    call('hello')
 """
     _test_apply_changes(base, current)
 
@@ -248,11 +248,11 @@ with fun3() as f3:
 def test_change_with_content():
     base = """
 with fun():
-    print('hello')
+    call('hello')
 """
     current = """
 with fun():
-    print('hello world')
+    call('hello world')
 """
     _test_apply_changes(base, current)
 
@@ -260,11 +260,11 @@ with fun():
 def test_rename_function():
     base = """
 def fun1():
-    print('fun1')
+    call('fun1')
 """
     current = """
 def renamed_function():
-    print('fun1')
+    call('fun1')
 """
     _test_apply_changes(base, current)
 
@@ -272,20 +272,20 @@ def renamed_function():
 def test_new_function():
     base = """
 def fun1():
-    print('fun1')
+    call('fun1')
 
 def fun2():
-    print('fun2')
+    call('fun2')
 """
     current = """
 def fun1():
-    print('fun1')
+    call('fun1')
 
 def new_fun():
-    print('new fun')
+    call('new fun')
 
 def fun2():
-    print('fun2')
+    call('fun2')
 """
     _test_apply_changes(base, current)
 
@@ -293,20 +293,20 @@ def fun2():
 def test_remove_function():
     base = """
 def fun1():
-    print('fun1')
+    call('fun1')
 
 def old_fun():
-    print('new fun')
+    call('new fun')
 
 def fun2():
-    print('fun2')
+    call('fun2')
 """
     current = """
 def fun1():
-    print('fun1')
+    call('fun1')
 
 def fun2():
-    print('fun2')
+    call('fun2')
 """
     _test_apply_changes(base, current)
 
@@ -539,7 +539,7 @@ class A:
 """
     current = """
 class A:
-    print('hello')
+    call('hello')
 """
     _test_apply_changes(base, current)
 
@@ -553,7 +553,7 @@ class A:
     current = """
 class A:
     def fun():
-        print('hello')
+        call('hello')
 """
     _test_apply_changes(base, current)
 
@@ -660,7 +660,7 @@ if cond:
 """
     current = """
 if cond:
-    print('hello')
+    call('hello')
 """
     _test_apply_changes(base, current)
 
@@ -725,16 +725,16 @@ def test_if_match_cond():
     if cond1:
         pass
     if cond2:
-        print('hello')
+        call('hello')
 """
     _test_apply_changes(base, current)
 
 
 def test_change_indentation():
     base = """
-    print('hello')
+    call('hello')
 """
     current = """
-        print('hello')
+        call('hello')
 """
     _test_apply_changes(base, current)

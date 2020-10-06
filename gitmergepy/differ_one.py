@@ -275,7 +275,6 @@ def diff_endl_node(left, right, indent):
         logging.debug('%s changed indentation %d to %d', indent,
                       len(left.indent), len(right.indent))
         diff += [ChangeIndentation(right.indent)]
-
     return diff
 
 

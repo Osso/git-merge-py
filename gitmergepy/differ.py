@@ -63,11 +63,12 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         el_left = stack_left.pop(0)
 
         if el_diff:
-            if isinstance(el, nodes.EndlNode):
-                context = gather_after_context(el)
-            else:
-                context = gather_context(el)
-            logging.debug("%s context %r", indent+INDENT, context)
+            # if isinstance(el, nodes.EndlNode):
+            #     context = gather_after_context(el)
+            # else:
+            context = gather_context(el)
+            logging.debug("%s context %r", indent+INDENT,
+                          short_context(context))
             diff += [context_class(el_left, el_diff, context=context)]
 
         return diff
@@ -100,8 +101,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                           short_display_el(el_right))
             stack_left.pop(0)
         # Look forward a few elements to check if we have a match
-        elif not isinstance(el_right, nodes.EndlNode) and \
-               any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
+        elif any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
             for _ in range(10):
@@ -114,7 +114,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             stack_left.pop(0)
             if els:
                 diff += [RemoveEls(els, context=gather_context(els[0]))]
-        elif type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
+        elif isinstance(el_right, type(stack_left[0])) and \
+                type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
             diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left,
                                                                 el_right,
                                                                 indent+INDENT,

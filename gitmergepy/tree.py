@@ -12,16 +12,17 @@ from .matcher import (find_class,
                       find_context,
                       find_el,
                       find_func)
-from .tools import (ANY,
-                    LAST,
+from .tools import (LAST,
                     AfterContext,
                     BeforeContext,
                     append_coma_list,
                     apply_diff_to_list,
                     as_from_contexts,
                     decrease_indentation,
+                    find_indentation,
                     get_call_els,
                     id_from_el,
+                    is_last,
                     iter_coma_list,
                     make_indented,
                     remove_coma_list,
@@ -91,13 +92,11 @@ class RemoveEls:
                 index = None
                 el = find_el(tree, el_to_remove, self.context)
                 if el:
-                    logging.debug("    found context %r",
-                                  short_context(self.context))
+                    logging.debug("    found context")
                     index = tree.node_list.index(el)
                     break
                 else:
-                    logging.debug("    context not found %r",
-                                  short_context(self.context))
+                    logging.debug("    context not found")
                     to_remove.remove(el_to_remove)
 
         if index is None:
@@ -110,7 +109,12 @@ class RemoveEls:
                 del tree.node_list[index]
             else:
                 logging.debug("        not matching %r", short_display_el(el))
-                return []
+                break
+
+        # We are possibly messing the indentation
+        # last_el = tree.node_list[-1]
+        # if isinstance(last_el, nodes.EndlNode):
+        #     last_el.indent = ''
 
         return []
 
@@ -160,6 +164,8 @@ class AddEls:
 
     def add_el(self, el):
         self.to_add.append(el)
+        first_in_context = self.context.pop(0)
+        assert el is first_in_context
 
     def apply(self, tree):
         logging.debug("adding els")
@@ -167,7 +173,7 @@ class AddEls:
         if self.context[-1] is None:
             if isinstance(self.context, AfterContext):
                 logging.debug("    at the end")
-                index = -1
+                index = len(tree.node_list)
             else:
                 logging.debug("    at the beginning")
                 index = skip_context_endl(tree, self.context)
@@ -186,13 +192,16 @@ class AddEls:
 
         for el_to_add in self.to_add:
             logging.debug("    el %r", short_display_el(el_to_add))
-            tree.node_list.insert(index, el_to_add)
+            el = el_to_add.copy()
+            el.parent = tree
+            tree.node_list.insert(index, el)
             index += 1
 
-        # if isinstance(tree.node_list[index-1], nodes.EndlNode) and \
-        #         not isinstance(tree.node_list[index], nodes.EndlNode):
-        #     # We are possibly messing the indentation
-        #     tree.node_list[index-1].indent = tree.indentation + '    '
+        # We are possibly messing the indentation
+        # previous_el = tree.node_list[index-1]
+        # if is_last(self.to_add[-1]) and not is_last(previous_el):
+        #     endl = find_indentation(previous_el).copy()
+        #     tree.node_list.insert(index, endl)
 
         return []
 
@@ -266,8 +275,9 @@ class ChangeEl(BaseEl):
             self.changes, short_context(self.context))
 
     def apply(self, tree):
-        logging.debug("changing %s at %s", short_display_el(self.el),
+        logging.debug("changing %s context %s", short_display_el(self.el),
                       short_context(self.context))
+
         el = find_el(tree, self.el, self.context)
         if el is None:
             logging.debug("    not found")
@@ -508,7 +518,7 @@ class RemoveFunArgs:
 
     def __repr__(self):
         return "<%s args=%r>" % (self.__class__.__name__,
-                                 [arg.name.value for arg in self.args])
+                                 [id_from_el(arg) for arg in self.args])
 
     def get_args(self, tree):
         return tree.arguments

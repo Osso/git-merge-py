@@ -1,3 +1,5 @@
+import logging
+
 from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes_safe
@@ -11,21 +13,19 @@ def _test_merge_changes(base, current, other, expected):
     assert base_ast.dumps() != current_ast.dumps()
 
     changes = compute_diff(base_ast, current_ast)
-    print("======== changes from current ========")
+    logging.debug("======== changes from current ========")
     for change in changes:
-        print(change)
-    print("=========")
-    apply_changes_safe(base_ast, changes)
-    print("======= changes applied to base =======")
-    print(base_ast.dumps())
-    print("=========")
-    print(base_ast.node_list[1].node_list[1].node_list)
-    print(base_ast.node_list)
-    print(current_ast.node_list)
-    assert base_ast.dumps() == current_ast.dumps()
+        logging.debug(change)
+    logging.debug("=========")
+    base_ast_patched = base_ast.copy()
+    apply_changes_safe(base_ast_patched, changes)
+    logging.debug("======= changes applied to base =======")
+    logging.debug(base_ast_patched.dumps())
+    logging.debug("=========")
+    assert base_ast_patched.dumps() == current_ast.dumps()
     apply_changes_safe(other_ast, changes)
-    print("======= changes applied to other =======")
-    print(other_ast.dumps())
+    logging.debug("======= changes applied to other =======")
+    logging.debug(other_ast.dumps())
     assert other_ast.dumps() == expected
 
 
@@ -67,7 +67,7 @@ from module1 import (fun2,
 
 def test_move_function():
     base = """def fun1():
-    print('hello')
+    call('hello')
 
 def fun2():
     pass
@@ -76,10 +76,10 @@ def fun2():
     pass
 
 def fun1():
-    print('hello')
+    call('hello')
 """
     other = """def fun1():
-    print('hello world')
+    call('hello world')
 
 def fun2():
     pass
@@ -88,14 +88,14 @@ def fun2():
     pass
 
 def fun1():
-    print('hello world')
+    call('hello world')
 """
     _test_merge_changes(base, current, other, expected)
 
 
 def test_move_function_without_context():
     base = """def fun1():
-    print('hello')
+    call('hello')
 
 def fun2():
     pass
@@ -104,13 +104,13 @@ def fun2():
     pass
 
 def fun1():
-    print('hello')
+    call('hello')
 """
     other = """def fun1():
-    print('hello world')
+    call('hello world')
 """
     expected = """def fun1():
-    print('hello world')
+    call('hello world')
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -118,17 +118,17 @@ def fun1():
 def test_remove_with():
     base = """
 with fun():
-    print('hello')
+    call('hello')
 """
     current = """
-print('hello')
+call('hello')
 """
     other = """
 with fun():
-    print('hello world')
+    call('hello world')
 """
     expected = """
-print('hello world')
+call('hello world')
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -136,19 +136,19 @@ print('hello world')
 def test_change_with():
     base = """
 with fun():
-    print('hello')
+    call('hello')
 """
     current = """
 with fun2():
-    print('hello')
+    call('hello')
 """
     other = """
 with fun():
-    print('hello world')
+    call('hello world')
 """
     expected = """
 with fun2():
-    print('hello world')
+    call('hello world')
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -156,28 +156,28 @@ with fun2():
 def test_rename_function():
     base = """
 def fun1():
-    print('hello')
+    call('hello')
 
 def fun2():
     pass
 """
     current = """
 def renamed_fun():
-    print('hello')
+    call('hello')
 
 def fun2():
     pass
 """
     other = """
 def fun1():
-    print('hello world')
+    call('hello world')
 
 def fun2():
     pass
 """
     expected = """
 def renamed_fun():
-    print('hello world')
+    call('hello world')
 
 def fun2():
     pass
@@ -299,7 +299,7 @@ if cond:
 """
     current = """
 if cond:
-    print('hello')
+    call('hello')
 """
     other = """
 if cond2:
@@ -307,7 +307,7 @@ if cond2:
 """
     expected = """
 if cond2:
-    print('hello')
+    call('hello')
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -323,7 +323,7 @@ else:
 if cond:
     pass
 else:
-    print('hello')
+    call('hello')
 """
     other = """
 if cond:
@@ -336,8 +336,8 @@ else:
 if cond:
     pass
 else:
-    print('hello')
     # passing here
+    call('hello')
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -354,7 +354,7 @@ if cond:
     pass
 else:
     pass
-    print('hello')
+    call('hello')
 """
     other = """
 if cond:
@@ -369,6 +369,6 @@ if cond:
 else:
     # passing here
     pass
-    print('hello')
+    call('hello')
 """
     _test_merge_changes(base, current, other, expected)

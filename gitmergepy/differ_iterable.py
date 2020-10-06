@@ -89,7 +89,8 @@ def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
     diff = []
     if id_from_el(el_right) == id_from_el(stack_left[0]) or \
             el_right[0] == stack_left[0][0] == 'super':
-        logging.debug("%s modified call %r", indent+INDENT, el_right.name)
+        logging.debug("%s modified call %r", indent+INDENT,
+                      short_display_el(el_right.name))
         el_left = stack_left.pop(0)
         el_diff = compute_diff(el_left, el_right, indent=indent+INDENT)
         if el_diff:

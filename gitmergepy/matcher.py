@@ -18,8 +18,8 @@ def guess_if_same_el(left, right):
         return True
     if isinstance(left, nodes.IfelseblockNode):
         return True
-    # if isinstance(left, nodes.EndlNode):
-    #     return True
+    if isinstance(left, nodes.EndlNode):
+        return True
     if match_el_guess(left, right, None):
         return True
 
@@ -130,7 +130,8 @@ def find_el(tree, target_el, context):  # pylint: disable=too-many-return-statem
     if isinstance(context, AfterContext):
         if context[-1] is None:
             index = len(tree.node_list) - len(context)
-            if match_after_context(tree, index, context):
+            if match_after_context(tree, index, context) and \
+                    same_el(tree.node_list[index], target_el):
                 return tree.node_list[index]
         else:
             el = find_el_with_context(tree, target_el, context)
@@ -140,7 +141,8 @@ def find_el(tree, target_el, context):  # pylint: disable=too-many-return-statem
         if context[-1] is None:
             if isinstance(target_el, nodes.EndlNode):
                 index = len(context) - 1
-                if match_before_context(tree, index, context):
+                if match_before_context(tree, index, context) and \
+                        same_el(tree.node_list[index], target_el):
                     return tree.node_list[index]
             else:
                 # We can have a less strict match

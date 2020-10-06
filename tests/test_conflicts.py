@@ -1,3 +1,5 @@
+import logging
+
 from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes_safe
@@ -11,13 +13,13 @@ def _test_merge_changes(base, current, other, expected):
     assert base_ast.dumps() != current_ast.dumps()
 
     changes = compute_diff(base_ast, current_ast)
-    print("======== changes from current ========")
+    logging.debug("======== changes from current ========")
     for change in changes:
-        print(change)
+        logging.debug(change)
     apply_changes_safe(other_ast, changes)
-    print("======= changes applied to other =======")
-    print(other_ast.dumps())
-    print("=========")
+    logging.debug("======= changes applied to other =======")
+    logging.debug(other_ast.dumps())
+    logging.debug("=========")
     assert other_ast.dumps() == expected
 
 
@@ -70,28 +72,28 @@ def fun(new_arg1):
 def test_change_with():
     base = """# stuff
 with fun() as out:
-    print('hello')
+    call('hello')
 """
     current = """# stuff
-print('hello')
+call('hello')
 """
     other = """# changed stuff
 with fun() as out:
-    print('hello')
+    call('hello')
 with fun() as out:
-    print('world')
+    call('world')
 """
     expected = """# <<<<<<<<<<
 # Reason Multiple with nodes found
 # <RemoveWith el="with fun() as out:" context='# stuff|new line indent=0'>
 # with fun() as out:
-#     print('hello')
+#     call('hello')
 # >>>>>>>>>>
 # changed stuff
 with fun() as out:
-    print('hello')
+    call('hello')
 with fun() as out:
-    print('world')
+    call('world')
 """
     _test_merge_changes(base, current, other, expected)
 

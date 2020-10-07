@@ -228,7 +228,7 @@ class ReplaceTarget(Replace):
         return []
 
 
-class ChangeAttr:
+class ReplaceAttr:
     def __init__(self, attr_name, attr_value):
         self.attr_name = attr_name
         self.attr_value = attr_value
@@ -249,9 +249,23 @@ class ChangeAttr:
         return value
 
     def __repr__(self):
-
         return "<%s %s=%r>" % (self.__class__.__name__, self.attr_name,
                                self.value_str)
+
+
+class ReplaceAnnotation:
+    def __init__(self, new_value):
+        self.new_value = new_value
+
+    def apply(self, tree):
+        if self.new_value is not None and tree.annotation is None:
+            tree.annotation_second_formatting = self.new_value.parent.annotation_second_formatting
+        tree.annotation = self.new_value.copy()
+        return []
+
+    def __repr__(self):
+        return "<%s new_value=%r>" % (self.__class__.__name__,
+                                      short_display_el(self.new_value))
 
 
 class RemoveAllDecoratorArgs(BaseEl):
@@ -315,7 +329,12 @@ class ChangeArg(ChangeEl):
         return apply_changes(tree.value, self.changes)
 
 
-class ChangeArgDefault(ChangeEl):
+class ChangeAnnotation(ChangeEl):
+    def apply(self, tree):
+        return apply_changes(tree.annotation, self.changes)
+
+
+class ChangeDefArg(ChangeEl):
     def get_args(self, tree):
         return tree.arguments
 
@@ -331,7 +350,7 @@ class ChangeArgDefault(ChangeEl):
                                           self.changes)
 
 
-class ChangeCallArgValue(ChangeArgDefault):
+class ChangeCallArgValue(ChangeDefArg):
     def get_args(self, tree):
         return tree
 

@@ -18,14 +18,14 @@ from .tree import (AddAllDecoratorArgs,
                    AddDecorator,
                    AddFunArg,
                    AddImports,
+                   ChangeAnnotation,
                    ChangeArg,
-                   ChangeArgDefault,
                    ChangeAssignmentNode,
                    ChangeAtomtrailersCall,
-                   ChangeAttr,
                    ChangeCallArgValue,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
+                   ChangeDefArg,
                    ChangeIndentation,
                    ChangeValue,
                    RemoveAllDecoratorArgs,
@@ -34,6 +34,8 @@ from .tree import (AddAllDecoratorArgs,
                    RemoveFunArgs,
                    RemoveImports,
                    Replace,
+                   ReplaceAnnotation,
+                   ReplaceAttr,
                    ReplaceTarget)
 
 
@@ -47,10 +49,28 @@ def diff_replace(left, right, indent):
 
 def diff_arg_node(left, right, indent):
     diff = []
+    # Target
     if id_from_el(left.target) != id_from_el(right.target):
         diff += [ReplaceTarget(right.target)]
-    changes = compute_diff(left.value, right.value, indent=indent+INDENT)
-    diff += [ChangeArg(right, changes=changes)]
+    # Value
+    if left.value is None and right.value is None:
+        pass
+    elif left.value is not None and right.value is not None:
+        changes = compute_diff(left.value, right.value, indent=indent+INDENT)
+        if changes:
+            diff += [ChangeArg(right, changes=changes)]
+    else:
+        diff += [ReplaceAttr('value', right.value)]
+    # Annotation
+    if isinstance(left, nodes.DefArgumentNode):
+        if left.annotation is None and right.annotation is None:
+            pass
+        elif left.annotation is not None and right.annotation is not None:
+            changes = compute_diff(left.annotation, right.annotation, indent=indent+INDENT)
+            if changes:
+                diff += [ChangeAnnotation(right, changes=changes)]
+        else:
+            diff += [ReplaceAnnotation(right.annotation)]
     return diff
 
 
@@ -58,7 +78,7 @@ def diff_def_node(left, right, indent):
     diff = []
     # Name
     if left.name != right.name:
-        diff += [ChangeAttr('name', right.name)]
+        diff += [ReplaceAttr('name', right.name)]
     # Args
     to_add, to_remove = diff_list(left.arguments, right.arguments,
                                   key_getter=id_from_el)
@@ -77,7 +97,7 @@ def diff_def_node(left, right, indent):
     for _, arg in changed:
         logging.debug('%s fun changed args %r', indent,
                       short_display_el(arg))
-    diff += [ChangeArgDefault(el_right,
+    diff += [ChangeDefArg(el_right,
                               changes=compute_diff(el_left, el_right,
                                                    indent=indent+INDENT))
              for el_left, el_right in changed]
@@ -147,7 +167,7 @@ def diff_with_node(left, right, indent):
     diff = []
     if left.contexts.dumps() != right.contexts.dumps():
         logging.debug('%s changed contexts %r', indent, short_display_el(right.contexts))
-        diff += [ChangeAttr('contexts', right.contexts.copy())]
+        diff += [ReplaceAttr('contexts', right.contexts.copy())]
 
     diff += compute_diff_iterables(left, right, indent=indent)
 
@@ -200,7 +220,7 @@ def diff_call_node(left, right, indent):
 def diff_assignment_node(left, right, indent):
     diff = []
     if left.name.value != right.name.value:
-        diff += [ChangeAttr('name', right.name)]
+        diff += [ReplaceAttr('name', right.name)]
 
     el_diff = compute_diff(left.value, right.value, indent=indent+INDENT)
     if el_diff:
@@ -213,7 +233,7 @@ def diff_class_node(left, right, indent):
     diff = []
     # Name
     if left.name != right.name:
-        diff += [ChangeAttr('name', right.name)]
+        diff += [ReplaceAttr('name', right.name)]
     # Decorators
     to_add, to_remove = diff_list(left.decorators, right.decorators,
                                   key_getter=lambda t: t.name.value)
@@ -259,7 +279,7 @@ def diff_if_else_block_node(left, right, indent):
 def diff_if_node(left, right, indent):
     diff = []
     if left.test.dumps() != right.test.dumps():
-        diff += [ChangeAttr('test', right.test.copy())]
+        diff += [ReplaceAttr('test', right.test.copy())]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
     return diff

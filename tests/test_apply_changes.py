@@ -739,3 +739,15 @@ def test_change_indentation():
         call('hello')
 """
     _test_apply_changes(base, current)
+
+
+def test_argument_annotation():
+    base = """
+def fun(arg):
+    pass
+"""
+    current = """
+def fun(arg: my_type):
+    pass
+"""
+    _test_apply_changes(base, current)

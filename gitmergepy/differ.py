@@ -135,7 +135,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                           short_display_el(el))
         diff += [RemoveEls(stack_left, context=AfterContext([None]))]
 
-    logging.debug("%s compute_diff_iterables %r", indent, diff)
+    # logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff
 
 

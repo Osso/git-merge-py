@@ -331,18 +331,22 @@ def test_already_removed_el():
 def test_if():
     base = """
 if cond:
+    # comment
     pass
 """
     current = """
 if cond:
+    # comment
     call('hello')
 """
     other = """
 if cond2:
+    # comment
     pass
 """
     expected = """
 if cond2:
+    # comment
     call('hello')
 """
     _test_merge_changes(base, current, other, expected)

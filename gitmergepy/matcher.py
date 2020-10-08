@@ -172,10 +172,10 @@ def find_el(tree, target_el, context):
             print('matched with if condition')
             return el
 
-        # el = find_single(tree, nodes.IfelseblockNode)
-        # if el:
-        #     print('matched with sinle if condition')
-        #     return el
+        el = find_if(tree, target_el)
+        if el:
+            print('matched if with similarity')
+            return el
 
     if isinstance(target_el, nodes.WithNode):
         el = find_single(tree, nodes.WithNode)
@@ -201,3 +201,21 @@ def find_el_exact_match_with_context(tree, target_el, context):
         if same_el(el, target_el) and context.match_el(tree, el):
             return el
     return None
+
+
+def find_if(tree, target_el):
+    ifs_found = []
+    for el in tree.node_list:
+        if isinstance(el, nodes.IfelseblockNode) and if_similarity(target_el, el) > 0.5:
+            ifs_found += [el]
+    if len(ifs_found) == 1:
+        return ifs_found[0]
+    return None
+
+
+def if_similarity(left, right):
+    left_lines = set(left.dumps().splitlines())
+    right_lines = set(right.dumps().splitlines())
+    same_lines_count = len(left_lines & right_lines)
+    total_lines_count = max(len(left_lines), len(right_lines))
+    return same_lines_count / total_lines_count

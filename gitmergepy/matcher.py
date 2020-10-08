@@ -15,6 +15,8 @@ def guess_if_same_el(left, right):
         return True
     if isinstance(left, nodes.EndlNode):
         return True
+    if isinstance(left, nodes.ReturnNode):
+        return True
     if match_el_guess(left, right, None):
         return True
 
@@ -62,9 +64,12 @@ def match_el_with_if_condition(el, target_el, context):
     return False
 
 
+def find_all(tree, types):
+    return [el for el in tree.node_list if isinstance(el, types)]
+
+
 def find_single(tree, types):
-    els = [el for el in tree.node_list
-           if isinstance(el, types)]
+    els = find_all(tree, types)
 
     if len(els) == 1:
         return els[0]
@@ -98,12 +103,12 @@ def find_el_strong(tree, target_el, context):
     """Strong matches: match with an id"""
     if isinstance(target_el, nodes.DefNode):
         el = find_func(tree, target_el)
-        if el:
+        if el is not None:
             return el
 
     if isinstance(target_el, nodes.ClassNode):
         el = find_class(tree, target_el)
-        if el:
+        if el is not None:
             return el
 
     if isinstance(target_el, nodes.IfNode):
@@ -115,28 +120,33 @@ def find_el_strong(tree, target_el, context):
         el = tree.node_list[-1]
         return el if isinstance(el, nodes.ElseNode) else None
 
+    if isinstance(target_el, nodes.ReturnNode):
+        el = find_single(tree, nodes.ReturnNode)
+        if el is not None:
+            return el
+
     return None
 
 
 def find_el(tree, target_el, context):
     el = find_el_strong(tree, target_el, context)
     if el is not None:
+        print('matched strong')
         return el
 
     # Match full context
     el = find_el_exact_match_with_context(tree, target_el, context)
     if el is not None:
+        print('matched with context')
         return el
 
     # Match context with endl
     smaller_context = context.copy()
     while isinstance(smaller_context[0], nodes.EndlNode):
         del smaller_context[0]
-    from .tools import short_context
-    import logging
-    logging.debug("smaller_context %r", short_context(smaller_context))
     el = find_el_exact_match_with_context(tree, target_el, smaller_context)
     if el is not None:
+        print('matched with smaller context')
         return el
 
     # Require context for indentation
@@ -152,17 +162,20 @@ def find_el(tree, target_el, context):
 
     el = _find_el(match_el_without_context)
     if el:
+        print('matched without context')
         return el
 
     # Start guessing here
     if isinstance(target_el, nodes.IfelseblockNode):
         el = _find_el(match_el_with_if_condition)
         if el:
+            print('matched with if condition')
             return el
 
-        el = find_single(tree, nodes.IfelseblockNode)
-        if el:
-            return el
+        # el = find_single(tree, nodes.IfelseblockNode)
+        # if el:
+        #     print('matched with sinle if condition')
+        #     return el
 
     if isinstance(target_el, nodes.WithNode):
         el = find_single(tree, nodes.WithNode)
@@ -171,6 +184,7 @@ def find_el(tree, target_el, context):
 
     el = _find_el(match_el_guess)
     if el:
+        print('matched with guess')
         return el
     return None
 

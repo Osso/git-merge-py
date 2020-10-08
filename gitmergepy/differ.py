@@ -37,7 +37,7 @@ def compute_diff(left, right, indent=""):
                   short_display_el(left), short_display_el(right))
 
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
-        diff = [Replace(right)]
+        diff = [Replace(new_value=right, old_value=left)]
     elif type(left) in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
         diff = COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
     else:

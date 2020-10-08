@@ -18,15 +18,17 @@ from .tree import (AddAllDecoratorArgs,
                    AddDecorator,
                    AddFunArg,
                    AddImports,
+                   ArgOnNewLine,
                    ChangeAnnotation,
                    ChangeArg,
                    ChangeAssignmentNode,
                    ChangeAtomtrailersCall,
-                   ChangeCallArgValue,
+                   ChangeCallArg,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
                    ChangeDefArg,
                    ChangeIndentation,
+                   ChangeReturn,
                    ChangeValue,
                    RemoveAllDecoratorArgs,
                    RemoveCallArgs,
@@ -44,14 +46,14 @@ def diff_redbaron(left, right, indent):
 
 
 def diff_replace(left, right, indent):
-    return [Replace(right)]
+    return [Replace(new_value=right, old_value=left)]
 
 
 def diff_arg_node(left, right, indent):
     diff = []
     # Target
     if id_from_el(left.target) != id_from_el(right.target):
-        diff += [ReplaceTarget(right.target)]
+        diff += [ReplaceTarget(new_value=right.target, old_value=left.target)]
     # Value
     if left.value is None and right.value is None:
         pass
@@ -93,14 +95,15 @@ def diff_def_node(left, right, indent):
         diff += [RemoveFunArgs(to_remove)]
     changed = changed_in_list(left.arguments, right.arguments,
                               key_getter=lambda t: t.name.value,
-                              value_getter=lambda t: t.dumps())
-    for _, arg in changed:
+                              value_getter=_check_for_arg_changes)
+    for old_arg, new_arg in changed:
         logging.debug('%s fun changed args %r', indent,
-                      short_display_el(arg))
-    diff += [ChangeDefArg(el_right,
-                              changes=compute_diff(el_left, el_right,
-                                                   indent=indent+INDENT))
-             for el_left, el_right in changed]
+                      short_display_el(new_arg))
+        diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
+        if old_arg.previous and not old_arg.previous.endl and \
+                new_arg.previous and new_arg.previous.endl:
+            diff_arg += [ArgOnNewLine()]
+        diff += [ChangeDefArg(new_arg, changes=diff_arg)]
     # Decorators
     to_add, to_remove = diff_list(left.decorators, right.decorators,
                                   key_getter=lambda t: t.name.value)
@@ -177,17 +180,26 @@ def diff_with_node(left, right, indent):
 def diff_atom_trailer_node(left, right, indent):
     diff = []
     if id_from_el(left) != id_from_el(right):
-        diff += [Replace(right)]
+        diff += [Replace(new_value=right, old_value=left)]
     else:
         calls_diff = []
         calls_els_left = get_call_els(left)
         calls_els_right = get_call_els(right)
-        for index, (el_left, el_right) in enumerate(zip(calls_els_left, calls_els_right)):
+        for index, (el_left, el_right) in enumerate(zip(calls_els_left,
+                                                        calls_els_right)):
             calls_diff = compute_diff(el_left, el_right, indent=indent)
             if calls_diff:
                 diff += [ChangeAtomtrailersCall(el_left, index=index,
                                                 changes=calls_diff)]
     return diff
+
+
+def _check_for_arg_changes(arg):
+    endl = ""
+    if arg.previous and arg.previous.endl:
+        print('hello')
+        endl = "\n"
+    return endl + arg.dumps()
 
 
 def diff_call_node(left, right, indent):
@@ -205,15 +217,16 @@ def diff_call_node(left, right, indent):
         diff += [RemoveCallArgs(to_remove)]
 
     changed = changed_in_list(left, right,
-                           key_getter=id_from_el,
-                           value_getter=lambda t: t.dumps())
-    for _, arg in changed:
+                              key_getter=id_from_el,
+                              value_getter=_check_for_arg_changes)
+    for old_arg, new_arg in changed:
         logging.debug('%s call changed args %r', indent,
-                      short_display_el(arg))
-    diff += [ChangeCallArgValue(el_right,
-                                changes=compute_diff(el_left, el_right,
-                                                     indent=indent+INDENT))
-             for el_left, el_right in changed]
+                      short_display_el(new_arg))
+        diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
+        if old_arg.previous and not old_arg.previous.endl and \
+                new_arg.previous and new_arg.previous.endl:
+            diff_arg += [ArgOnNewLine()]
+        diff += [ChangeCallArg(new_arg, changes=diff_arg)]
     return diff
 
 
@@ -298,6 +311,27 @@ def diff_endl_node(left, right, indent):
     return diff
 
 
+def diff_return_node(left, right, indent):
+    diff = compute_diff(left.value, right.value, indent+INDENT)
+    if diff:
+        return [ChangeReturn(right, changes=diff)]
+    return []
+
+
+def diff_list_node(left, right, indent):
+    diff = compute_diff_iterables(left.value, right.value, indent+INDENT)
+    if diff:
+        return [ChangeValue(right, changes=diff)]
+    return []
+
+
+def diff_tuple_node(left, right, indent):
+    diff = compute_diff_iterables(left.value, right.value, indent+INDENT)
+    if diff:
+        return [ChangeValue(right, changes=diff)]
+    return []
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -316,4 +350,7 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.IfNode: diff_if_node,
     nodes.EndlNode: diff_endl_node,
     nodes.ElseNode: diff_else_node,
+    nodes.ReturnNode: diff_return_node,
+    nodes.ListNode: diff_list_node,
+    nodes.TupleNode: diff_tuple_node,
 }

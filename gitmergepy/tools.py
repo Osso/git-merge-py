@@ -226,6 +226,9 @@ def id_from_el(arg):
 
 
 def make_indented(coma_list, handle_brackets=False):
+    if coma_list._indented:
+        return
+
     # Enclose in () for multi-line
     if handle_brackets and not isinstance(coma_list[0],
                                           nodes.LeftParenthesisNode):
@@ -256,6 +259,7 @@ def make_indented(coma_list, handle_brackets=False):
 
     coma_list._get_middle_separator = types.MethodType(_get_middle_separator,
                                                        coma_list)
+    coma_list._indented = True
 
 
 def clear_coma_list(l):

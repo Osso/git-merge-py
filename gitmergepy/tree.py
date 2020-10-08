@@ -19,6 +19,7 @@ from .tools import (append_coma_list,
                     get_call_els,
                     id_from_el,
                     iter_coma_list,
+                    make_endl,
                     make_indented,
                     remove_coma_list,
                     same_el,
@@ -26,7 +27,8 @@ from .tools import (append_coma_list,
                     short_display_el,
                     short_display_list,
                     skip_context_endl,
-                    sort_imports)
+                    sort_imports,
+                    with_parent)
 
 
 class BaseEl:
@@ -79,25 +81,30 @@ class RemoveEls:
         #         tmp_to_remove.pop()
         #     index -= len(tmp_to_remove)
         # else:
+        context_el = None
         for el_to_remove in to_remove:
             logging.debug(". context %r", short_context(self.context))
             logging.debug(". looking for el %r",
                           short_display_el(el_to_remove))
-            index = None
-            el = find_el(tree, el_to_remove, self.context)
-            if el is not None:
+            context_el = find_el(tree, el_to_remove, self.context)
+            if context_el is not None:
                 logging.debug(". found context")
-                index = tree.node_list.index(el)
                 break
             else:
                 logging.debug(". context not found")
                 to_remove.remove(el_to_remove)
 
-        if index is None:
+        if context_el is None:
             return []
 
+        index = tree.node_list.index(context_el)
         for el_to_remove in to_remove:
-            el = tree.node_list[index]
+            try:
+                el = tree.node_list[index]
+            except IndexError:
+                # End of tree, we can only assume the other elements
+                # are already removed
+                break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
                 del tree.node_list[index]
@@ -210,10 +217,13 @@ class AddEls:
 
 
 class Replace:
-    def __init__(self, new_value):
+    def __init__(self, new_value, old_value):
         self.new_value = new_value
+        self.old_value = old_value
 
     def apply(self, tree):
+        if tree.dumps() != self.old_value.dumps():
+            return [Conflict([tree], self, reason="Different from old value")]
         tree.replace(self.new_value)
         return []
 
@@ -315,8 +325,21 @@ class ChangeValue(ChangeEl):
         return apply_changes(tree.value, self.changes)
 
 
+class ChangeReturn(ChangeEl):
+    def apply(self, tree):
+        logging.debug(". changing %s", short_display_el(tree))
+        # Most of the time we don't need a conflict but it is safer to have one
+        if not isinstance(tree.value, type(self.el.value)):
+            logging.debug(". skipping types differ")
+            return []
+        import pdb; pdb.set_trace()
+        conflicts = apply_changes(tree.value, self.changes)
+        add_conflicts(tree, conflicts)
+        return []
+
+
 class ChangeCall(ChangeEl):
-    write_conflicts = True
+    pass
 
 
 class ChangeDecoratorArgs(ChangeEl):
@@ -350,9 +373,27 @@ class ChangeDefArg(ChangeEl):
                                           self.changes)
 
 
-class ChangeCallArgValue(ChangeDefArg):
+class ChangeCallArg(ChangeDefArg):
     def get_args(self, tree):
         return tree
+
+
+class ArgOnNewLine:
+    def __repr__(self):
+        return "<%s>" % self.__class__.__name__
+
+    def apply(self, tree):
+        logging.debug(". putting arg on a new line")
+        if isinstance(tree.parent, nodes.DefNode):
+            args = tree.parent.arguments
+        elif isinstance(tree.parent, nodes.CallNode):
+            args = tree.parent
+        else:
+            raise Exception(type(tree.parent))
+
+        make_indented(args)
+        tree.previous.replace(args._get_middle_separator())
+        return []
 
 
 class Conflict:
@@ -388,7 +429,7 @@ class ChangeFun(ChangeEl):
             el = find_func(tree, tmp_el)
 
         if el:
-            logging.debug("    found")
+            logging.debug(". found")
             # endl = el._convert_input_to_node_object("\n",
             #     parent=el.node_list, on_attribute=el.on_attribute)
 

@@ -197,7 +197,6 @@ def diff_atom_trailer_node(left, right, indent):
 def _check_for_arg_changes(arg):
     endl = ""
     if arg.previous and arg.previous.endl:
-        print('hello')
         endl = "\n"
     return endl + arg.dumps()
 

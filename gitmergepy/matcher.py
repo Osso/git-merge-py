@@ -131,13 +131,11 @@ def find_el_strong(tree, target_el, context):
 def find_el(tree, target_el, context):
     el = find_el_strong(tree, target_el, context)
     if el is not None:
-        print('matched strong')
         return el
 
     # Match full context
     el = find_el_exact_match_with_context(tree, target_el, context)
     if el is not None:
-        print('matched with context')
         return el
 
     # Match context with endl
@@ -146,7 +144,6 @@ def find_el(tree, target_el, context):
         del smaller_context[0]
     el = find_el_exact_match_with_context(tree, target_el, smaller_context)
     if el is not None:
-        print('matched with smaller context')
         return el
 
     # Require context for indentation
@@ -162,19 +159,16 @@ def find_el(tree, target_el, context):
 
     el = _find_el(match_el_without_context)
     if el:
-        print('matched without context')
         return el
 
     # Start guessing here
     if isinstance(target_el, nodes.IfelseblockNode):
         el = _find_el(match_el_with_if_condition)
         if el:
-            print('matched with if condition')
             return el
 
         el = find_if(tree, target_el)
         if el:
-            print('matched if with similarity')
             return el
 
     if isinstance(target_el, nodes.WithNode):
@@ -184,7 +178,6 @@ def find_el(tree, target_el, context):
 
     el = _find_el(match_el_guess)
     if el:
-        print('matched with guess')
         return el
     return None
 

@@ -362,9 +362,12 @@ class ChangeDefArg(ChangeEl):
         return tree.arguments
 
     def apply(self, tree):
+        logging.debug(". changing arg %s", short_display_el(self.el))
         for arg in self.get_args(tree):
             if id_from_el(arg) == id_from_el(self.el):
+                logging.debug(".. found")
                 return apply_changes(arg, self.changes)
+        logging.debug(".. not found")
         return []
 
     def __repr__(self):
@@ -383,7 +386,7 @@ class ArgOnNewLine:
         return "<%s>" % self.__class__.__name__
 
     def apply(self, tree):
-        logging.debug(". putting arg on a new line")
+        logging.debug(". putting arg %s on a new line", short_display_el(tree))
         if isinstance(tree.parent, nodes.DefNode):
             args = tree.parent.arguments
         elif isinstance(tree.parent, nodes.CallNode):

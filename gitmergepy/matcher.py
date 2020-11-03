@@ -138,14 +138,6 @@ def find_el(tree, target_el, context):
     if el is not None:
         return el
 
-    # Match context with endl
-    smaller_context = context.copy()
-    while isinstance(smaller_context[0], nodes.EndlNode):
-        del smaller_context[0]
-    el = find_el_exact_match_with_context(tree, target_el, smaller_context)
-    if el is not None:
-        return el
-
     # Require context for indentation
     if isinstance(target_el, nodes.EndlNode):
         return None

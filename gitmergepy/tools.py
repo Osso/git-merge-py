@@ -225,11 +225,13 @@ def find_endl(tree):
     return None
 
 
-def same_el(left, right):
+def same_el(left, right, discard_indentation=True):
     # For speed
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
 
+    if discard_indentation:
+        return left.dumps().lstrip(" ") == right.dumps().lstrip(" ")
     return left.dumps() == right.dumps()
 
 

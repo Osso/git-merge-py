@@ -11,7 +11,6 @@ from .tools import (INDENT,
                     diff_list,
                     get_call_els,
                     id_from_el,
-                    iter_coma_list,
                     short_display_el)
 from .tree import (AddAllDecoratorArgs,
                    AddCallArg,
@@ -134,16 +133,6 @@ def diff_def_node(left, right, indent):
         if diff_decorator:
             diff += [ChangeDecorator(left, changes=diff_decorator)]
 
-    # Remove extra newlines that should have been in parent
-    # left_copy = left.copy()
-    # while isinstance(left_copy.data[-1][0], nodes.EndlNode):
-    #     left_copy.data.pop()
-
-    # right_copy = right.copy()
-    # while isinstance(right_copy.data[-1][0], nodes.EndlNode):
-    #     right_copy.data.pop()
-
-    # diff += compute_diff_iterables(left_copy, right_copy, indent=indent)
     diff += compute_diff_iterables(left, right, indent=indent)
 
     return diff
@@ -159,8 +148,7 @@ def create_add_remove_imports(to_add_class, to_add, to_remove_class, to_remove):
 
 
 def diff_import_node(left, right, indent):
-    to_add, to_remove = diff_list(iter_coma_list(left.targets),
-                                  iter_coma_list(right.targets),
+    to_add, to_remove = diff_list(left.targets, right.targets,
                                   key_getter=lambda t: t.value)
     return create_add_remove_imports(AddImports, to_add,
                                      RemoveImports, to_remove)

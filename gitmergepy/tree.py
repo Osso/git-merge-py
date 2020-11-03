@@ -12,23 +12,17 @@ from .context import (AfterContext,
 from .matcher import (find_class,
                       find_el,
                       find_func)
-from .tools import (append_coma_list,
-                    apply_diff_to_list,
+from .tools import (apply_diff_to_list,
                     as_from_contexts,
-                    decrease_indentation,
                     get_call_els,
                     id_from_el,
-                    iter_coma_list,
-                    make_endl,
                     make_indented,
-                    remove_coma_list,
                     same_el,
                     short_context,
                     short_display_el,
                     short_display_list,
                     skip_context_endl,
-                    sort_imports,
-                    with_parent)
+                    sort_imports)
 
 
 class BaseEl:
@@ -67,20 +61,6 @@ class RemoveEls:
         # We modify this
         to_remove = self.to_remove.copy()
 
-        # if self.context is LAST:
-        #     logging.debug("    at the end")
-        #     index = len(tree.node_list)
-        #     if same_el(tree.node_list[index-1], PLACEHOLDER):
-        #         index -= 1
-        #     # Ignore trailing empty lines when matching tree
-        #     while isinstance(tree.node_list[index-1], nodes.EndlNode):
-        #         index -= 1
-        #     # Ignore trailing empty lines when matching removed els
-        #     tmp_to_remove = self.to_remove.copy()
-        #     while tmp_to_remove and isinstance(tmp_to_remove[-1], nodes.EndlNode):
-        #         tmp_to_remove.pop()
-        #     index -= len(tmp_to_remove)
-        # else:
         context_el = None
         for el_to_remove in to_remove:
             logging.debug(". context %r", short_context(self.context))
@@ -97,25 +77,20 @@ class RemoveEls:
         if context_el is None:
             return []
 
-        index = tree.node_list.index(context_el)
+        index = tree.index(context_el)
         for el_to_remove in to_remove:
             try:
-                el = tree.node_list[index]
+                el = tree[index]
             except IndexError:
                 # End of tree, we can only assume the other elements
                 # are already removed
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
-                del tree.node_list[index]
+                del tree[index]
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
                 break
-
-        # We are possibly messing the indentation
-        # last_el = tree.node_list[-1]
-        # if isinstance(last_el, nodes.EndlNode):
-        #     last_el.indent = ''
 
         return []
 
@@ -130,11 +105,11 @@ class AddImports:
                                               for el in self.imports))
 
     def apply(self, tree):
-        existing_imports = set(el.value for el in iter_coma_list(tree.targets))
+        existing_imports = set(el.value for el in tree.targets)
         make_indented(tree.targets, handle_brackets=True)
         for import_el in self.imports:
             if import_el.value not in existing_imports:
-                append_coma_list(tree.targets, import_el)
+                tree.targets.append(import_el)
         sort_imports(tree.targets)
         return []
 
@@ -175,7 +150,7 @@ class AddEls:
         if self.context[-1] is None and False:
             if isinstance(self.context, AfterContext):
                 logging.debug("    at the end")
-                index = len(tree.node_list)
+                index = len(tree)
             else:
                 logging.debug("    at the beginning")
                 index = skip_context_endl(tree, self.context)
@@ -196,7 +171,7 @@ class AddEls:
             if index == 0:
                 at = "the beginning"
             else:
-                el = tree.node_list[index-1]
+                el = tree[index-1]
                 at = short_display_el(el)
             logging.debug("    after %r", at)
 
@@ -204,14 +179,8 @@ class AddEls:
             logging.debug("    el %r", short_display_el(el_to_add))
             el = el_to_add.copy()
             el.parent = tree
-            tree.node_list.insert(index, el)
+            tree.insert(index, el)
             index += 1
-
-        # We are possibly messing the indentation
-        # previous_el = tree.node_list[index-1]
-        # if is_last(self.to_add[-1]) and not is_last(previous_el):
-        #     endl = find_indentation(previous_el).copy()
-        #     tree.node_list.insert(index, endl)
 
         return []
 
@@ -332,7 +301,7 @@ class ChangeReturn(ChangeEl):
         if not isinstance(tree.value, type(self.el.value)):
             logging.debug(". skipping types differ")
             return []
-        import pdb; pdb.set_trace()
+
         conflicts = apply_changes(tree.value, self.changes)
         add_conflicts(tree, conflicts)
         return []
@@ -433,16 +402,7 @@ class ChangeFun(ChangeEl):
 
         if el:
             logging.debug(". found")
-            # endl = el._convert_input_to_node_object("\n",
-            #     parent=el.node_list, on_attribute=el.on_attribute)
-
             conflicts = apply_changes(el, self.changes)
-            # Make sure we keep a newline at the end of a function
-            # If remove empty lines after a function and tree has no
-            # newlines after the function already then we would end up
-            # without any newline
-            # if not isinstance(el.node_list[-1], nodes.EndlNode):
-            #     el.node_list.append(endl)
 
             add_conflicts(el, conflicts)
 
@@ -480,19 +440,17 @@ class MoveFunction(ChangeEl):
         fun = find_func(tree, self.el)
         # If function still exists, move it then apply changes
         if fun:
-            index = tree.node_list.index(fun)
+            index = tree.index(fun)
             # Deal with indentation or newline before element
             if tree.parent is not None:
                 assert index > 1
-                endl = tree.node_list.pop(index - 1)
+                endl = tree.pop(index - 1)
             else:
                 endl = None
 
-            tree.node_list.remove(fun)
-            if not insert_at_context(fun, self.context, tree,
-                                     node_list_workaround=True,
-                                     endl=endl):
-                tree.node_list.append(fun)
+            tree.remove(fun)
+            if not insert_at_context(fun, self.context, tree, endl=endl):
+                tree.append(fun)
                 add_conflict(tree, Conflict([], self,
                                             reason="Context not found, added at the end"))
                 return []
@@ -557,7 +515,7 @@ class AddFunArg:
     def make_conflict(self, reason):
         el = self.arg.parent.copy()
         el.decorators.clear()
-        el.node_list.clear()
+        el.clear()
         return Conflict([el], self, reason=reason)
 
 
@@ -578,7 +536,7 @@ class AddDecorator(ElWithContext):
         if isinstance(context[0], nodes.EndlNode):
             del context[0]
         logging.debug(".. context %s", short_context(context))
-        index = find_context(tree.decorators, context, node_list_workaround=False)
+        index = find_context(tree.decorators, context)
         if index is not None:
             logging.debug(".. inserting at %d", index)
             tree.decorators.insert(index, decorator)
@@ -602,11 +560,11 @@ class RemoveFunArgs:
     def apply(self, tree):
         to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
-        for el in iter_coma_list(args.node_list):
+        for el in args:
             logging.debug(". removing arg %r from %r",
                           short_display_el(el), short_display_el(args))
             if id_from_el(el) in to_remove_values:
-                remove_coma_list(args, el)
+                args.remove(el)
         return []
 
 
@@ -625,8 +583,6 @@ class RemoveDecorators(RemoveFunArgs):
         for el in args:
             if el.name.value in to_remove_values:
                 args.remove(el)
-        if not tree.decorators and tree.decorators.node_list:
-            tree.decorators.node_list.clear()
         return []
 
 
@@ -673,24 +629,24 @@ class RemoveWith(ElWithContext):
                                         insert_before=False))
             return []
 
-        decrease_indentation(with_node)
-        index = with_node.parent.node_list.index(with_node) + 1
-        for el in reversed(with_node.node_list[1:]):
-            with_node.parent.node_list.insert(index, el)
-        tree.node_list.remove(with_node)
+        with_node.decrease_indentation()
+        index = with_node.parent.index(with_node) + 1
+        for el in reversed(with_node[1:]):
+            with_node.parent.insert(index, el)
+        tree.remove(with_node)
         return []
 
 
 class ChangeIndentation:
-    def __init__(self, new_indentation):
-        self.new_indentation = new_indentation
+    def __init__(self, relative_indentation):
+        self.relative_indentation = relative_indentation
 
     def apply(self, tree):
         logging.debug('. indentation %d to %d',
-                      len(tree.indent), len(self.new_indentation))
-        tree.indent = self.new_indentation
+                      len(tree.indentation), len(self.relative_indentation))
+        tree.indentation = self.relative_indentation
         return []
 
     def __repr__(self):
-        return "<%s new_indentation=\"%s\">" % (self.__class__.__name__,
-                                                len(self.new_indentation))
+        return "<%s relative_indentation=\"%s\">" % (self.__class__.__name__,
+                                                len(self.relative_indentation))

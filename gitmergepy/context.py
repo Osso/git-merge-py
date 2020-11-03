@@ -1,114 +1,81 @@
 from redbaron import nodes
 
 from .tools import (WHITESPACE_NODES,
-                    iter_coma_list,
                     same_el)
 
 
 class BeforeContext(list):
-    def match_el(self, tree, el, node_list_workaround=True):
-        index = tree.node_list.index(el)
-        return self.match(tree, index,
-                          node_list_workaround=node_list_workaround)
+    def match_el(self, tree, el):
+        index = tree.index(el)
+        return self.match(tree, index)
 
-    def match(self, tree, index, node_list_workaround=True):
-        return match_before_context(tree, index, self,
-                                    node_list_workaround=node_list_workaround)
+    def match(self, tree, index):
+        context = self
+        start_index = index - len(context)
+        if context[-1] is None:
+            start_index += 1
+            context = context[:-1]
+            if start_index != 0:
+                return False
+        if start_index < 0:
+            return False
+
+        els = tree[start_index:index]
+
+        if len(els) != len(context):
+            return False
+
+        for context_el, el in zip(reversed(context), els):
+            if not same_el(context_el, el):
+                return False
+
+        return True
 
     def copy(self):
         return BeforeContext(self)
 
 
 class AfterContext(list):
-    def match_el(self, tree, el, node_list_workaround=True):
-        index = tree.node_list.index(el) + 1
-        return self.match(tree, index,
-                          node_list_workaround=node_list_workaround)
+    def match_el(self, tree, el):
+        index = tree.index(el) + 1
+        return self.match(tree, index)
 
-    def match(self, tree, index, node_list_workaround=True):
-        return match_after_context(tree, index, self,
-                                   node_list_workaround=node_list_workaround)
+    def match(self, tree, index):
+        context = self
+
+        if context[-1] is None:
+            context = context[:-1]
+            if index + len(context) != len(tree):
+                return False
+
+        end_index = index + len(context)
+
+        els = tree[index:end_index]
+
+        if len(els) != len(context):
+            return False
+
+        for context_el, el in zip(context, els):
+            if not same_el(context_el, el):
+                return False
+
+        return True
 
     def copy(self):
         return AfterContext(self)
 
 
-def match_before_context(tree, index, context, node_list_workaround=True):
-    assert context
-    start_index = index - len(context)
-    if context[-1] is None:
-        start_index += 1
-        context = context[:-1]
-        if start_index != 0:
-            return False
-    if start_index < 0:
-        return False
-
-    if node_list_workaround:
-        nodes_list = tree.node_list
-    else:
-        nodes_list = tree
-    els = nodes_list[start_index:index]
-
-    if len(els) != len(context):
-        return False
-
-    for context_el, el in zip(reversed(context), els):
-        if not same_el(context_el, el):
-            return False
-
-    return True
-
-
-def match_after_context(tree, index, context, node_list_workaround=True):
-    assert context
-
-    if context[-1] is None:
-        context = context[:-1]
-        if index + len(context) != len(tree.node_list):
-            return False
-
-    end_index = index + len(context)
-
-    if node_list_workaround:
-        nodes_list = tree.node_list
-    else:
-        nodes_list = tree
-    els = nodes_list[index:end_index]
-
-    if len(els) != len(context):
-        return False
-
-    for context_el, el in zip(context, els):
-        if not same_el(context_el, el):
-            return False
-
-    return True
-
-
-def find_context(tree, context, node_list_workaround=True):
-    nodes_list = tree
-    if node_list_workaround:
-        nodes_list = tree.node_list
-
-    for index in range(len(nodes_list) + 1):
-        if context.match(tree, index,
-                         node_list_workaround=node_list_workaround):
+def find_context(tree, context):
+    for index in range(len(tree) + 1):
+        if context.match(tree, index):
             return index
     return None
 
 
-def find_context_coma_list(tree, context):
-    for index, el in enumerate(iter_coma_list(tree)):
-        if same_el(el, context[-1]):
-            return index + 1
-    return None
-
-
 def gather_context(el):
-    after_context = gather_after_context(el)
-    if after_context[-1] is None:
-        return after_context
+    # after_context = gather_after_context(el)
+    # if after_context[-1] is None:
+    #     return after_context
 
     el = el.previous
     context = BeforeContext([el])

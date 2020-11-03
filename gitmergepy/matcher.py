@@ -65,7 +65,7 @@ def match_el_with_if_condition(el, target_el, context):
 
 
 def find_all(tree, types):
-    return [el for el in tree.node_list if isinstance(el, types)]
+    return [el for el in tree if isinstance(el, types)]
 
 
 def find_single(tree, types):
@@ -112,12 +112,12 @@ def find_el_strong(tree, target_el, context):
             return el
 
     if isinstance(target_el, nodes.IfNode):
-        el = tree.node_list[0]
+        el = tree[0]
         assert isinstance(el, nodes.IfNode)
         return el
 
     if isinstance(target_el, nodes.ElseNode):
-        el = tree.node_list[-1]
+        el = tree[-1]
         return el if isinstance(el, nodes.ElseNode) else None
 
     if isinstance(target_el, nodes.ReturnNode):
@@ -152,7 +152,7 @@ def find_el(tree, target_el, context):
 
     # Match with exact element
     def _find_el(func):
-        for el in tree.node_list:
+        for el in tree:
             if func(el, target_el, context):
                 return el
         return None
@@ -183,24 +183,19 @@ def find_el(tree, target_el, context):
 
 
 def find_with_node(tree):
-    for el in tree:
-        if isinstance(el, nodes.WithNode):
-            return el
-    return None
+    return tree.find('with')
 
 
 def find_el_exact_match_with_context(tree, target_el, context):
-    for el in tree.node_list:
+    for el in tree:
         if same_el(el, target_el) and context.match_el(tree, el):
             return el
     return None
 
 
 def find_if(tree, target_el):
-    ifs_found = []
-    for el in tree.node_list:
-        if isinstance(el, nodes.IfelseblockNode) and if_similarity(target_el, el) > 0.5:
-            ifs_found += [el]
+    ifs_found = [el for el in tree.find_all('ifelseblock')
+                 if if_similarity(target_el, el) > 0.5]
     if len(ifs_found) == 1:
         return ifs_found[0]
     return None

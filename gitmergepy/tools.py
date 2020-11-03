@@ -3,91 +3,27 @@ import types
 from redbaron import (RedBaron,
                       nodes)
 
-import baron
-
 FIRST = object()
 LAST = object()
 INDENT = "."
 WHITESPACE_NODES = (nodes.EndlNode, )
 
 
-def iter_coma_list(l):
-    trimmed_list = l.node_list
-    if not trimmed_list:
-        return
-
-    if isinstance(trimmed_list[0], nodes.LeftParenthesisNode):
-        trimmed_list = trimmed_list[1:]
-    if isinstance(trimmed_list[-1], nodes.RightParenthesisNode):
-        trimmed_list = trimmed_list[:-1]
-
-    for el in trimmed_list[::2]:
-        yield el
+def append_coma_list(target_list, to_add, new_line=False):
+    if new_line:
+        target_list.append("\n")
+    target_list.append(to_add)
 
 
-def append_coma_list(l, to_add, new_line=False):
-    insert_coma_list(l, position=LAST, to_add=to_add, new_line=new_line)
-
-
-def insert_coma_list(l, position, to_add, new_line=False):
-
-    def copy_sep():
-        """Copy existing element to keep indentation"""
-        middle_separator = l._get_middle_separator()
-        separator = with_parent(l, middle_separator)
-        if new_line:
-            separator.second_formatting.insert(0, new_line.copy())
-            separator.second_formatting.pop()
-        return nodes.NodeList([separator])
-
-    index = len(l.node_list) if position is LAST else 2 * position - 1
-    if position == 0:
-        index += 1
-    data_index = len(l.data) if position is LAST else position
-    sep = copy_sep()
-    new_el = with_parent(l, to_add.copy())
-
-    if l.node_list and isinstance(l.node_list[-1], nodes.RightParenthesisNode):
-        is_empty = len(l.node_list) == 2
-        index += -1 if position is LAST else 1
-        data_index += -1 if position is LAST else 1
-    else:
-        is_empty = len(l.node_list) == 0  # pylint: disable=len-as-condition
-
-    l.data.insert(data_index, [new_el, []])
-
-    if not is_empty and position == 0:
-        l.node_list.insert(index, sep[0])
-    l.node_list.insert(index, new_el)
-    if not is_empty and (position is LAST or position > 0):
-        l.node_list.insert(index, sep[0])
-
-
-def pop_coma_list(l):
-    if isinstance(l[0], nodes.LeftParenthesisNode):
-        del l.data[1]
-        del l.node_list[1:3]
-    else:
-        del l.data[0]
-        del l.node_list[0]
-
-
-def remove_coma_list(l, el):
-    for d in l.data:
-        if d[0] == el:
-            l.data.remove(d)
-    index = l.node_list.index(el)
-    del l.node_list[index]
-    if index > 0:
-        del l.node_list[index - 1]
-    if index == 0 and l.node_list:
-        del l.node_list[index]
+def insert_coma_list(target_list, position, to_add, new_line=False):
+    if new_line:
+        target_list.insert(position, "\n")
+        position += 1
+    target_list.insert(position, to_add)
 
 
 def sort_imports(targets):
-    for target in sorted(iter_coma_list(targets), key=lambda el: el.value):
-        append_coma_list(targets, target)
-        pop_coma_list(targets)
+    targets.sort(key=lambda el: el.value)
 
 
 def short_display_el(el):
@@ -113,8 +49,8 @@ def short_display_el(el):
     return "a bunch of blank lines"
 
 
-def short_display_list(l):
-    return ', '.join(short_display_el(el) for el in l)
+def short_display_list(node_list):
+    return ', '.join(short_display_el(el) for el in node_list)
 
 
 def short_context(context):
@@ -183,7 +119,7 @@ def is_iterable(el):
 
 
 def get_call_els(atom_trailer_node):
-    return [el for el in atom_trailer_node if isinstance(el, nodes.CallNode)]
+    return atom_trailer_node.find_all("call")
 
 
 def get_name_els_from_call(el):
@@ -242,9 +178,7 @@ def make_indented(coma_list, handle_brackets=False):
 
     # Indentation
     def _get_middle_separator(self):
-        first_el = self.node_list[0]
-        if isinstance(first_el, nodes.LeftParenthesisNode):
-            first_el = self.node_list[1]
+        first_el = self[0]
 
         column = first_el.absolute_bounding_box.top_left.column - 1
 
@@ -262,76 +196,19 @@ def make_indented(coma_list, handle_brackets=False):
     coma_list._indented = True
 
 
-def clear_coma_list(l):
-    del l.data[1:-1]
-    del l.node_list[1:-1]
-
-
 def skip_context_endl(tree, context, index=0):
-    if len(tree.node_list) == 0:  # pylint: disable=len-as-condition
+    if not tree:  # pylint: disable=len-as-condition
         return 0
 
-    while isinstance(tree.node_list[index], nodes.EndlNode):
+    while index < len(tree) and isinstance(tree[index], nodes.EmptyLine):
         index += 1
-        if index >= len(tree.node_list):
-            break
     return index
 
 
 def with_parent(tree, el):
-    el.parent = tree.node_list
+    el.parent = tree
     el.on_attribute = tree.on_attribute
     return el
-
-
-def decrease_indentation(tree):
-    """Workaround redbaron de-indent bug"""
-    def _shift(el):
-        el.indent = el.indent[:-4]
-
-    if isinstance(tree, nodes.IfelseblockNode):
-        decrease_indentation(tree.value)
-        return
-    if isinstance(tree, nodes.AssignmentNode):
-        decrease_indentation(tree.value)
-        return
-    if isinstance(tree, nodes.AtomtrailersNode):
-        for call_el in get_call_els(tree):
-            decrease_indentation(call_el)
-        return
-    if isinstance(tree, nodes.CallNode):
-        for el in tree.node_list:
-            if isinstance(el, nodes.CommaNode):
-                for _el in el.second_formatting:
-                    if isinstance(_el, nodes.EndlNode):
-                        _shift(_el)
-        return
-    if not hasattr(tree, 'node_list'):
-        return
-
-    indentation = None
-    for el in tree.node_list:
-        if not isinstance(el, nodes.EndlNode):
-            decrease_indentation(el)
-        else:
-            if indentation is None:
-                indentation = el.indent
-            if el.indent < indentation:
-                break
-            _shift(el)
-
-
-def find_indentation(el):
-    tree = el.parent
-    if tree is None:
-        return None
-
-    index = tree.node_list.index(el)
-    if index > 0:
-        node = tree.node_list[index-1]
-        endl = find_endl(node)
-        return endl
-    return None
 
 
 def find_endl(tree):
@@ -346,16 +223,6 @@ def find_endl(tree):
         return find_endl(last_el)
 
     return None
-
-
-def make_endl(tree):
-    return tree._convert_input_to_node_object("\n",
-        parent=tree.node_list, on_attribute=tree.on_attribute)
-
-
-def make_node(text, parent, on_attribute):
-    return nodes.Node.from_fst(baron.parse(text)[0],
-                               parent=parent, on_attribute=on_attribute)
 
 
 def same_el(left, right):

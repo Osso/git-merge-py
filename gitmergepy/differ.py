@@ -6,12 +6,12 @@ from .context import (AfterContext,
                       gather_context)
 from .matcher import guess_if_same_el
 from .tools import (INDENT,
-                    decrease_indentation,
                     same_el,
                     short_context,
                     short_display_el)
 from .tree import (AddEls,
                    ChangeEl,
+                   ChangeIndentation,
                    RemoveEls,
                    RemoveWith,
                    Replace)
@@ -36,16 +36,31 @@ def compute_diff(left, right, indent=""):
     logging.debug('%s compute_diff %s != %s', indent,
                   short_display_el(left), short_display_el(right))
 
-    if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
+    diff = []
+    if left.indentation != right.indentation:
+        delta = len(right.indentation) - len(left.indentation)
+        diff += [ChangeIndentation(delta)]
+
+    if type(left) != type(right) or type(left) not in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
         diff = [Replace(new_value=right, old_value=left)]
-    elif type(left) in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
-        diff = COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
     else:
-        # Unhandled
-        logging.warning("unhandled element type %s", type(left))
-        diff = []
+        diff += COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
 
     logging.debug('%s compute_diff diff=%r', indent, diff)
+    return diff
+
+
+def _changed_el(el, stack_left, indent, context_class):
+    diff = []
+    el_diff = compute_diff(stack_left[0], el, indent=indent+INDENT)
+    el_left = stack_left.pop(0)
+
+    if el_diff:
+        context = gather_context(el)
+        logging.debug("%s context %r", indent,
+                      short_context(context))
+        diff += [context_class(el_left, el_diff, context=context)]
+
     return diff
 
 
@@ -53,27 +68,11 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
     logging.debug("%s compute_diff_iterables %r <=> %r", indent,
-                  type(left).__name__, type(right).__name__)
-    stack_left = list(left.node_list)
-
-    def _changed_el(el, stack_left, context_class=context_class):
-        diff = []
-        el_diff = compute_diff(stack_left[0], el, indent=indent+2*INDENT)
-        el_left = stack_left.pop(0)
-
-        if el_diff:
-            # if isinstance(el, nodes.EndlNode):
-            #     context = gather_after_context(el)
-            # else:
-            context = gather_context(el)
-            logging.debug("%s context %r", indent+INDENT,
-                          short_context(context))
-            diff += [context_class(el_left, el_diff, context=context)]
-
-        return diff
+                  left.baron_type, right.baron_type)
+    stack_left = list(left)
 
     diff = []
-    for el_right in right.node_list:
+    for el_right in right:
         if not stack_left:
             logging.debug("%s stack left empty, new el %r", indent+INDENT,
                           short_display_el(el_right))
@@ -86,22 +85,21 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             logging.debug("%s with node removal %r", indent+INDENT, short_display_el(stack_left[0]))
             orig_with_node = stack_left.pop(0)
             with_node = orig_with_node.copy()
-            decrease_indentation(with_node)
-            stack_left = list(with_node.node_list[1:]) + stack_left
+            with_node.decrease_indentation()
+            stack_left = list(with_node[1:]) + stack_left
             diff += [RemoveWith(orig_with_node, context=gather_context(el_right))]
 
         # Actual processing
 
-        # Direct match
         max_ahead = min(10, len(stack_left))
+        # Direct match
         if same_el(stack_left[0], el_right):
             # Exactly same element
             logging.debug("%s same el %r", indent+INDENT,
                           short_display_el(el_right))
             stack_left.pop(0)
         # Look forward a few elements to check if we have a match
-        elif not isinstance(el_right, nodes.EndlNode) and \
-               any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
+        elif any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
             for _ in range(10):
@@ -123,7 +121,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         elif guess_if_same_el(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,
                           short_display_el(el_right))
-            diff += _changed_el(el_right, stack_left)
+            diff += _changed_el(el_right, stack_left, indent+INDENT,
+                                context_class=context_class)
         else:
             logging.debug("%s new el %r", indent+INDENT,
                           short_display_el(el_right))
@@ -143,9 +142,6 @@ def add_to_diff(diff, el, indent):
     if diff and isinstance(diff[-1], AddEls):
         diff[-1].add_el(el)
     else:
-        # if isinstance(el, nodes.EndlNode):
-        #     context = gather_after_context(el)
-        # else:
         context = gather_context(el)
         logging.debug("%s context %r", indent, short_context(context))
         diff += [AddEls([el], context=context)]

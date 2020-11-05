@@ -61,13 +61,7 @@ def insert_at_context_coma_list(el, context, tree, new_line=False):
 def apply_changes_safe(tree, changes):
     """Workaround redbaron bug in case of empty tree"""
     conflicts = apply_changes(tree, changes)
-    remove_trailing_empty_lines(tree)
     return conflicts
-
-
-def remove_trailing_empty_lines(tree):
-    while tree and isinstance(tree[-1], nodes.EmptyLineNode):
-        tree.pop()
 
 
 def add_conflicts(source_el, conflicts):

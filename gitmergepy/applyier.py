@@ -6,7 +6,6 @@ from .context import (AfterContext,
                       find_context)
 from .tools import (LAST,
                     append_coma_list,
-                    find_endl,
                     insert_coma_list)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
@@ -63,13 +62,7 @@ def apply_changes_safe(tree, changes):
     """Workaround redbaron bug in case of empty tree"""
     conflicts = apply_changes(tree, changes)
     remove_trailing_empty_lines(tree)
-    add_final_endl(tree)
     return conflicts
-
-
-def add_final_endl(tree):
-    if find_endl(tree) is None:
-        tree.append("\n")
 
 
 def remove_trailing_empty_lines(tree):

@@ -211,20 +211,6 @@ def with_parent(tree, el):
     return el
 
 
-def find_endl(tree):
-    if isinstance(tree, nodes.EndlNode):
-        return tree
-    if isinstance(tree, nodes.IfelseblockNode):
-        return find_endl(tree.value)
-    if isinstance(tree, (nodes.DefNode, nodes.WithNode, nodes.ClassNode,
-                         nodes.IfNode, RedBaron, nodes.NodeList,
-                         nodes.ElifNode, nodes.ElseNode)):
-        last_el = tree.value.node_list[-1]
-        return find_endl(last_el)
-
-    return None
-
-
 def same_el(left, right, discard_indentation=True):
     # For speed
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck

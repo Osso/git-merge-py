@@ -58,12 +58,6 @@ def insert_at_context_coma_list(el, context, tree, new_line=False):
     return False
 
 
-def apply_changes_safe(tree, changes):
-    """Workaround redbaron bug in case of empty tree"""
-    conflicts = apply_changes(tree, changes)
-    return conflicts
-
-
 def add_conflicts(source_el, conflicts):
     for conflict in conflicts:
         add_conflict(source_el, conflict)

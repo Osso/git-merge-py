@@ -2,7 +2,7 @@ import logging
 
 from redbaron import RedBaron
 
-from gitmergepy.applyier import apply_changes_safe
+from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
 
 
@@ -16,7 +16,7 @@ def _test_merge_changes(base, current, other, expected):
     logging.debug("======== changes from current ========")
     for change in changes:
         logging.debug(change)
-    apply_changes_safe(other_ast, changes)
+    apply_changes(other_ast, changes)
     logging.debug("======= changes applied to other =======")
     logging.debug(other_ast.dumps())
     logging.debug("=========")

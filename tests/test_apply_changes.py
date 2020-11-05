@@ -2,7 +2,7 @@ import logging
 
 from redbaron import RedBaron
 
-from gitmergepy.applyier import apply_changes_safe
+from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
 
 
@@ -14,7 +14,7 @@ def _test_apply_changes(base, current):
     changes = compute_diff(base_ast, current_ast)
     logging.debug("applying changes")
     base_ast_patched = RedBaron(base)
-    conflicts = apply_changes_safe(base_ast_patched, changes)
+    conflicts = apply_changes(base_ast_patched, changes)
     logging.debug("======= new_ast =======\n%s", base_ast.dumps())
     assert not conflicts
     assert base_ast_patched.dumps() == current_ast.dumps()

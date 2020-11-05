@@ -3,8 +3,7 @@ from redbaron import (RedBaron,
 
 from .context import (AfterContext,
                       BeforeContext,
-                      find_context,
-                      find_context_coma_list)
+                      find_context)
 from .tools import (LAST,
                     append_coma_list,
                     find_endl,
@@ -52,7 +51,7 @@ def insert_at_context_coma_list(el, context, tree, new_line=False):
         return True
 
     # Look for context
-    index = find_context_coma_list(tree, context)
+    index = find_context(tree, context)
     if index:
         insert_coma_list(tree, position=index, to_add=el, new_line=new_line)
         return True
@@ -74,7 +73,7 @@ def add_final_endl(tree):
 
 
 def remove_trailing_empty_lines(tree):
-    while tree and isinstance(tree[-1], nodes.EmptyLine):
+    while tree and isinstance(tree[-1], nodes.EmptyLineNode):
         tree.pop()
 
 

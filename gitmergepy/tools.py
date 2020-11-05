@@ -149,7 +149,7 @@ def id_from_el(arg):
     if isinstance(arg, nodes.DictArgumentNode):
         return '**' + arg.name.value
     if isinstance(arg, nodes.NameNode):
-        return arg.name.value
+        return arg.value
     if isinstance(arg, nodes.DefArgumentNode):
         return arg.name.value
     if isinstance(arg, nodes.StringNode):
@@ -219,7 +219,7 @@ def find_endl(tree):
     if isinstance(tree, (nodes.DefNode, nodes.WithNode, nodes.ClassNode,
                          nodes.IfNode, RedBaron, nodes.NodeList,
                          nodes.ElifNode, nodes.ElseNode)):
-        last_el = tree.node_list[-1]
+        last_el = tree.value.node_list[-1]
         return find_endl(last_el)
 
     return None

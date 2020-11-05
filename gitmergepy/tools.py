@@ -151,7 +151,7 @@ def id_from_el(arg):
     if isinstance(arg, nodes.NameNode):
         return arg.value
     if isinstance(arg, nodes.DefArgumentNode):
-        return arg.name.value
+        return arg.target.value
     if isinstance(arg, nodes.StringNode):
         return arg.value
     if isinstance(arg, nodes.AtomtrailersNode):

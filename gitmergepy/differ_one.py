@@ -93,7 +93,7 @@ def diff_def_node(left, right, indent):
     if to_remove:
         diff += [RemoveFunArgs(to_remove)]
     changed = changed_in_list(left.arguments, right.arguments,
-                              key_getter=lambda t: t.name.value,
+                              key_getter=lambda t: t.target.value,
                               value_getter=_check_for_arg_changes)
     for old_arg, new_arg in changed:
         logging.debug('%s fun changed args %r', indent,

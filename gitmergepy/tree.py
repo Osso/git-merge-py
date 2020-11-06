@@ -181,6 +181,10 @@ class AddEls:
             el.parent = tree
             tree.insert(index, el)
             index += 1
+            # Add endl for code proxy lists
+            if isinstance(el_to_add.associated_sep, nodes.EndlNode):
+                tree.insert(index, el_to_add.associated_sep.copy())
+                index += 1
 
         return []
 

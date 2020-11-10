@@ -90,7 +90,7 @@ def match_el_guess(left, right, context):
     if isinstance(left, nodes.FromImportNode):
         return set(m.value for m in left.value) == set(m.value for m in right.value)
     if isinstance(left, nodes.AssignmentNode):
-        return left.name.value == right.name.value
+        return left.target.value == right.target.value
     if isinstance(left, nodes.WithNode):
         return left.contexts.dumps() == right.contexts.dumps()
     if isinstance(left, (nodes.IfNode, nodes.ElseNode)):

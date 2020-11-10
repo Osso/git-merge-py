@@ -216,8 +216,8 @@ def diff_call_node(left, right, indent):
 
 def diff_assignment_node(left, right, indent):
     diff = []
-    if left.name.value != right.name.value:
-        diff += [ReplaceAttr('name', right.name)]
+    if left.target.value != right.target.value:
+        diff += [ReplaceAttr('target', right.target)]
 
     el_diff = compute_diff(left.value, right.value, indent=indent+INDENT)
     if el_diff:

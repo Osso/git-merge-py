@@ -144,7 +144,7 @@ def is_iterable(el):
 
 
 def get_call_els(atom_trailer_node):
-    return atom_trailer_node.find_all("call")
+    return atom_trailer_node.find_all("call", recursive=False)
 
 
 def get_name_els_from_call(el):

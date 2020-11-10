@@ -223,8 +223,7 @@ def diff_class_node(left, right, indent):
     if left.name != right.name:
         diff += [ReplaceAttr('name', right.name)]
     # Decorators
-    to_add, to_remove = diff_list(left.decorators, right.decorators,
-                                  key_getter=lambda t: t.name.value)
+    to_add, to_remove = diff_list(left.decorators, right.decorators)
     for decorator in to_add:
         diff += [AddDecorator(decorator,
                               context=gather_context(decorator))]
@@ -234,9 +233,7 @@ def diff_class_node(left, right, indent):
         logging.debug('%s class new decorators %r', indent, to_add)
     if to_remove:
         logging.debug('%s class old decorators %r', indent, to_remove)
-    changed = changed_in_list(left.decorators, right.decorators,
-                           key_getter=lambda t: t.name.value,
-                           value_getter=lambda t: t.dumps())
+    changed = changed_in_list(left.decorators, right.decorators)
     for left_el, right_el in changed:
         logging.debug('%s class changed decorator %r ', indent, right_el)
         diff_decorator = []
@@ -252,7 +249,7 @@ def diff_class_node(left, right, indent):
         if diff_decorator:
             diff += [ChangeDecorator(left, changes=diff_decorator)]
 
-    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    diff += compute_diff_iterables(left.value, right.value, indent=indent+INDENT)
 
     return diff
 

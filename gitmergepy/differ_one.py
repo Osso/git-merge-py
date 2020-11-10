@@ -105,7 +105,7 @@ def diff_def_node(left, right, indent):
         diff += [ChangeDefArg(new_arg, changes=diff_arg)]
     # Decorators
     to_add, to_remove = diff_list(left.decorators, right.decorators,
-                                  key_getter=lambda t: t.name.value)
+                                  key_getter=lambda t: id_from_el(t))
     for decorator in to_add:
         diff += [AddDecorator(decorator,
                               context=gather_context(decorator))]
@@ -116,7 +116,7 @@ def diff_def_node(left, right, indent):
     for arg in to_remove:
         logging.debug('%s fun old decorator %r', indent, short_display_el(arg))
     changed = changed_in_list(left.decorators, right.decorators,
-                              key_getter=lambda t: t.name.value,
+                              key_getter=lambda t: id_from_el(t),
                               value_getter=lambda t: t.dumps())
     for left_el, right_el in changed:
         logging.debug('%s fun changed decorator %r ', indent, right_el)

@@ -589,10 +589,10 @@ class RemoveDecorators(RemoveFunArgs):
         return tree.decorators
 
     def apply(self, tree):
-        to_remove_values = set(el.name.value for el in self.args)
+        to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
         for el in args:
-            if el.name.value in to_remove_values:
+            if id_from_el(el) in to_remove_values:
                 args.remove(el)
         return []
 

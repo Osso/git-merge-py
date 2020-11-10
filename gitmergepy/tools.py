@@ -152,9 +152,11 @@ def id_from_el(arg):
         return arg.value
     if isinstance(arg, nodes.DefArgumentNode):
         return arg.target.value
+    if isinstance(arg, nodes.DecoratorNode):
+        return id_from_el(arg.value)
     if isinstance(arg, nodes.StringNode):
         return arg.value
-    if isinstance(arg, nodes.AtomtrailersNode):
+    if isinstance(arg, (nodes.AtomtrailersNode, nodes.DottedNameNode)):
         return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
                         else '()'
                         for el in arg)

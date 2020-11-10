@@ -129,8 +129,17 @@ def test_add_import():
 from module1 import fun1
 """
     current = """
-from module1 import (fun1,
-                     fun2)
+from module1 import fun1, fun2
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_import_brackets():
+    base = """
+from module1 import fun1
+"""
+    current = """
+from module1 import (fun1, fun2)
 """
     _test_apply_changes(base, current)
 
@@ -140,8 +149,7 @@ def test_add_import_as():
 from module1 import fun1 as f1
 """
     current = """
-from module1 import (fun1 as f1,
-                     fun2)
+from module1 import fun1 as f1, fun2
 """
     _test_apply_changes(base, current)
 
@@ -159,13 +167,11 @@ import module2
 
 def test_add_import_multiline():
     base = """
-from module1 import (fun1,
-                     fun2)
+from module1 import fun1
 """
     current = """
 from module1 import (fun1,
-                     fun2,
-                     fun3)
+                     fun2)
 """
     _test_apply_changes(base, current)
 
@@ -177,6 +183,19 @@ from module1 import fun2
     current = """
 from module1 import (fun1,
                      fun2)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_add_import_multiline_last():
+    base = """
+from module1 import (fun1,
+                     fun2)
+"""
+    current = """
+from module1 import (fun1,
+                     fun2,
+                     fun3)
 """
     _test_apply_changes(base, current)
 

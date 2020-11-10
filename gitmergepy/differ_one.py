@@ -138,20 +138,17 @@ def diff_def_node(left, right, indent):
     return diff
 
 
-def create_add_remove_imports(to_add_class, to_add, to_remove_class, to_remove):
-    diff = []
-    if to_add:
-        diff += [to_add_class([el for el in to_add])]
-    if to_remove:
-        diff += [to_remove_class(to_remove)]
-    return diff
-
-
 def diff_import_node(left, right, indent):
     to_add, to_remove = diff_list(left.targets, right.targets,
                                   key_getter=lambda t: t.value)
-    return create_add_remove_imports(AddImports, to_add,
-                                     RemoveImports, to_remove)
+    diff = []
+    if to_add:
+        diff += [AddImports([el for el in to_add],
+                            new_style=right.targets.style,
+                            add_brackets=right.targets.has_brackets())]
+    if to_remove:
+        diff += [RemoveImports(to_remove)]
+    return diff
 
 
 def diff_with_node(left, right, indent):

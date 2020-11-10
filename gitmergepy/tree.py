@@ -16,7 +16,6 @@ from .tools import (apply_diff_to_list,
                     as_from_contexts,
                     get_call_els,
                     id_from_el,
-                    make_indented,
                     same_el,
                     short_context,
                     short_display_el,
@@ -96,8 +95,10 @@ class RemoveEls:
 
 
 class AddImports:
-    def __init__(self, imports):
+    def __init__(self, imports, new_style=None, add_brackets=False):
         self.imports = imports
+        self.new_style = new_style
+        self.add_brackets = add_brackets
 
     def __repr__(self):
         return "<%s imports=%r>" % (self.__class__.__name__,
@@ -106,10 +107,16 @@ class AddImports:
 
     def apply(self, tree):
         existing_imports = set(el.value for el in tree.targets)
-        make_indented(tree.targets, handle_brackets=True)
+
+        if self.new_style:
+            tree.targets.style = self.new_style
+        if self.add_brackets:
+            tree.targets.add_brackets()
+
         for import_el in self.imports:
             if import_el.value not in existing_imports:
                 tree.targets.append(import_el)
+
         sort_imports(tree.targets)
         return []
 

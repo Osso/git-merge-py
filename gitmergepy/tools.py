@@ -161,33 +161,6 @@ def id_from_el(arg):
     return arg
 
 
-def make_indented(coma_list, handle_brackets=False):
-    if getattr(coma_list, "_indented", False):
-        return
-
-    # Enclose in () for multi-line
-    coma_list.add_brackets()
-
-    # Indentation
-    def _get_middle_separator(self):
-        first_el = self[0]
-
-        column = first_el.absolute_bounding_box.top_left.column - 1
-
-        node = nodes.CommaNode({
-            "type": "comma",
-            "first_formatting": [],
-            "second_formatting": [{
-                "type": "endl",
-                "indent": column * " ",
-                "formatting": [], "value": "\n"}]})
-        return with_parent(self, node)
-
-    coma_list._get_middle_separator = types.MethodType(_get_middle_separator,
-                                                       coma_list)
-    coma_list._indented = True
-
-
 def skip_context_endl(tree, context, index=0):
     if not tree:  # pylint: disable=len-as-condition
         return 0

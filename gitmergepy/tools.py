@@ -166,15 +166,7 @@ def make_indented(coma_list, handle_brackets=False):
         return
 
     # Enclose in () for multi-line
-    if handle_brackets and not isinstance(coma_list[0],
-                                          nodes.LeftParenthesisNode):
-        targets = RedBaron("from m import (f)")[0].targets
-        left_bracket = targets[0]
-        right_bracket = targets[-1]
-        coma_list.data.insert(0, [left_bracket, None])
-        coma_list.data.append([right_bracket, None])
-        coma_list.node_list.insert(0, left_bracket)
-        coma_list.node_list.append(right_bracket)
+    coma_list.add_brackets()
 
     # Indentation
     def _get_middle_separator(self):

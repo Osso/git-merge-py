@@ -68,7 +68,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
     logging.debug("%s compute_diff_iterables %r <=> %r", indent,
-                  left.baron_type, right.baron_type)
+                  type(left).__name__, type(right).__name__)
     stack_left = list(left)
 
     diff = []

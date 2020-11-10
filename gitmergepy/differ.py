@@ -73,14 +73,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
 
     diff = []
     for el_right in right:
-        if not stack_left:
-            logging.debug("%s stack left empty, new el %r", indent+INDENT,
-                          short_display_el(el_right))
-            add_to_diff(diff, el_right, indent)
-            continue
-
         # Pre-processing
-        if isinstance(stack_left[0], nodes.WithNode) and not \
+        if stack_left and isinstance(stack_left[0], nodes.WithNode) and not \
                 isinstance(el_right, nodes.WithNode):
             logging.debug("%s with node removal %r", indent+INDENT, short_display_el(stack_left[0]))
             orig_with_node = stack_left.pop(0)
@@ -88,6 +82,12 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             with_node.decrease_indentation()
             stack_left = list(with_node[1:]) + stack_left
             diff += [RemoveWith(orig_with_node, context=gather_context(el_right))]
+
+        if not stack_left:
+            logging.debug("%s stack left empty, new el %r", indent+INDENT,
+                          short_display_el(el_right))
+            add_to_diff(diff, el_right, indent)
+            continue
 
         # Actual processing
 

@@ -81,19 +81,16 @@ def diff_def_node(left, right, indent):
     if left.name != right.name:
         diff += [ReplaceAttr('name', right.name)]
     # Args
-    to_add, to_remove = diff_list(left.arguments, right.arguments,
-                                  key_getter=id_from_el)
+    to_add, to_remove = diff_list(left.arguments, right.arguments)
     for arg in to_add:
         logging.debug('%s fun new arg %r', indent, short_display_el(arg))
-    for arg in to_remove:
-        logging.debug('%s fun old arg %r', indent, short_display_el(arg))
-    for arg in to_add:
         diff += [AddFunArg(arg, context=gather_context(arg),
                            new_line=arg.previous.endl if arg.previous else False)]
     if to_remove:
+        for arg in to_remove:
+            logging.debug('%s fun old arg %r', indent, short_display_el(arg))
         diff += [RemoveFunArgs(to_remove)]
     changed = changed_in_list(left.arguments, right.arguments,
-                              key_getter=lambda t: t.target.value,
                               value_getter=_check_for_arg_changes)
     for old_arg, new_arg in changed:
         logging.debug('%s fun changed args %r', indent,
@@ -104,8 +101,7 @@ def diff_def_node(left, right, indent):
             diff_arg += [ArgOnNewLine()]
         diff += [ChangeDefArg(new_arg, changes=diff_arg)]
     # Decorators
-    to_add, to_remove = diff_list(left.decorators, right.decorators,
-                                  key_getter=lambda t: id_from_el(t))
+    to_add, to_remove = diff_list(left.decorators, right.decorators)
     for decorator in to_add:
         diff += [AddDecorator(decorator,
                               context=gather_context(decorator))]
@@ -115,9 +111,7 @@ def diff_def_node(left, right, indent):
         logging.debug('%s fun new decorator %r', indent, short_display_el(arg))
     for arg in to_remove:
         logging.debug('%s fun old decorator %r', indent, short_display_el(arg))
-    changed = changed_in_list(left.decorators, right.decorators,
-                              key_getter=lambda t: id_from_el(t),
-                              value_getter=lambda t: t.dumps())
+    changed = changed_in_list(left.decorators, right.decorators)
     for left_el, right_el in changed:
         logging.debug('%s fun changed decorator %r ', indent, right_el)
         diff_decorator = []

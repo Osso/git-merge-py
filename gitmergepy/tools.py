@@ -70,7 +70,31 @@ def short_context(context):
     return '|'.join(short_display_el(el) for el in reversed(context))
 
 
-def diff_list(left, right, key_getter, value_getter=None):
+def id_from_el(arg):
+    if isinstance(arg, nodes.CallArgumentNode):
+        if arg.target is not None:
+            return id_from_el(arg.target)
+        return id_from_el(arg.value)
+    if isinstance(arg, nodes.ListArgumentNode):
+        return '*' + arg.name.value
+    if isinstance(arg, nodes.DictArgumentNode):
+        return '**' + arg.name.value
+    if isinstance(arg, nodes.NameNode):
+        return arg.value
+    if isinstance(arg, nodes.DefArgumentNode):
+        return arg.target.value
+    if isinstance(arg, nodes.DecoratorNode):
+        return id_from_el(arg.value)
+    if isinstance(arg, nodes.StringNode):
+        return arg.value
+    if isinstance(arg, (nodes.AtomtrailersNode, nodes.DottedNameNode)):
+        return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
+                        else '()'
+                        for el in arg)
+    return arg
+
+
+def diff_list(left, right, key_getter=id_from_el, value_getter=None):
     left = list(left)
     right = list(right)
     left_keys = set(key_getter(i) for i in left)
@@ -82,7 +106,8 @@ def diff_list(left, right, key_getter, value_getter=None):
     return to_add, to_remove
 
 
-def changed_in_list(left, right, key_getter, value_getter):
+def changed_in_list(left, right, key_getter=id_from_el,
+                    value_getter=lambda el: el.dumps()):
     left_keys = set(key_getter(i) for i in left)
     right_keys = set(key_getter(i) for i in right)
     both_keys = left_keys & right_keys
@@ -137,30 +162,6 @@ def name_els_to_string(els):
 
 def as_from_contexts(contexts):
     return set(c.as_.value if c.as_ else id_from_el(c.value) for c in contexts)
-
-
-def id_from_el(arg):
-    if isinstance(arg, nodes.CallArgumentNode):
-        if arg.target is not None:
-            return id_from_el(arg.target)
-        return id_from_el(arg.value)
-    if isinstance(arg, nodes.ListArgumentNode):
-        return '*' + arg.name.value
-    if isinstance(arg, nodes.DictArgumentNode):
-        return '**' + arg.name.value
-    if isinstance(arg, nodes.NameNode):
-        return arg.value
-    if isinstance(arg, nodes.DefArgumentNode):
-        return arg.target.value
-    if isinstance(arg, nodes.DecoratorNode):
-        return id_from_el(arg.value)
-    if isinstance(arg, nodes.StringNode):
-        return arg.value
-    if isinstance(arg, (nodes.AtomtrailersNode, nodes.DottedNameNode)):
-        return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
-                        else '()'
-                        for el in arg)
-    return arg
 
 
 def skip_context_endl(tree, context, index=0):

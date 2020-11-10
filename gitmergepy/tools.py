@@ -162,7 +162,7 @@ def id_from_el(arg):
 
 
 def make_indented(coma_list, handle_brackets=False):
-    if coma_list._indented:
+    if getattr(coma_list, "_indented", False):
         return
 
     # Enclose in () for multi-line

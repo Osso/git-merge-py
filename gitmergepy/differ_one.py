@@ -127,7 +127,7 @@ def diff_def_node(left, right, indent):
         if diff_decorator:
             diff += [ChangeDecorator(left, changes=diff_decorator)]
 
-    diff += compute_diff_iterables(left, right, indent=indent)
+    diff += compute_diff_iterables(left.value, right.value, indent=indent)
 
     return diff
 
@@ -182,8 +182,7 @@ def _check_for_arg_changes(arg):
 
 def diff_call_node(left, right, indent):
     diff = []
-    to_add, to_remove = diff_list(left, right,
-                                  key_getter=id_from_el)
+    to_add, to_remove = diff_list(left, right)
     for arg in to_add:
         logging.debug('%s call new arg %r', indent, short_display_el(arg))
     for arg in to_remove:
@@ -194,9 +193,7 @@ def diff_call_node(left, right, indent):
     if to_remove:
         diff += [RemoveCallArgs(to_remove)]
 
-    changed = changed_in_list(left, right,
-                              key_getter=id_from_el,
-                              value_getter=_check_for_arg_changes)
+    changed = changed_in_list(left, right, value_getter=_check_for_arg_changes)
     for old_arg, new_arg in changed:
         logging.debug('%s call changed args %r', indent,
                       short_display_el(new_arg))

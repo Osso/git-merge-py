@@ -1,7 +1,4 @@
-import types
-
-from redbaron import (RedBaron,
-                      nodes)
+from redbaron import nodes
 
 FIRST = object()
 LAST = object()
@@ -10,16 +7,18 @@ WHITESPACE_NODES = (nodes.EndlNode, )
 
 
 def append_coma_list(target_list, to_add, new_line=False):
-    if new_line:
-        target_list.append("\n")
-    target_list.append(to_add)
+    insert_coma_list(target_list, len(target_list), to_add, new_line=new_line)
 
 
 def insert_coma_list(target_list, position, to_add, new_line=False):
-    if new_line:
-        target_list.insert(position, "\n")
-        position += 1
+    if new_line and target_list.style == "flat":
+        target_list.style = "mixed"
+
     target_list.insert(position, to_add)
+
+    if new_line and position - 1 >= 0:
+        assert target_list._data[position-1][1]
+        target_list._data[position-1][1].second_formatting = ["\n"]
 
 
 def sort_imports(targets):

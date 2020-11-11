@@ -6,19 +6,16 @@ INDENT = "."
 WHITESPACE_NODES = (nodes.EndlNode, )
 
 
-def append_coma_list(target_list, to_add, new_line=False):
-    insert_coma_list(target_list, len(target_list), to_add, new_line=new_line)
+def append_coma_list(target_list, to_add, on_new_line=False):
+    insert_coma_list(target_list, len(target_list), to_add,
+                     on_new_line=on_new_line)
 
 
-def insert_coma_list(target_list, position, to_add, new_line=False):
-    if new_line and target_list.style == "flat":
-        target_list.style = "mixed"
-
-    target_list.insert(position, to_add)
-
-    if new_line and position - 1 >= 0:
-        assert target_list._data[position-1][1]
-        target_list._data[position-1][1].second_formatting = ["\n"]
+def insert_coma_list(target_list, position, to_add, on_new_line=False):
+    if on_new_line:
+        target_list.insert_on_new_line(position, to_add)
+    else:
+        target_list.insert(position, to_add)
 
 
 def sort_imports(targets):

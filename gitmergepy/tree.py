@@ -95,9 +95,9 @@ class RemoveEls:
 
 
 class AddImports:
-    def __init__(self, imports, new_style=None, add_brackets=False):
+    def __init__(self, imports, one_per_line=False, add_brackets=False):
         self.imports = imports
-        self.new_style = new_style
+        self.one_per_line = one_per_line
         self.add_brackets = add_brackets
 
     def __repr__(self):
@@ -108,16 +108,23 @@ class AddImports:
     def apply(self, tree):
         existing_imports = set(el.value for el in tree.targets)
 
-        if self.new_style:
-            tree.targets.style = self.new_style
         if self.add_brackets:
             tree.targets.add_brackets()
 
         for import_el in self.imports:
             if import_el.value not in existing_imports:
-                tree.targets.append(import_el)
-
+                if import_el.endl:
+                    tree.targets.append_with_new_line(import_el.copy())
+                else:
+                    tree.targets.append(import_el.copy())
         sort_imports(tree.targets)
+
+        if self.one_per_line:
+            for _, sep in tree.targets._data:
+                if sep:
+                    sep.second_formatting = ["\n"]
+            tree.targets._synchronise()
+
         return []
 
 
@@ -361,7 +368,7 @@ class ChangeCallArg(ChangeDefArg):
         return tree
 
 
-class ArgOnNewLine:
+class ArgOnNewLine(BaseEl):
     def __repr__(self):
         return "<%s>" % self.__class__.__name__
 
@@ -374,8 +381,6 @@ class ArgOnNewLine:
         else:
             raise Exception(type(tree.parent))
 
-        make_indented(args)
-        tree.previous.replace(args._get_middle_separator())
         return []
 
 
@@ -499,10 +504,10 @@ class ChangeDecorator(ChangeEl):
 
 
 class AddFunArg:
-    def __init__(self, arg, context, new_line):
+    def __init__(self, arg, context, on_new_line):
         self.arg = arg
         self.context = context
-        self.new_line = new_line
+        self.on_new_line = on_new_line
 
     def __repr__(self):
         return "<%s arg=%r context=%r>" % (self.__class__.__name__,
@@ -515,11 +520,12 @@ class AddFunArg:
     def apply(self, tree):
         args = self.get_args(tree)
         arg = self.arg.copy()
-        logging.debug(". adding arg %r to %r",
-                      short_display_el(self.arg), short_display_el(args))
+        logging.debug(". adding arg %r to %r, new_line=%s",
+                      short_display_el(self.arg), short_display_el(args),
+                      self.on_new_line)
 
         if not insert_at_context_coma_list(arg, self.context, args,
-                                           new_line=self.new_line):
+                                           on_new_line=self.on_new_line):
             return [self.make_conflict("Argument context has changed")]
         return []
 

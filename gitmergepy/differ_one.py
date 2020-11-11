@@ -85,7 +85,7 @@ def diff_def_node(left, right, indent):
     for arg in to_add:
         logging.debug('%s fun new arg %r', indent, short_display_el(arg))
         diff += [AddFunArg(arg, context=gather_context(arg),
-                           new_line=arg.previous.endl if arg.previous else False)]
+                           on_new_line=arg.on_new_line)]
     if to_remove:
         for arg in to_remove:
             logging.debug('%s fun old arg %r', indent, short_display_el(arg))
@@ -138,7 +138,7 @@ def diff_import_node(left, right, indent):
     diff = []
     if to_add:
         diff += [AddImports([el for el in to_add],
-                            new_style=right.targets.style,
+                            one_per_line=right.targets.detect_one_per_line(),
                             add_brackets=right.targets.has_brackets())]
     if to_remove:
         diff += [RemoveImports(to_remove)]
@@ -189,7 +189,7 @@ def diff_call_node(left, right, indent):
         logging.debug('%s call old arg %r', indent, short_display_el(arg))
     for arg in to_add:
         diff += [AddCallArg(arg, context=gather_context(arg),
-                            new_line=arg.previous.endl if arg.previous else False)]
+                            on_new_line=arg.previous.endl if arg.previous else False)]
     if to_remove:
         diff += [RemoveCallArgs(to_remove)]
 
@@ -200,7 +200,7 @@ def diff_call_node(left, right, indent):
         diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
         if old_arg.previous and not old_arg.previous.endl and \
                 new_arg.previous and new_arg.previous.endl:
-            diff_arg += [ArgOnNewLine()]
+            diff_arg += [ArgOnNewLine(new_arg)]
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]
     return diff
 

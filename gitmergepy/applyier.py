@@ -36,23 +36,24 @@ def insert_at_context(el, context, tree, endl=None):
     return True
 
 
-def insert_at_context_coma_list(el, context, tree, new_line=False):
+def insert_at_context_coma_list(el, context, tree, on_new_line=False):
     assert isinstance(context, (AfterContext, BeforeContext))
 
     if isinstance(context, AfterContext) and context[-1] is None:
         # insert at the end
-        append_coma_list(tree, el, new_line=new_line)
+        append_coma_list(tree, el, on_new_line=on_new_line)
         return True
 
     if isinstance(context, BeforeContext) and context[-1] is None:
         # insert at the beginning
-        insert_coma_list(tree, position=0, to_add=el, new_line=new_line)
+        insert_coma_list(tree, position=0, to_add=el, on_new_line=on_new_line)
         return True
 
     # Look for context
     index = find_context(tree, context)
     if index:
-        insert_coma_list(tree, position=index, to_add=el, new_line=new_line)
+        insert_coma_list(tree, position=index, to_add=el,
+                         on_new_line=on_new_line)
         return True
 
     return False

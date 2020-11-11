@@ -25,14 +25,10 @@ def compute_diff(left, right, indent=""):
     from .differ_one import COMPUTE_DIFF_ONE_CALLS
 
     if left.dumps() == right.dumps():
-        # logging.debug('%s compute_diff %s = %s', indent,
-        #               type(left).__name__, type(right).__name__)
         logging.debug('%s compute_diff %s = %s', indent,
                       short_display_el(left), short_display_el(right))
         return []
 
-    # logging.debug('%s compute_diff %s != %s', indent,
-    #               type(left).__name__, type(right).__name__)
     logging.debug('%s compute_diff %s != %s', indent,
                   short_display_el(left), short_display_el(right))
 

@@ -72,9 +72,9 @@ def id_from_el(arg):
             return id_from_el(arg.target)
         return id_from_el(arg.value)
     if isinstance(arg, nodes.ListArgumentNode):
-        return '*' + arg.name.value
+        return '*' + id_from_el(arg.value)
     if isinstance(arg, nodes.DictArgumentNode):
-        return '**' + arg.name.value
+        return '**' + id_from_el(arg.value)
     if isinstance(arg, nodes.NameNode):
         return arg.value
     if isinstance(arg, nodes.DefArgumentNode):

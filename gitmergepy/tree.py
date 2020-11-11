@@ -368,19 +368,14 @@ class ChangeCallArg(ChangeDefArg):
         return tree
 
 
-class ArgOnNewLine(BaseEl):
+class ArgOnNewLine:
     def __repr__(self):
         return "<%s>" % self.__class__.__name__
 
     def apply(self, tree):
         logging.debug(". putting arg %s on a new line", short_display_el(tree))
-        if isinstance(tree.parent, nodes.DefNode):
-            args = tree.parent.arguments
-        elif isinstance(tree.parent, nodes.CallNode):
-            args = tree.parent
-        else:
-            raise Exception(type(tree.parent))
-
+        tree.parent.put_on_new_line(tree)
+        tree.parent._synchronise()
         return []
 
 

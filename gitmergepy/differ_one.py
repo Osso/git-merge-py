@@ -198,9 +198,8 @@ def diff_call_node(left, right, indent):
         logging.debug('%s call changed args %r', indent,
                       short_display_el(new_arg))
         diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
-        if old_arg.previous and not old_arg.previous.endl and \
-                new_arg.previous and new_arg.previous.endl:
-            diff_arg += [ArgOnNewLine(new_arg)]
+        if not old_arg.on_new_line and new_arg.on_new_line:
+            diff_arg += [ArgOnNewLine()]
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]
     return diff
 

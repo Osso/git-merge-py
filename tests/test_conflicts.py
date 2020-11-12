@@ -42,7 +42,7 @@ with fun() as out:
 """
     expected = """# <<<<<<<<<<
 # Reason Multiple with nodes found
-# <RemoveWith el="with fun() as out:" context='# stuff|new line indent=0'>
+# <RemoveWith el="with fun() as out:" context='# stuff'>
 # with fun() as out:
 #     call('hello')
 # # more stuff

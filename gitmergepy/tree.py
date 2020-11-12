@@ -654,11 +654,15 @@ class ChangeIndentation:
         self.relative_indentation = relative_indentation
 
     def apply(self, tree):
-        logging.debug('. indentation %d to %d',
-                      len(tree.indentation), len(self.relative_indentation))
-        tree.indentation = self.relative_indentation
+        logging.debug('. indentation %d delta %d',
+                      len(tree.indentation), self.relative_indentation)
+        if self.relative_indentation >= 0:
+            tree.indentation += self.relative_indentation * " "
+        else:
+            tree.indentation = tree.indentation[:self.relative_indentation]
+
         return []
 
     def __repr__(self):
         return "<%s relative_indentation=\"%s\">" % (self.__class__.__name__,
-                                                len(self.relative_indentation))
+                                                     self.relative_indentation)

@@ -32,10 +32,7 @@ def compute_diff(left, right, indent=""):
     logging.debug('%s compute_diff %s != %s', indent,
                   short_display_el(left), short_display_el(right))
 
-    diff = []
-    if left.indentation != right.indentation:
-        delta = len(right.indentation) - len(left.indentation)
-        diff += [ChangeIndentation(delta)]
+    diff = diff_indent(left, right)
 
     if type(left) != type(right) or type(left) not in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
         diff = [Replace(new_value=right, old_value=left)]
@@ -93,7 +90,11 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             # Exactly same element
             logging.debug("%s same el %r", indent+INDENT,
                           short_display_el(el_right))
-            stack_left.pop(0)
+            if stack_left[0].indentation != el_right.indentation:
+                diff += _changed_el(el_right, stack_left, indent, context_class)
+            else:
+                stack_left.pop(0)
+
         # Look forward a few elements to check if we have a match
         elif any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
@@ -102,10 +103,15 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 if not stack_left or same_el(stack_left[0], el_right):
                     break
                 el = stack_left.pop(0)
+                diff += diff_indent(el, el_right)
+
                 logging.debug("%s removing %r", indent+INDENT,
                               short_display_el(el))
                 els.append(el)
-            stack_left.pop(0)
+            if stack_left[0].indentation != el_right.indentation:
+                diff += _changed_el(el_right, stack_left, indent, context_class)
+            else:
+                stack_left.pop(0)
             if els:
                 diff += [RemoveEls(els, context=gather_context(els[0]))]
         elif isinstance(el_right, type(stack_left[0])) and \
@@ -141,3 +147,12 @@ def add_to_diff(diff, el, indent):
         context = gather_context(el)
         logging.debug("%s context %r", indent, short_context(context))
         diff += [AddEls([el], context=context)]
+
+
+def diff_indent(left, right):
+    diff = []
+    if left.indentation != right.indentation:
+        delta = len(right.indentation) - len(left.indentation)
+        diff += [ChangeIndentation(delta)]
+
+    return diff

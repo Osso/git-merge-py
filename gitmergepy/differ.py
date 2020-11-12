@@ -73,7 +73,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             orig_with_node = stack_left.pop(0)
             with_node = orig_with_node.copy()
             with_node.decrease_indentation()
-            stack_left = list(with_node[1:]) + stack_left
+            stack_left = list(with_node) + stack_left
             diff += [RemoveWith(orig_with_node, context=gather_context(el_right))]
 
         if not stack_left:

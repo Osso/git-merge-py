@@ -521,13 +521,13 @@ class AddFunArg:
 
         if not insert_at_context_coma_list(arg, self.context, args,
                                            on_new_line=self.on_new_line):
-            return [self.make_conflict("Argument context has changed")]
+            args.append(arg)
         return []
 
     def make_conflict(self, reason):
-        el = self.arg.parent.copy()
+        el = self.arg.parent.parent.copy()
         el.decorators.clear()
-        el.clear()
+        el.value.clear()
         return Conflict([el], self, reason=reason)
 
 

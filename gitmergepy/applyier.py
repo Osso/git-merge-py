@@ -90,6 +90,5 @@ def add_conflict(source_el, conflict):
     if conflict.els:
         for el in conflict.els:
             for line in el.dumps().splitlines():
-                _insert(line.strip())
+                _insert(line.rstrip())
     _insert(after_text)
-    tree.insert(index, "\n")

@@ -153,7 +153,7 @@ def get_name_els_from_call(el):
 
 
 def name_els_to_string(els):
-    return '.'.join(el.name.value for el in els)
+    return '.'.join(el.dumps() for el in els)
 
 
 def as_from_contexts(contexts):

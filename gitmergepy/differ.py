@@ -94,7 +94,13 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 diff += _changed_el(el_right, stack_left, indent, context_class)
             else:
                 stack_left.pop(0)
-
+        # Custom handlers for def, class, etc.
+        elif isinstance(el_right, type(stack_left[0])) and \
+                type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
+            diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left,
+                                                                el_right,
+                                                                indent+INDENT,
+                                                                context_class)
         # Look forward a few elements to check if we have a match
         elif any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
@@ -114,12 +120,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 stack_left.pop(0)
             if els:
                 diff += [RemoveEls(els, context=gather_context(els[0]))]
-        elif isinstance(el_right, type(stack_left[0])) and \
-                type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
-            diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left,
-                                                                el_right,
-                                                                indent+INDENT,
-                                                                context_class)
         elif guess_if_same_el(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,
                           short_display_el(el_right))

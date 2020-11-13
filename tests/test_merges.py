@@ -376,8 +376,8 @@ else:
 if cond:
     pass
 else:
-    # passing here
     call('hello')
+    # passing here
 """
     _test_merge_changes(base, current, other, expected)
 

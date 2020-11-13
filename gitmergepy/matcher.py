@@ -84,7 +84,6 @@ def match_el_guess(left, right, context):
     if isinstance(left, nodes.DefNode):
         return left.name == right.name
     if isinstance(left, nodes.AtomtrailersNode):
-        import pdb; pdb.set_trace()
         name_els_left = get_name_els_from_call(left)
         name_els_right = get_name_els_from_call(right)
         return name_els_to_string(name_els_left) == name_els_to_string(name_els_right)

@@ -294,7 +294,6 @@ class ChangeEl(BaseEl):
 
         el = find_el(tree, self.el, self.context)
         if el is None:
-            import pdb; pdb.set_trace()
             logging.debug(". not found")
         else:
             logging.debug(". found")

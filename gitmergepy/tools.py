@@ -148,7 +148,7 @@ def get_name_els_from_call(el):
     for sub_el in el:
         if not isinstance(sub_el, nodes.NameNode):
             break
-        name_els.append(el)
+        name_els.append(sub_el)
     return name_els
 
 

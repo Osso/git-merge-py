@@ -573,9 +573,9 @@ class RemoveFunArgs:
         to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
         for el in args:
-            logging.debug(". removing arg %r from %r",
-                          short_display_el(el), short_display_el(args))
             if id_from_el(el) in to_remove_values:
+                logging.debug(". removing arg %r from %r",
+                              short_display_el(el), short_display_el(args))
                 args.remove(el)
         return []
 

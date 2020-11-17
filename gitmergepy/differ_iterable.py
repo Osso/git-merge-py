@@ -97,7 +97,8 @@ def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
             diff += [context_class(el_left, el_diff, context=gather_context(el_left))]
         logging.debug("%s modified call diff %r", indent+INDENT, diff)
     else:
-        logging.debug("%s new AtomtrailersNode %r", indent+INDENT, el_right.name)
+        logging.debug("%s new AtomtrailersNode %r", indent+INDENT,
+                      el_right.dumps())
         add_to_diff(diff, el_right, indent+2*INDENT)
 
     return diff

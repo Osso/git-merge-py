@@ -643,6 +643,10 @@ class RemoveWith(ElWithContext):
 
         with_node.decrease_indentation()
         index = with_node.parent.index(with_node) + 1
+        for el, sep in with_node.value._data:
+            el.parent = with_node.parent
+            if sep:
+                sep.parent = with_node.parent
         with_node.parent._data[index:index] = with_node.value._data
         with_node.parent._synchronise()
         tree.remove(with_node)

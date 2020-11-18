@@ -274,12 +274,7 @@ def diff_else_node(left, right, indent):
 
 
 def diff_endl_node(left, right, indent):
-    diff = []
-    if left.indent != right.indent:
-        logging.debug('%s changed indentation %d to %d', indent,
-                      len(left.indent), len(right.indent))
-        diff += [ChangeIndentation(right.indent)]
-    return diff
+    return []
 
 
 def diff_return_node(left, right, indent):
@@ -304,21 +299,11 @@ def diff_tuple_node(left, right, indent):
 
 
 def diff_list_argument_node(left, right, indent):
-    diff = compute_diff(left.value, right.value, indent+INDENT)
-    if left.indent != right.indent:
-        logging.debug('%s changed indentation %d to %d', indent,
-                      len(left.indent), len(right.indent))
-        diff += [ChangeIndentation(right.indent)]
-    return diff
+    return compute_diff(left.value, right.value, indent+INDENT)
 
 
 def diff_dict_argument_node(left, right, indent):
-    diff = compute_diff(left.value, right.value, indent+INDENT)
-    if left.indent != right.indent:
-        logging.debug('%s changed indentation %d to %d', indent,
-                      len(left.indent), len(right.indent))
-        diff += [ChangeIndentation(right.indent)]
-    return diff
+    return compute_diff(left.value, right.value, indent+INDENT)
 
 
 COMPUTE_DIFF_ONE_CALLS = {

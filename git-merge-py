@@ -19,7 +19,8 @@ def main():
     current_file = sys.argv[1]
     base_file = sys.argv[2]
     other_file = sys.argv[3]
-    merge_files(base_file, current_file, other_file)
+    r = merge_files(base_file, current_file, other_file)
+    sys.exit(0 if r else 1)
 
 
 def merge_files(base_file, current_file, other_file):
@@ -27,8 +28,10 @@ def merge_files(base_file, current_file, other_file):
     current_ast = parse_file(current_file)
     other_ast = parse_file(other_file)
     merge_ast(base_ast, current_ast, other_ast)
+    output = other_ast.dumps()
     with open('current.py', 'w') as out:
-        out.write(other_ast.dumps())
+        out.write(output)
+    return ">>>>>>>>>>>>>>>>>>>" not in output
 
 
 def merge_ast(base_ast, current_ast, other_ast):

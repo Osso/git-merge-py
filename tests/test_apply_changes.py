@@ -795,3 +795,16 @@ def fun(arg1,
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_change_fun_arg_new_line_kwargs():
+    base = """
+def fun(arg1, **arg2):
+    pass
+"""
+    current = """
+def fun(arg1,
+        **arg2):
+    pass
+"""
+    _test_apply_changes(base, current)

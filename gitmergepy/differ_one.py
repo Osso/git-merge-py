@@ -303,6 +303,24 @@ def diff_tuple_node(left, right, indent):
     return []
 
 
+def diff_list_argument_node(left, right, indent):
+    diff = compute_diff(left.value, right.value, indent+INDENT)
+    if left.indent != right.indent:
+        logging.debug('%s changed indentation %d to %d', indent,
+                      len(left.indent), len(right.indent))
+        diff += [ChangeIndentation(right.indent)]
+    return diff
+
+
+def diff_dict_argument_node(left, right, indent):
+    diff = compute_diff(left.value, right.value, indent+INDENT)
+    if left.indent != right.indent:
+        logging.debug('%s changed indentation %d to %d', indent,
+                      len(left.indent), len(right.indent))
+        diff += [ChangeIndentation(right.indent)]
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -324,4 +342,6 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.ReturnNode: diff_return_node,
     nodes.ListNode: diff_list_node,
     nodes.TupleNode: diff_tuple_node,
+    nodes.ListArgumentNode: diff_list_argument_node,
+    nodes.DictArgumentNode: diff_dict_argument_node,
 }

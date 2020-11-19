@@ -86,7 +86,7 @@ def id_from_el(arg):
     if isinstance(arg, nodes.DotNode):
         return '.'
     if isinstance(arg, nodes.GetitemNode):
-        return '[' + arg.key + ']'
+        return '[' + id_from_el(arg.key) + ']'
     if isinstance(arg, (nodes.AtomtrailersNode, nodes.DottedNameNode)):
         return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
                         else '()'

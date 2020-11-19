@@ -836,3 +836,22 @@ def fun(arg1,
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_put_on_new_line():
+    base = """
+def fun(session: SQLSession, service="JOYN",
+        pta_code=None, price_range=None,
+        category=None, csu_state=None):
+   pass
+"""
+    current = """
+def fun(session: SQLSession,
+        service="JOYN",
+        pta_code=None,
+        price_range=None,
+        category=None,
+        csu_state=None):
+   pass
+"""
+    _test_apply_changes(base, current)

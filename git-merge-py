@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import logging
+import pdb
 import sys
 
 from redbaron import RedBaron
@@ -19,8 +20,13 @@ def main():
     current_file = sys.argv[1]
     base_file = sys.argv[2]
     other_file = sys.argv[3]
-    r = merge_files(base_file, current_file, other_file)
-    sys.exit(0 if r else 1)
+
+    try:
+        r = merge_files(base_file, current_file, other_file)
+    except Exception as e:
+        pdb.post_mortem(e.__traceback__)
+    else:
+        sys.exit(0 if r else 1)
 
 
 def merge_files(base_file, current_file, other_file):
@@ -29,7 +35,7 @@ def merge_files(base_file, current_file, other_file):
     other_ast = parse_file(other_file)
     merge_ast(base_ast, current_ast, other_ast)
     output = other_ast.dumps()
-    with open('current.py', 'w') as out:
+    with open(base_file, 'w') as out:
         out.write(output)
     return ">>>>>>>>>>>>>>>>>>>" not in output
 

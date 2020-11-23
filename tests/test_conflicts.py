@@ -1,6 +1,7 @@
 import logging
 
-from redbaron import RedBaron
+from redbaron import (RedBaron,
+                      nodes)
 
 from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
@@ -21,6 +22,7 @@ def _test_merge_changes(base, current, other, expected):
     logging.debug(other_ast.dumps())
     logging.debug("=========")
     assert other_ast.dumps() == expected
+    return other_ast
 
 
 def test_change_with():
@@ -55,3 +57,34 @@ with fun() as out:
 # more stuff
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_if_else():
+    base = """
+if cond:
+    # context
+    pass
+"""
+    current = """
+if cond:
+    # context
+    # text
+    pass
+"""
+    other = """
+if cond:
+    # changed context
+    pass
+"""
+    expected = """
+# <<<<<<<<<<
+# Reason context not found
+# <AddEls to_add="    # text" context='    # context'>
+#     # text
+# >>>>>>>>>>
+if cond:
+    # changed context
+    pass
+"""
+    ast = _test_merge_changes(base, current, other, expected)
+    assert isinstance(ast[0], nodes.CommentNode)

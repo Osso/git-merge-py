@@ -1,5 +1,6 @@
 from redbaron import (RedBaron,
                       nodes)
+from redbaron.proxy_list import ProxyList
 
 from .context import (AfterContext,
                       BeforeContext,
@@ -65,8 +66,9 @@ def add_conflicts(source_el, conflicts):
 
 
 def add_conflict(source_el, conflict):
-    if isinstance(source_el.parent, nodes.IfelseblockNode):
-        source_el = source_el.parent
+    if isinstance(source_el.parent, ProxyList) and \
+       isinstance(source_el.parent.parent, nodes.IfelseblockNode):
+        source_el = source_el.parent.parent
 
     if conflict.insert_before and source_el.parent is not None:
         tree = source_el.parent

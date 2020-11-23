@@ -1,6 +1,7 @@
 import logging
 
 from redbaron import nodes
+from redbaron.base_nodes import NodeList
 
 from .applyier import (add_conflict,
                        add_conflicts,
@@ -661,6 +662,13 @@ class ChangeIndentation:
         self.relative_indentation = relative_indentation
 
     def apply(self, tree):
+        if isinstance(tree, NodeList):
+            if not tree:
+                logging.debug('. empty list, skipping')
+                return []
+            logging.debug('. found list, using first el')
+            tree = tree[0]
+
         logging.debug('. indentation %d delta %d',
                       len(tree.indentation), self.relative_indentation)
         if self.relative_indentation >= 0:

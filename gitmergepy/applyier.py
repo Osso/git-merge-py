@@ -22,7 +22,7 @@ def apply_changes(tree, changes):
     return conflicts
 
 
-def insert_at_context(el, context, tree, endl=None):
+def insert_at_context(el, context, tree):
     if context is LAST:  # insert at the end
         tree.append(el)
     elif context[-1] is None:  # insert at the beginning

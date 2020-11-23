@@ -455,16 +455,8 @@ class MoveFunction(ChangeEl):
         fun = find_func(tree, self.el)
         # If function still exists, move it then apply changes
         if fun:
-            index = tree.index(fun)
-            # Deal with indentation or newline before element
-            if tree.parent is not None:
-                assert index > 1
-                endl = tree.pop(index - 1)
-            else:
-                endl = None
-
             tree.remove(fun)
-            if not insert_at_context(fun, self.context, tree, endl=endl):
+            if not insert_at_context(fun, self.context, tree):
                 tree.append(fun)
                 add_conflict(tree, Conflict([], self,
                                             reason="Context not found, added at the end"))

@@ -867,3 +867,19 @@ def fun(session: SQLSession,
    pass
 """
     _test_apply_changes(base, current)
+
+
+def test_if_change_indent():
+    base = """
+    if cond:
+        pass
+    elif cond:
+        pass
+"""
+    current = """
+if cond:
+        pass
+elif cond:
+    pass
+"""
+    _test_apply_changes(base, current)

@@ -151,6 +151,9 @@ def add_to_diff(diff, el, indent):
 
 
 def diff_indent(left, right):
+    assert not isinstance(left, nodes.NodeList)
+    assert not isinstance(right, nodes.NodeList)
+
     diff = []
     if left.indentation != right.indentation:
         delta = len(right.indentation) - len(left.indentation)

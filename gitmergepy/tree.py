@@ -257,7 +257,10 @@ class ReplaceAnnotation:
     def apply(self, tree):
         if self.new_value is not None and tree.annotation is None:
             tree.annotation_second_formatting = self.new_value.parent.annotation_second_formatting
-        tree.annotation = self.new_value.copy()
+        if self.new_value is not None:
+            tree.annotation = self.new_value.copy()
+        else:
+            tree.annotation = None
         return []
 
     def __repr__(self):

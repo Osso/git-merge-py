@@ -784,6 +784,18 @@ def fun(arg, arg2: my_type):
     _test_apply_changes(base, current)
 
 
+def test_argument_annotation_remove():
+    base = """
+def fun(arg: my_type):
+    pass
+"""
+    current = """
+def fun(arg):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
 def test_change_fun_arg_new_line():
     base = """
 def fun(arg1, arg2):

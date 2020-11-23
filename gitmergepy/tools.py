@@ -83,6 +83,8 @@ def id_from_el(arg):
         return id_from_el(arg.value)
     if isinstance(arg, nodes.StringNode):
         return arg.value
+    if isinstance(arg, nodes.IntNode):
+        return arg.value
     if isinstance(arg, nodes.DotNode):
         return '.'
     if isinstance(arg, nodes.GetitemNode):

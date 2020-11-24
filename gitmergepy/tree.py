@@ -493,7 +493,7 @@ class ChangeDecorator(ChangeEl):
 
     def apply(self, tree):
         for decorator in tree.decorators:
-            if decorator.name.value == self.el.name.value:
+            if id_from_el(decorator) == id_from_el(self.el):
                 return apply_changes(decorator, self.changes)
         return []
 

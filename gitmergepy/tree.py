@@ -487,6 +487,10 @@ class ChangeAtomtrailersCall(ChangeEl):
 
 
 class ChangeDecorator(ChangeEl):
+    def __init__(self, el, changes, context=None):
+        assert isinstance(el, nodes.DecoratorNode)
+        super().__init__(el, changes=changes, context=context)
+
     def apply(self, tree):
         for decorator in tree.decorators:
             if decorator.name.value == self.el.name.value:

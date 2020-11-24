@@ -511,7 +511,7 @@ class AddFunArg:
     def apply(self, tree):
         args = self.get_args(tree)
         arg = self.arg.copy()
-        logging.debug(". adding arg %r to %r, new_line=%s",
+        logging.debug(". adding arg %r to %r, new_line=%r",
                       short_display_el(self.arg), short_display_el(args),
                       self.on_new_line)
 

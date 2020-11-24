@@ -1,6 +1,7 @@
 from redbaron import (RedBaron,
                       nodes)
-from redbaron.proxy_list import ProxyList
+from redbaron.proxy_list import (CodeProxyList,
+                                 ProxyList)
 
 from .context import (AfterContext,
                       BeforeContext,
@@ -77,8 +78,11 @@ def add_conflict(source_el, conflict):
         tree = source_el
         index = 0
 
-    if isinstance(tree, nodes.CommaProxyList):
+    while tree.parent and not isinstance(tree, CodeProxyList):
         tree = tree.parent
+
+    # We can only add code to add CodeProxyList
+    assert isinstance(tree, CodeProxyList)
 
     def _insert(text):
         nonlocal index

@@ -246,7 +246,7 @@ def diff_class_node(left, right, indent):
         elif right_el.call:
             diff_decorator += [AddAllDecoratorArgs(right_el.call)]
         if diff_decorator:
-            diff += [ChangeDecorator(left, changes=diff_decorator)]
+            diff += [ChangeDecorator(left_el, changes=diff_decorator)]
 
     diff += compute_diff_iterables(left.value, right.value, indent=indent+INDENT)
 

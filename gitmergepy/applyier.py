@@ -77,6 +77,9 @@ def add_conflict(source_el, conflict):
         tree = source_el
         index = 0
 
+    if isinstance(tree, nodes.CommaProxyList):
+        tree = tree.parent
+
     def _insert(text):
         nonlocal index
         tree.insert(index, "# " + text + "\n")

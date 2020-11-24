@@ -93,7 +93,7 @@ def id_from_el(arg):
         return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
                         else '()'
                         for el in arg)
-    return arg
+    return str(arg)
 
 
 def diff_list(left, right, key_getter=id_from_el, value_getter=None):

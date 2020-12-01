@@ -10,7 +10,8 @@ from .matcher import (find_func,
 from .tools import (INDENT,
                     id_from_el,
                     short_display_el)
-from .tree import (ChangeClass,
+from .tree import (AddImports,
+                   ChangeClass,
                    ChangeFun,
                    ChangeImport,
                    MoveFunction)
@@ -112,12 +113,16 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
 
     el = find_import(stack_left, el_right)
     if el:
-        diff += _changed_el(el_right, stack_left, indent=indent,
-                            context_class=ChangeImport)
+        el_diff = compute_diff(el, el_right, indent=indent+INDENT)
+        if el_diff:
+            diff += [ChangeImport(el, el_diff, context=gather_context(el))]
+        stack_left.remove(el)
+
     else:
         # new import
         logging.debug("%s new import %r", indent+INDENT, id_from_el(el_right))
-        add_to_diff(diff, el_right, indent+2*INDENT)
+        diff += [ChangeImport(el_right, changes=[AddImports(el_right.targets)],
+                              context=gather_context(el_right))]
 
     return diff
 

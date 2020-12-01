@@ -178,7 +178,7 @@ class AddEls:
                 smaller_context = self.context.copy()
                 while isinstance(smaller_context[0], nodes.EndlNode):
                     del smaller_context[0]
-                logging.debug("smaller_context %r", short_context(smaller_context))
+                logging.debug("    smaller_context %r", short_context(smaller_context))
                 index = find_context(tree, smaller_context)
                 if index is None:
                     logging.debug("    context not found")
@@ -436,13 +436,14 @@ class ChangeImport(ChangeEl):
 
     def apply(self, tree):
         logging.debug("changing import %r", short_display_el(self.el))
-        el = find_import(tree, self.el)
-        if not el:
-            logging.debug(". not found, adding")
-            return AddEls([self.el], context=self.context).apply(tree)
+        if self.el:
+            el = find_import(tree, self.el)
+            if el:
+                logging.debug(". found")
+                return apply_changes(el, self.changes)
 
-        logging.debug(". found")
-        return apply_changes(el, self.changes)
+        logging.debug(". not found, adding")
+        return AddEls([self.el], context=self.context).apply(tree)
 
 
 class ChangeClass(ChangeEl):

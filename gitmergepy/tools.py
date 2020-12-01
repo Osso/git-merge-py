@@ -1,4 +1,5 @@
 from redbaron import nodes
+from redbaron.proxy_list import DotProxyList
 
 FIRST = object()
 LAST = object()
@@ -67,6 +68,8 @@ def short_context(context):
 
 
 def id_from_el(arg):
+    if isinstance(arg, nodes.FromImportNode):
+        return id_from_el(arg.value)
     if isinstance(arg, nodes.CallArgumentNode):
         if arg.target is not None:
             return id_from_el(arg.target)
@@ -89,7 +92,8 @@ def id_from_el(arg):
         return '.'
     if isinstance(arg, nodes.GetitemNode):
         return '[' + id_from_el(arg.value) + ']'
-    if isinstance(arg, (nodes.AtomtrailersNode, nodes.DottedNameNode)):
+    if isinstance(arg, (nodes.AtomtrailersNode, nodes.DottedNameNode,
+                        DotProxyList)):
         return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
                         else '()'
                         for el in arg)

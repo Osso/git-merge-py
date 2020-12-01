@@ -12,7 +12,8 @@ from .context import (AfterContext,
                       find_context)
 from .matcher import (find_class,
                       find_el,
-                      find_func)
+                      find_func,
+                      find_import)
 from .tools import (apply_diff_to_list,
                     as_from_contexts,
                     get_call_els,
@@ -422,6 +423,26 @@ class ChangeFun(ChangeEl):
             add_conflicts(el, conflicts)
 
         return []
+
+
+class ChangeImport(ChangeEl):
+    def __init__(self, el, changes, context=None):
+        super().__init__(el, changes=changes, context=context)
+
+    def __repr__(self):
+        return "<%s el=\"%s\" changes=%r context=%r>" % (
+            self.__class__.__name__, short_display_el(self.el), self.changes,
+            short_context(self.context))
+
+    def apply(self, tree):
+        logging.debug("changing import %r", short_display_el(self.el))
+        el = find_import(tree, self.el)
+        if not el:
+            logging.debug(". not found, adding")
+            return AddEls([self.el], context=self.context).apply(tree)
+
+        logging.debug(". found")
+        return apply_changes(el, self.changes)
 
 
 class ChangeClass(ChangeEl):

@@ -1,6 +1,7 @@
 from redbaron import nodes
 
 from .tools import (get_name_els_from_call,
+                    id_from_el,
                     name_els_to_string,
                     same_el)
 
@@ -40,6 +41,17 @@ def find_class(tree, class_node):
     for el in tree:
         if isinstance(el, nodes.ClassNode):
             if class_node.name == el.name:
+                return el
+
+    return None
+
+
+def find_import(tree, import_node):
+    import_types = (nodes.FromImportNode, nodes.ImportNode)
+    assert isinstance(import_node, import_types)
+    for el in tree:
+        if isinstance(el, import_types):
+            if id_from_el(el) == id_from_el(import_node):
                 return el
 
     return None

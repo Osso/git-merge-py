@@ -5,12 +5,14 @@ from redbaron import nodes
 from .context import gather_context
 from .differ import (add_to_diff,
                      compute_diff)
-from .matcher import find_func
+from .matcher import (find_func,
+                      find_import)
 from .tools import (INDENT,
                     id_from_el,
                     short_display_el)
 from .tree import (ChangeClass,
                    ChangeFun,
+                   ChangeImport,
                    MoveFunction)
 
 
@@ -104,8 +106,25 @@ def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
     return diff
 
 
+def diff_from_import_node(stack_left, el_right, indent, context_class):
+    logging.debug("%s changed import %r", indent, short_display_el(el_right))
+    diff = []
+
+    el = find_import(stack_left, el_right)
+    if el:
+        diff += _changed_el(el_right, stack_left, indent=indent,
+                            context_class=ChangeImport)
+    else:
+        # new import
+        logging.debug("%s new import %r", indent+INDENT, id_from_el(el_right))
+        add_to_diff(diff, el_right, indent+2*INDENT)
+
+    return diff
+
+
 COMPUTE_DIFF_ITERABLE_CALLS = {
     nodes.DefNode: diff_def_node,
     nodes.ClassNode: diff_class_node,
     nodes.AtomtrailersNode: diff_atom_trailer_node,
+    nodes.FromImportNode: diff_from_import_node,
 }

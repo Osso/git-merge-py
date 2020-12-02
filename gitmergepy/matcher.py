@@ -5,6 +5,8 @@ from .tools import (get_name_els_from_call,
                     name_els_to_string,
                     same_el)
 
+IF_SIMILARITY_THRESHOLD = 0.5
+
 
 def guess_if_same_el(left, right):
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
@@ -89,7 +91,7 @@ def find_single(tree, types):
     return None
 
 
-def match_el_guess(left, right, context):
+def match_el_guess(left, right, context=None):
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
 
@@ -106,7 +108,7 @@ def match_el_guess(left, right, context):
     if isinstance(left, nodes.WithNode):
         return left.contexts.dumps() == right.contexts.dumps()
     if isinstance(left, (nodes.IfNode, nodes.ElseNode)):
-        return True
+        return if_similarity(left, right) > IF_SIMILARITY_THRESHOLD
 
     return False
 
@@ -120,6 +122,12 @@ def find_el_strong(tree, target_el, context):
 
     if isinstance(target_el, nodes.ClassNode):
         el = find_class(tree, target_el)
+        if el is not None:
+            return el
+
+    if isinstance(target_el, nodes.FromImportNode):
+        el = find_import(tree, target_el)
+        import pdb; pdb.set_trace()
         if el is not None:
             return el
 
@@ -199,7 +207,7 @@ def find_el_exact_match_with_context(tree, target_el, context):
 
 def find_if(tree, target_el):
     ifs_found = [el for el in tree.find_all('ifelseblock')
-                 if if_similarity(target_el, el) > 0.5]
+                 if if_similarity(target_el, el) > IF_SIMILARITY_THRESHOLD]
     if len(ifs_found) == 1:
         return ifs_found[0]
     return None

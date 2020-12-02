@@ -1,5 +1,6 @@
 from redbaron import nodes
 
+from .matcher import match_el_guess
 from .tools import (WHITESPACE_NODES,
                     same_el)
 
@@ -26,7 +27,7 @@ class BeforeContext(list):
             return False
 
         for context_el, el in zip(reversed(context), els):
-            if not same_el(context_el, el):
+            if not same_el(context_el, el) and not match_el_guess(context_el, el):
                 return False
 
         return True

@@ -111,18 +111,31 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
     logging.debug("%s changed import %r", indent, short_display_el(el_right))
     diff = []
 
+    def remove_import_if_not_found(stack):
+        # Try to keep in left and right stacks in sync, so that empty lines
+        # can also be matched
+        if isinstance(stack_left[0], (nodes.FromImportNode, nodes.ImportNode)):
+            if not find_import(stack_left, el_right.parent):
+                stack_left.pop(0)
+
     el = find_import(stack_left, el_right)
     if el:
         el_diff = compute_diff(el, el_right, indent=indent+INDENT)
         if el_diff:
             diff += [ChangeImport(el, el_diff, context=gather_context(el))]
-        stack_left.remove(el)
+
+        if el is stack_left[0]:
+            stack_left.pop(0)
+        else:
+            stack_left.remove(el)
+            remove_import_if_not_found(stack_left)
 
     else:
         # new import
         logging.debug("%s new import %r", indent+INDENT, id_from_el(el_right))
         diff += [ChangeImport(el_right, changes=[AddImports(el_right.targets)],
                               context=gather_context(el_right))]
+        remove_import_if_not_found(stack_left)
 
     return diff
 

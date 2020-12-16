@@ -86,7 +86,8 @@ def add_conflict(source_el, conflict):
 
     def _insert(text):
         nonlocal index
-        tree.insert(index, "# " + text + "\n")
+        txt = "# " + text
+        tree.insert(index, txt.strip() + "\n")
         index += 1
 
     before_text = "<<<<<<<<<<"

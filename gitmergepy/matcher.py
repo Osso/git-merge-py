@@ -12,14 +12,11 @@ def guess_if_same_el(left, right):
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
 
-    if isinstance(left, nodes.WithNode):
+    if isinstance(left, (nodes.WithNode, nodes.IfelseblockNode,
+                         nodes.IfNode, nodes.ElseNode, nodes.EndlNode,
+                         nodes.ReturnNode)):
         return True
-    if isinstance(left, nodes.IfelseblockNode):
-        return True
-    if isinstance(left, nodes.EndlNode):
-        return True
-    if isinstance(left, nodes.ReturnNode):
-        return True
+
     if match_el_guess(left, right, None):
         return True
 
@@ -127,7 +124,6 @@ def find_el_strong(tree, target_el, context):
 
     if isinstance(target_el, nodes.FromImportNode):
         el = find_import(tree, target_el)
-        import pdb; pdb.set_trace()
         if el is not None:
             return el
 

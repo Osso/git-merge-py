@@ -6,6 +6,7 @@ from .tools import (get_name_els_from_call,
                     same_el)
 
 IF_SIMILARITY_THRESHOLD = 0.5
+DICT_SIMILARITY_THRESHOLD = 0.5
 
 
 def guess_if_same_el(left, right):
@@ -106,6 +107,8 @@ def match_el_guess(left, right, context=None):
         return left.contexts.dumps() == right.contexts.dumps()
     if isinstance(left, (nodes.IfNode, nodes.ElseNode)):
         return if_similarity(left, right) > IF_SIMILARITY_THRESHOLD
+    if isinstance(left, nodes.DictNode):
+        return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
 
     return False
 
@@ -215,3 +218,21 @@ def if_similarity(left, right):
     same_lines_count = len(left_lines & right_lines)
     total_lines_count = max(len(left_lines), len(right_lines))
     return same_lines_count / total_lines_count
+
+
+def dict_similarity(left, right):
+    left_lines = set(item.key.dumps() for item in left)
+    right_lines = set(item.key.dumps() for item in right)
+    same_lines_count = len(left_lines & right_lines)
+    total_lines_count = max(len(left_lines), len(right_lines))
+    return same_lines_count / total_lines_count
+
+
+def find_key(item, dict_node):
+    key_str = item.key.dumps()
+
+    for dict_item in dict_node.value:
+        if dict_item.key.dumps() == key_str:
+            return dict_item
+
+    return None

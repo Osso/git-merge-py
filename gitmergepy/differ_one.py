@@ -15,6 +15,7 @@ from .tools import (INDENT,
 from .tree import (AddAllDecoratorArgs,
                    AddCallArg,
                    AddDecorator,
+                   AddDictItem,
                    AddFunArg,
                    AddImports,
                    ArgOnNewLine,
@@ -26,11 +27,13 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
                    ChangeDefArg,
+                   ChangeDictItem,
                    ChangeReturn,
                    ChangeValue,
                    RemoveAllDecoratorArgs,
                    RemoveCallArgs,
                    RemoveDecorators,
+                   RemoveDictItem,
                    RemoveFunArgs,
                    RemoveImports,
                    Replace,
@@ -305,6 +308,29 @@ def diff_dict_argument_node(left, right, indent):
     return compute_diff(left.value, right.value, indent+INDENT)
 
 
+def diff_dict_node(left, right, indent):
+    diff = []
+
+    to_add, to_remove = diff_list(left, right)
+
+    for item in to_add:
+        logging.debug('%s dict new key %r', indent, short_display_el(item.key))
+        diff += [AddDictItem(item, previous_item=item.previous)]
+    for item in to_remove:
+        logging.debug('%s dict removed key %r', indent, short_display_el(item.key))
+        diff += [RemoveDictItem(item)]
+
+    changed = changed_in_list(left, right)
+    for left_el, right_el in changed:
+        logging.debug('%s dict changed key %r', indent, short_display_el(left_el.key))
+        diff += [ChangeDictItem(left_el,
+                                changes=compute_diff(left_el.value,
+                                                     right_el.value,
+                                                     indent=indent+INDENT))]
+
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -328,4 +354,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.TupleNode: diff_tuple_node,
     nodes.ListArgumentNode: diff_list_argument_node,
     nodes.DictArgumentNode: diff_dict_argument_node,
+    nodes.DictNode: diff_dict_node,
 }

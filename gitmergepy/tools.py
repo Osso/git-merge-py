@@ -97,6 +97,8 @@ def id_from_el(arg):
         return '.'.join(id_from_el(el) if not isinstance(el, nodes.CallNode)
                         else '()'
                         for el in arg)
+    if isinstance(arg, nodes.DictitemNode):
+        return id_from_el(arg.key)
     return str(arg)
 
 

@@ -15,7 +15,7 @@ def _test_apply_changes(base, current):
     logging.debug("applying changes")
     base_ast_patched = RedBaron(base)
     conflicts = apply_changes(base_ast_patched, changes)
-    logging.debug("======= new_ast =======\n%s", base_ast.dumps())
+    logging.debug("======= new_ast =======\n%s", base_ast_patched.dumps())
     assert not conflicts
     assert base_ast_patched.dumps() == current_ast.dumps()
 
@@ -881,5 +881,46 @@ if cond:
         pass
 elif cond:
     pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_dict_add():
+    base = """
+    {'key': 'value'}
+"""
+    current = """
+    {'key': 'value', 'new_key': 'value'}
+"""
+    _test_apply_changes(base, current)
+
+
+def test_dict_add_multiline():
+    base = """
+    {'key': 'value'}
+"""
+    current = """
+    {'key': 'value',
+     'new_key': 'value'}
+"""
+    _test_apply_changes(base, current)
+
+
+def test_dict_remove():
+    base = """
+    {'key': 'value', 'new_key': 'value'}
+"""
+    current = """
+    {'key': 'value'}
+"""
+    _test_apply_changes(base, current)
+
+
+def test_dict_change():
+    base = """
+    {'key': 'value'}
+"""
+    current = """
+    {'key': 'value2'}
 """
     _test_apply_changes(base, current)

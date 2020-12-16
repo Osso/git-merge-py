@@ -13,7 +13,8 @@ from .context import (AfterContext,
 from .matcher import (find_class,
                       find_el,
                       find_func,
-                      find_import)
+                      find_import,
+                      find_key)
 from .tools import (apply_diff_to_list,
                     as_from_contexts,
                     get_call_els,
@@ -699,3 +700,44 @@ class ChangeIndentation:
     def __repr__(self):
         return "<%s relative_indentation=\"%s\">" % (self.__class__.__name__,
                                                      self.relative_indentation)
+
+
+class AddDictItem(BaseEl):
+    def __init__(self, el, previous_item):
+        super().__init__(el)
+        self.previous_item = previous_item
+
+    def apply(self, tree):
+        logging.debug("adding key %s after %s", short_display_el(self.el.key),
+                      short_context(self.previous_item.key))
+
+        previous_key = find_key(self.previous_key, tree)
+        if not previous_key:
+            add_conflict(tree, Conflict([], self,
+                                        reason="Previous key not found"))
+
+        previous_key.insert_after(self.el)
+        return []
+
+
+class RemoveDictItem(BaseEl):
+    def apply(self, tree):
+        logging.debug("removing key %s", short_display_el(self.el))
+        item = find_key(self.el.key, tree)
+        tree.remove(item)
+
+
+class ChangeDictItem(BaseEl):
+    def __init__(self, key, changes):
+        super().__init__(key)
+        self.changes = changes
+
+    def apply(self, tree):
+        logging.debug("changing key %s", short_display_el(self.el.key))
+
+        item = find_key(self.el, tree)
+        if not item:
+            add_conflict(tree, Conflict([], self, reason="Key not found"))
+            return []
+
+        return apply_changes(item.value, self.changes)

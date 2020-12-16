@@ -14,7 +14,8 @@ from .tree import (AddImports,
                    ChangeClass,
                    ChangeFun,
                    ChangeImport,
-                   MoveFunction)
+                   MoveFunction,
+                   RemoveEls)
 
 
 def _changed_el(el, stack_left, indent, context_class):
@@ -112,10 +113,13 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
     diff = []
 
     def remove_import_if_not_found(stack):
+        nonlocal diff
         # Try to keep in left and right stacks in sync, so that empty lines
         # can also be matched
         if isinstance(stack_left[0], (nodes.FromImportNode, nodes.ImportNode)):
-            if not find_import(stack_left, el_right.parent):
+            if not find_import(el_right.parent, stack_left[0]):
+                diff += [RemoveEls([stack_left[0]],
+                                   context=gather_context(stack_left[0]))]
                 stack_left.pop(0)
 
     el = find_import(stack_left, el_right)

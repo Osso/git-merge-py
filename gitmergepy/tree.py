@@ -711,12 +711,14 @@ class AddDictItem(BaseEl):
         logging.debug("adding key %s after %s", short_display_el(self.el.key),
                       short_display_el(self.previous_item.key))
 
-        previous_key = find_key(self.previous_key, tree)
+        previous_key = find_key(self.previous_item.key, tree)
         if not previous_key:
-            add_conflict(tree, Conflict([], self,
-                                        reason="Previous key not found"))
+            tree.value.append(self.el)
+            return [Conflict([], self,
+                            reason="Previous key not found, appended")]
+        else:
+            previous_key.insert_after(self.el)
 
-        previous_key.insert_after(self.el)
         return []
 
 
@@ -737,7 +739,6 @@ class ChangeDictItem(BaseEl):
 
         item = find_key(self.el, tree)
         if not item:
-            add_conflict(tree, Conflict([], self, reason="Key not found"))
-            return []
+            return [Conflict([], self, reason="Key not found")]
 
         return apply_changes(item.value, self.changes)

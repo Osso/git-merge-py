@@ -228,8 +228,8 @@ def dict_similarity(left, right):
     return same_lines_count / total_lines_count
 
 
-def find_key(item, dict_node):
-    key_str = item.key.dumps()
+def find_key(key_node, dict_node):
+    key_str = key_node.dumps()
 
     for dict_item in dict_node.value:
         if dict_item.key.dumps() == key_str:

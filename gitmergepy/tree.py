@@ -709,7 +709,7 @@ class AddDictItem(BaseEl):
 
     def apply(self, tree):
         logging.debug("adding key %s after %s", short_display_el(self.el.key),
-                      short_context(self.previous_item.key))
+                      short_display_el(self.previous_item.key))
 
         previous_key = find_key(self.previous_key, tree)
         if not previous_key:

@@ -1,5 +1,6 @@
 import logging
 
+import pytest
 from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes
@@ -357,6 +358,7 @@ fun1(arg1, arg2)
     _test_apply_changes(base, current)
 
 
+@pytest.mark.skip()
 def test_add_block():
     base = """
 # line 1

@@ -714,8 +714,6 @@ class AddDictItem(BaseEl):
         previous_key = find_key(self.previous_item.key, tree)
         if not previous_key:
             tree.value.append(self.el)
-            return [Conflict([], self,
-                            reason="Previous key not found, appended")]
         else:
             previous_key.insert_after(self.el)
 
@@ -734,11 +732,14 @@ class ChangeDictItem(BaseEl):
         super().__init__(key)
         self.changes = changes
 
+    def __repr__(self):
+        return "<%s el=\"%s\" changes=%r>" % (
+            self.__class__.__name__, short_display_el(self.el), self.changes)
+
     def apply(self, tree):
         logging.debug("changing key %s", short_display_el(self.el.key))
 
-        item = find_key(self.el, tree)
+        item = find_key(self.el.key, tree)
         if not item:
-            return [Conflict([], self, reason="Key not found")]
-
+            return []
         return apply_changes(item.value, self.changes)

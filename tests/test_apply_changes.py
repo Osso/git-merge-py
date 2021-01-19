@@ -924,3 +924,13 @@ def test_dict_change():
     {'key': 'value2'}
 """
     _test_apply_changes(base, current)
+
+
+def test_inline_comment():
+    base = """
+    fun()
+"""
+    current = """
+    fun()  # inline comment
+"""
+    _test_apply_changes(base, current)

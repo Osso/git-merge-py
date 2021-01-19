@@ -190,14 +190,24 @@ class AddEls:
             else:
                 el = tree[index-1]
                 at = short_display_el(el)
+                if self.to_add[0].on_new_line and not el.endl:
+                    logging.debug("    after %r (missing new line)", at)
+                    while el.next and not el.endl:
+                        el = el.next
+
             logging.debug("    after %r", at)
 
         for el_to_add in self.to_add:
             logging.debug("    el %r", short_display_el(el_to_add))
+
+            if not el_to_add.on_new_line and index > 0:
+                tree.value._data[index - 1][1] = None
+
             el = el_to_add.copy()
             el.parent = tree
             tree.insert(index, el)
             index += 1
+
             # Add endl for code proxy lists
             if isinstance(el_to_add.associated_sep, nodes.EndlNode):
                 tree.insert(index, el_to_add.associated_sep.copy())

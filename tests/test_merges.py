@@ -428,3 +428,21 @@ def test_change_call_args_indented():
     fun(new_arg1, arg3, arg2)
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_insert_after_inline_comment():
+    base = """
+call()
+"""
+    current = """
+call()  # comment
+"""
+    other = """
+call()
+stuff
+"""
+    expected = """
+call()  # comment
+stuff
+"""
+    _test_merge_changes(base, current, other, expected)

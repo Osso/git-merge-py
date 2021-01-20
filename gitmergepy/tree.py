@@ -204,14 +204,14 @@ class AddEls:
                 tree.value._data[index - 1][1] = None
 
             el = el_to_add.copy()
-            el.parent = tree
-            tree.insert(index, el)
-            index += 1
 
             # Add endl for code proxy lists
             if isinstance(el_to_add.associated_sep, nodes.EndlNode):
-                tree.insert(index, el_to_add.associated_sep.copy())
-                index += 1
+                tree.insert_with_new_line(index, el)
+            else:
+                tree.insert(index, el)
+
+            index += 1
 
         return []
 

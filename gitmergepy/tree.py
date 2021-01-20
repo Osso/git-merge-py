@@ -734,7 +734,9 @@ class RemoveDictItem(BaseEl):
     def apply(self, tree):
         logging.debug("removing key %s", short_display_el(self.el))
         item = find_key(self.el.key, tree)
-        tree.remove(item)
+        if item is not None:
+            tree.remove(item)
+        return []
 
 
 class ChangeDictItem(BaseEl):

@@ -3,6 +3,8 @@ import logging
 from redbaron import nodes
 from redbaron.base_nodes import NodeList
 
+import baron
+
 from .applyier import (add_conflict,
                        add_conflicts,
                        apply_changes,
@@ -190,18 +192,21 @@ class AddEls:
             else:
                 el = tree[index-1]
                 at = short_display_el(el)
+                # Mostly in case an inline comment has been added
                 if self.to_add[0].on_new_line and not el.endl:
                     logging.debug("    after %r (missing new line)", at)
                     while el.next and not el.endl:
                         el = el.next
+                        index = tree.index(el) + 1
+                        at = short_display_el(el)
 
             logging.debug("    after %r", at)
 
         for el_to_add in self.to_add:
             logging.debug("    el %r", short_display_el(el_to_add))
 
-            if not el_to_add.on_new_line and index > 0:
-                tree.value._data[index - 1][1] = None
+            if index > 0 and not el_to_add.on_new_line:
+                tree.value._data[index-1][1] = None
 
             el = el_to_add.copy()
 
@@ -211,7 +216,14 @@ class AddEls:
             else:
                 tree.insert(index, el)
 
+            # if index > 0 and el_to_add.on_new_line:
+            #     if not el.on_new_line:
+            #         tree.put_on_new_line(el)
+
             index += 1
+
+            # Sanity check
+            # baron.parse(tree.root.dumps())
 
         return []
 

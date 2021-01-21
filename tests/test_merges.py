@@ -446,3 +446,21 @@ call()  # comment
 stuff
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_insert_inline_comment():
+    base = """
+call()
+"""
+    current = """
+call()
+stuff
+"""
+    other = """
+call()  # comment
+"""
+    expected = """
+call()  # comment
+stuff
+"""
+    _test_merge_changes(base, current, other, expected)

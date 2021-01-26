@@ -47,7 +47,6 @@ with fun() as out:
 # <RemoveWith el="with fun() as out:" context='# stuff'>
 # with fun() as out:
 #     call('hello')
-# # more stuff
 # >>>>>>>>>>
 # changed stuff
 with fun() as out:

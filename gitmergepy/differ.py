@@ -111,7 +111,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 if not stack_left or same_el(stack_left[0], el_right):
                     break
                 el = stack_left.pop(0)
-                diff += diff_indent(el, el_right)
 
                 logging.debug("%s removing %r", indent+INDENT,
                               short_display_el(el))

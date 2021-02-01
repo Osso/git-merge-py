@@ -91,7 +91,14 @@ class RemoveEls:
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
+                # Adjust new lines in case of inline comment
+                put_on_new_line = index > 0 and not el.on_new_line and el.endl
+
                 del tree[index]
+
+                if put_on_new_line:
+                    tree.put_on_new_line(tree[index])
+
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
                 break
@@ -216,14 +223,11 @@ class AddEls:
             else:
                 tree.insert(index, el)
 
-            # if index > 0 and el_to_add.on_new_line:
-            #     if not el.on_new_line:
-            #         tree.put_on_new_line(el)
-
             index += 1
 
             # Sanity check
-            # baron.parse(tree.root.dumps())
+            if isinstance(tree, (nodes.DefNode, nodes.ClassNode)):
+                baron.parse(tree.root.dumps())
 
         return []
 

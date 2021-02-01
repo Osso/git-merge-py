@@ -928,11 +928,23 @@ def test_dict_change():
     _test_apply_changes(base, current)
 
 
-def test_inline_comment():
+def test_add_inline_comment():
     base = """
     fun()
 """
     current = """
     fun()  # inline comment
+"""
+    _test_apply_changes(base, current)
+
+
+def test_remove_inline_comment():
+    base = """
+    fun()  # inline comment
+    more()
+"""
+    current = """
+    fun()
+    more()
 """
     _test_apply_changes(base, current)

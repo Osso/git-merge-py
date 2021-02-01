@@ -3,6 +3,7 @@ import logging
 from redbaron import nodes
 
 from .context import (AfterContext,
+                      gather_after_context,
                       gather_context)
 from .matcher import guess_if_same_el
 from .tools import (INDENT,
@@ -142,7 +143,13 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
 
 
 def add_to_diff(diff, el, indent):
-    if diff and isinstance(diff[-1], AddEls):
+    # comments for a function
+    if isinstance(el, nodes.CommentNode) and \
+            isinstance(el.next, (nodes.DefNode, nodes.ClassNode)):
+        context = gather_after_context(el)
+        logging.debug("%s after context %r", indent, short_context(context))
+        diff += [AddEls([el], context=context)]
+    elif diff and isinstance(diff[-1], AddEls):
         diff[-1].add_el(el)
     else:
         context = gather_context(el)

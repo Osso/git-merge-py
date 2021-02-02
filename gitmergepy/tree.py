@@ -224,13 +224,6 @@ class AddEls:
 
             index += 1
 
-            # Sanity check
-            if isinstance(tree, (nodes.DefNode, nodes.ClassNode,
-                                 nodes.ForNode, nodes.WhileNode,
-                                 nodes.IfelseblockNode, nodes.TryNode,
-                                 nodes.CallNode)):
-                RedBaron(tree.dumps())
-
         return []
 
 

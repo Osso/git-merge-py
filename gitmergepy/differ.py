@@ -144,9 +144,16 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
 
 def add_to_diff(diff, el, indent):
     # comments for a function
-    if isinstance(el, nodes.CommentNode) and \
-            isinstance(el.next, (nodes.DefNode, nodes.ClassNode)):
-        context = gather_after_context(el)
+    comment_before_function = False
+    if isinstance(el, nodes.CommentNode):
+        n = el
+        while isinstance(n.next, nodes.CommentNode):
+            n = n.next
+        if isinstance(n.next, (nodes.DefNode, nodes.ClassNode)):
+            comment_before_function = True
+
+    if comment_before_function:
+        context = gather_after_context(n)
         logging.debug("%s after context %r", indent, short_context(context))
         diff += [AddEls([el], context=context)]
     elif diff and isinstance(diff[-1], AddEls):

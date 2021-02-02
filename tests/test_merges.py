@@ -498,3 +498,41 @@ def target():
     pass
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_two_comments_for_def():
+    base = """
+def anchor():
+    pass
+def target():
+    pass
+"""
+    current = """
+def anchor():
+    pass
+# comment 1
+# comment 2
+# comment 3
+def target():
+    pass
+"""
+    other = """
+def anchor():
+    pass
+def new_def():
+    pass
+def target():
+    pass
+"""
+    expected = """
+def anchor():
+    pass
+def new_def():
+    pass
+# comment 1
+# comment 2
+# comment 3
+def target():
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)

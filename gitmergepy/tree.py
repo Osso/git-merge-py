@@ -1,9 +1,8 @@
 import logging
 
-from redbaron import nodes
+from redbaron import (RedBaron,
+                      nodes)
 from redbaron.base_nodes import NodeList
-
-import baron
 
 from .applyier import (add_conflict,
                        add_conflicts,
@@ -226,8 +225,11 @@ class AddEls:
             index += 1
 
             # Sanity check
-            if isinstance(tree, (nodes.DefNode, nodes.ClassNode)):
-                baron.parse(tree.root.dumps())
+            if isinstance(tree, (nodes.DefNode, nodes.ClassNode,
+                                 nodes.ForNode, nodes.WhileNode,
+                                 nodes.IfelseblockNode, nodes.TryNode,
+                                 nodes.CallNode)):
+                RedBaron(tree.dumps())
 
         return []
 

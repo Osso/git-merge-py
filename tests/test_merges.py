@@ -352,36 +352,6 @@ if cond2:
     _test_merge_changes(base, current, other, expected)
 
 
-def test_if_else():
-    base = """
-if cond:
-    pass
-else:
-    pass
-"""
-    current = """
-if cond:
-    pass
-else:
-    call('hello')
-"""
-    other = """
-if cond:
-    pass
-else:
-    # passing here
-    pass
-"""
-    expected = """
-if cond:
-    pass
-else:
-    call('hello')
-    # passing here
-"""
-    _test_merge_changes(base, current, other, expected)
-
-
 def test_if_else_2():
     base = """
 if cond:

@@ -152,7 +152,7 @@ class RemoveImports:
         return []
 
 
-class AddEls:
+class BaseAddEls:
     def __init__(self, to_add, context):
         self.to_add = to_add
         self.context = context
@@ -210,19 +210,70 @@ class AddEls:
 
         for el_to_add in self.to_add:
             logging.debug("    el %r", short_display_el(el_to_add))
-
-            if index > 0 and not el_to_add.on_new_line:
-                tree.value._data[index-1][1] = None
-
-            el = el_to_add.copy()
-
-            # Add endl for code proxy lists
-            if isinstance(el_to_add.associated_sep, nodes.EndlNode):
-                tree.insert_with_new_line(index, el)
-            else:
-                tree.insert(index, el)
-
+            self._insert_el(el_to_add, index, tree)
             index += 1
+
+        return []
+
+    def _insert_el(self, el_to_add, index, tree):
+        if index > 0 and not el_to_add.on_new_line:
+            tree.value._data[index-1][1] = None
+
+        el = el_to_add.copy()
+
+        # Add endl for code proxy lists
+        if isinstance(el_to_add.associated_sep, nodes.EndlNode):
+            tree.insert_with_new_line(index, el)
+        else:
+            tree.insert(index, el)
+
+
+class AddEls(BaseAddEls):
+    pass
+
+
+class ReplaceEls(BaseAddEls):
+    def __init__(self, to_add, to_remove, context):
+        self.to_remove = to_remove
+        super().__init__(to_add=to_add, context=context)
+
+    def __repr__(self):
+        return "<%s to_add=\"%s\" to_remove=\"%s\" context=%r>" % (
+            self.__class__.__name__,
+            ', '.join(short_display_el(el) for el in self.to_add),
+            ', '.join(short_display_el(el) for el in self.to_remove),
+            short_context(self.context))
+
+    def _look_for_context(self, tree):
+        index = 0  # to silence pylint
+
+        # First use context
+        for index in range(len(tree) + 1):
+            if self.context.match(tree, index):
+                # match all to_remove items
+                for offset, el in enumerate(self.to_remove):
+                    if not same_el(tree[index+offset], el):
+                        break
+                else:
+                    return index
+
+        return None
+
+    def apply(self, tree):
+        logging.debug("replacing els")
+        logging.debug("    context %r", short_context(self.context))
+
+        index = self._look_for_context(tree)
+        if index is None:
+            return [Conflict([tree], self, reason="Cannot match context")]
+
+        for el_to_add in self.to_add:
+            logging.debug("    el %r", short_display_el(el_to_add))
+            self._insert_el(el_to_add, index, tree)
+            index += 1
+
+        for el_to_add in self.to_remove:
+            del tree[index]
 
         return []
 

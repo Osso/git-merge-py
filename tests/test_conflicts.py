@@ -87,3 +87,40 @@ if cond:
 """
     ast = _test_merge_changes(base, current, other, expected)
     assert isinstance(ast[0], nodes.CommentNode)
+
+
+def test_if_else_2():
+    base = """
+if cond:
+    pass
+else:
+    pass
+"""
+    current = """
+if cond:
+    pass
+else:
+    call('hello')
+"""
+    other = """
+if cond:
+    pass
+else:
+    # passing here
+    pass
+"""
+    expected = """
+# <<<<<<<<<<
+# Reason Cannot match context
+# <ReplaceEls to_add="    call('hello')" to_remove="    pass" context='None'>
+# else:
+#     # passing here
+#     pass
+# >>>>>>>>>>
+if cond:
+    pass
+else:
+    # passing here
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)

@@ -188,6 +188,9 @@ def with_parent(tree, el):
 
 
 def same_el(left, right, discard_indentation=True):
+    if left is None and right is None:
+        return True
+
     # For speed
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False

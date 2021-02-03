@@ -15,7 +15,8 @@ from .tree import (AddEls,
                    ChangeIndentation,
                    RemoveEls,
                    RemoveWith,
-                   Replace)
+                   Replace,
+                   ReplaceEls)
 
 
 def compute_diff(left, right, indent=""):
@@ -58,6 +59,29 @@ def _changed_el(el, stack_left, indent, context_class):
     return diff
 
 
+def _remove_or_replace(diff, els, context, force_separate):
+    if not force_separate and diff and isinstance(diff[-1], AddEls) and \
+            same_el(diff[-1].context[-1], context[-1]):
+        # Transform add+remove into a ReplaceEls
+        replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
+                             context=diff[-1].context)
+        diff.pop()
+        diff.append(replace)
+    else:
+        diff.append(RemoveEls(els, context=context))
+
+
+def _remove_or_replace_at_the_end(diff, els, force_separate):
+    if not force_separate and diff and isinstance(diff[-1], AddEls):
+        # Transform add+remove into a ReplaceEls
+        replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
+                             context=diff[-1].context)
+        diff.pop()
+        diff.append(replace)
+    else:
+        diff.append(RemoveEls(els, context=AfterContext([None])))
+
+
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
@@ -66,6 +90,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     stack_left = list(left)
 
     diff = []
+    last_added = False
     for el_right in right:
         # Pre-processing
         if stack_left and isinstance(stack_left[0], nodes.WithNode) and not \
@@ -96,6 +121,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 diff += _changed_el(el_right, stack_left, indent, context_class)
             else:
                 stack_left.pop(0)
+            last_added = False
         # Custom handlers for def, class, etc.
         elif isinstance(el_right, (type(stack_left[0]), ) + node_types_that_can_be_found_by_id) and \
                 type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
@@ -103,6 +129,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                                                 el_right,
                                                                 indent+INDENT,
                                                                 context_class)
+            last_added = False
         # Look forward a few elements to check if we have a match
         elif not isinstance(el_right, nodes.EmptyLineNode) and \
                any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
@@ -121,22 +148,28 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             else:
                 stack_left.pop(0)
             if els:
-                diff += [RemoveEls(els, context=gather_context(els[0]))]
+                _remove_or_replace(diff, els,
+                                   context=gather_context(els[0]),
+                                   force_separate=not last_added)
+            last_added = False
         elif guess_if_same_el(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,
                           short_display_el(el_right))
             diff += _changed_el(el_right, stack_left, indent+INDENT,
                                 context_class=context_class)
+            last_added = False
         else:
             logging.debug("%s new el %r", indent+INDENT,
                           short_display_el(el_right))
             add_to_diff(diff, el_right, indent+2*INDENT)
+            last_added = True
 
     if stack_left:
         for el in stack_left:
             logging.debug("%s removing leftover %r", indent+INDENT,
                           short_display_el(el))
-        diff += [RemoveEls(stack_left, context=AfterContext([None]))]
+        _remove_or_replace_at_the_end(diff, stack_left,
+                                      force_separate=not last_added)
 
     # logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff

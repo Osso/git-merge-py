@@ -26,6 +26,12 @@ def apply_changes(tree, changes):
                              nodes.IfelseblockNode, nodes.TryNode)):
             RedBaron(tree.dumps())
 
+    if isinstance(tree, (nodes.CallNode, nodes.DictArgumentNode)):
+        tree = tree.parent.parent
+    elif isinstance(tree, (nodes.ElseNode)):
+        tree = tree.parent
+    RedBaron(tree.dumps())
+
     return conflicts
 
 

@@ -59,10 +59,11 @@ def _changed_el(el, stack_left, indent, context_class):
     return diff
 
 
-def _remove_or_replace(diff, els, context, force_separate):
+def _remove_or_replace(diff, els, context, indent, force_separate):
     if not force_separate and diff and isinstance(diff[-1], AddEls) and \
             same_el(diff[-1].context[-1], context[-1]):
         # Transform add+remove into a ReplaceEls
+        logging.debug("%s transforming into replace", indent+INDENT)
         replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
                              context=diff[-1].context)
         diff.pop()
@@ -71,9 +72,10 @@ def _remove_or_replace(diff, els, context, force_separate):
         diff.append(RemoveEls(els, context=context))
 
 
-def _remove_or_replace_at_the_end(diff, els, force_separate):
+def _remove_or_replace_at_the_end(diff, els, indent, force_separate):
     if not force_separate and diff and isinstance(diff[-1], AddEls):
         # Transform add+remove into a ReplaceEls
+        logging.debug("%s transforming into replace", indent+INDENT)
         replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
                              context=diff[-1].context)
         diff.pop()
@@ -148,7 +150,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             else:
                 stack_left.pop(0)
             if els:
-                _remove_or_replace(diff, els,
+                _remove_or_replace(diff, els, indent=indent,
                                    context=gather_context(els[0]),
                                    force_separate=not last_added)
             last_added = False
@@ -168,7 +170,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         for el in stack_left:
             logging.debug("%s removing leftover %r", indent+INDENT,
                           short_display_el(el))
-        _remove_or_replace_at_the_end(diff, stack_left,
+        _remove_or_replace_at_the_end(diff, stack_left, indent=indent,
                                       force_separate=not last_added)
 
     # logging.debug("%s compute_diff_iterables %r", indent, diff)

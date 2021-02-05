@@ -15,20 +15,22 @@ PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
 def apply_changes(tree, changes):
     conflicts = []
+    old_tree = tree.dumps()
 
     for change in changes:
         # logging.debug('applying %r to %r', change, short_display_el(tree))
         conflicts += change.apply(tree)
 
         # Sanity check
-        if isinstance(tree, (nodes.DefNode, nodes.ClassNode,
+        if isinstance(tree, (nodes.DefNode, nodes.ClassNode, nodes.WithNode,
                              nodes.ForNode, nodes.WhileNode,
                              nodes.IfelseblockNode, nodes.TryNode)):
             RedBaron(tree.dumps())
 
-    if isinstance(tree, (nodes.CallNode, nodes.DictArgumentNode)):
+    if isinstance(tree, (nodes.CallNode, nodes.DictArgumentNode,
+                         nodes.DecoratorNode, nodes.WithNode)):
         tree = tree.parent.parent
-    elif isinstance(tree, (nodes.ElseNode)):
+    while isinstance(tree, (nodes.ElseNode, ProxyList)):
         tree = tree.parent
     RedBaron(tree.dumps())
 

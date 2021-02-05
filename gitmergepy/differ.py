@@ -112,6 +112,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
 
         # Actual processing
         node_types_that_can_be_found_by_id = (nodes.DefNode,
+                                              nodes.ClassNode,
                                               nodes.FromImportNode)
         max_ahead = min(10, len(stack_left))
         # Direct match
@@ -125,8 +126,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 stack_left.pop(0)
             last_added = False
         # Custom handlers for def, class, etc.
-        elif isinstance(el_right, (type(stack_left[0]), ) + node_types_that_can_be_found_by_id) and \
-                type(el_right) in COMPUTE_DIFF_ITERABLE_CALLS:    # pylint: disable=unidiomatic-typecheck
+        elif isinstance(el_right, node_types_that_can_be_found_by_id):
             diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left,
                                                                 el_right,
                                                                 indent+INDENT,

@@ -948,3 +948,19 @@ def test_remove_inline_comment():
     more()
 """
     _test_apply_changes(base, current)
+
+
+def test_remove_inline_comment_2():
+    base = """
+call(value1)  # comment
+fun()
+
+call(value2)  # comment
+fun()
+"""
+    current = """
+call(value1)  # comment
+
+call(value2)  # comment
+"""
+    _test_apply_changes(base, current)

@@ -201,7 +201,7 @@ class BaseAddEls:
                 # Mostly in case an inline comment has been added
                 if self.to_add[0].on_new_line and not el.endl:
                     logging.debug("    after %r (missing new line)", at)
-                    while el.next and not el.endl:
+                    while el.next and isinstance(el.next, nodes.CommentNode) and not el.endl:
                         el = el.next
                         index = tree.index(el) + 1
                         at = short_display_el(el)
@@ -226,6 +226,11 @@ class BaseAddEls:
             tree.insert_with_new_line(index, el)
         else:
             tree.insert(index, el)
+
+        # Handle comma separated lists and such that don't add a new line
+        # by default
+        if el_to_add.on_new_line and not el.on_new_line:
+            tree.put_on_new_line(el)
 
 
 class AddEls(BaseAddEls):

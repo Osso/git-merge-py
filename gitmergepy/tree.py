@@ -257,7 +257,10 @@ class ReplaceEls(BaseAddEls):
             if self.context.match(tree, index):
                 # match all to_remove items
                 for offset, el in enumerate(self.to_remove):
-                    if not same_el(tree[index+offset], el):
+                    try:
+                        if not same_el(tree[index+offset], el):
+                            break
+                    except IndexError:
                         break
                 else:
                     return index

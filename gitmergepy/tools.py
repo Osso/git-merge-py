@@ -4,7 +4,7 @@ from redbaron.proxy_list import DotProxyList
 FIRST = object()
 LAST = object()
 INDENT = "."
-WHITESPACE_NODES = (nodes.EndlNode, )
+WHITESPACE_NODES = (nodes.EndlNode, nodes.EmptyLineNode)
 
 
 def append_coma_list(target_list, to_add, on_new_line=False):

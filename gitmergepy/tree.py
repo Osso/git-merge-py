@@ -1,7 +1,6 @@
 import logging
 
-from redbaron import (RedBaron,
-                      nodes)
+from redbaron import nodes
 from redbaron.base_nodes import NodeList
 
 from .applyier import (add_conflict,
@@ -10,7 +9,8 @@ from .applyier import (add_conflict,
                        insert_at_context,
                        insert_at_context_coma_list)
 from .context import (AfterContext,
-                      find_context)
+                      find_context,
+                      gather_after_context)
 from .matcher import (find_class,
                       find_el,
                       find_func,
@@ -154,6 +154,7 @@ class RemoveImports:
 
 class BaseAddEls:
     def __init__(self, to_add, context):
+        assert context
         self.to_add = to_add
         self.context = context
 
@@ -168,6 +169,7 @@ class BaseAddEls:
         if isinstance(self.context, AfterContext):
             first_in_context = self.context.pop(0)
             assert el is first_in_context
+            self.context = gather_after_context(self.to_add[-1])
 
     def apply(self, tree):
         logging.debug("adding els")

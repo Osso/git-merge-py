@@ -790,10 +790,19 @@ class AddDictItem(BaseEl):
         self.previous_item = previous_item
 
     def apply(self, tree):
-        logging.debug("adding key %s after %s", short_display_el(self.el.key),
-                      short_display_el(self.previous_item.key))
+        if self.previous_item:
+            logging.debug("adding key %s after %s",
+                          short_display_el(self.el.key),
+                          short_display_el(self.previous_item.key))
+        else:
+            logging.debug("adding key %s at the beginning",
+                          short_display_el(self.el.key))
 
-        previous_key = find_key(self.previous_item.key, tree)
+        if self.previous_item:
+            previous_key = find_key(self.previous_item.key, tree)
+        else:
+            previous_key = None
+
         if not previous_key:
             tree.value.append(self.el)
         else:

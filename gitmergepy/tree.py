@@ -294,8 +294,10 @@ class Replace:
         self.old_value = old_value
 
     def apply(self, tree):
-        if tree.dumps() != self.old_value.dumps():
-            return [Conflict([tree], self, reason="Different from old value")]
+        if tree.dumps() != self.new_value.dumps():
+            if tree.dumps() != self.old_value.dumps():
+                return [Conflict([tree], self,
+                                 reason="Different from old value")]
         tree.replace(self.new_value)
         return []
 

@@ -27,8 +27,10 @@ def apply_changes(tree, changes):
                              nodes.IfelseblockNode, nodes.TryNode)):
             RedBaron(tree.dumps())
 
-    if isinstance(tree, (nodes.CallNode, nodes.DictArgumentNode,
-                         nodes.DecoratorNode, nodes.WithNode)):
+    if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
+                         nodes.WithNode)):
+        tree = tree.parent.parent
+    if isinstance(tree, nodes.CallNode):
         tree = tree.parent.parent
     while isinstance(tree, (nodes.ElseNode, ProxyList)):
         tree = tree.parent

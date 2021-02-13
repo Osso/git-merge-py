@@ -21,12 +21,12 @@ def apply_changes(tree, changes):
         # logging.debug('applying %r to %r', change, short_display_el(tree))
         conflicts += change.apply(tree)
 
-        # Sanity check
-        if isinstance(tree, (nodes.DefNode, nodes.ClassNode, nodes.WithNode,
-                             nodes.ForNode, nodes.WhileNode,
-                             nodes.IfelseblockNode, nodes.TryNode)):
-            RedBaron(tree.dumps())
+        # if isinstance(tree, (nodes.DefNode, nodes.ClassNode, nodes.WithNode,
+        #                      nodes.ForNode, nodes.WhileNode,
+        #                      nodes.IfelseblockNode, nodes.TryNode)):
+        #     RedBaron(tree.dumps())
 
+    # Sanity check
     if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
                          nodes.WithNode)):
         tree = tree.parent.parent

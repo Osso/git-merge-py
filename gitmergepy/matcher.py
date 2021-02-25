@@ -183,7 +183,13 @@ def find_el(tree, target_el, context):
             return el
 
     if isinstance(target_el, nodes.WithNode):
+        # only one
         el = find_single(tree, nodes.WithNode)
+        if el:
+            return el
+
+        # same context, changed with attributes
+        el = find_with_node_same_context(tree, target_el, context)
         if el:
             return el
 
@@ -200,6 +206,13 @@ def find_with_node(tree):
 def find_el_exact_match_with_context(tree, target_el, context):
     for el in tree:
         if same_el(el, target_el) and context.match_el(tree, el):
+            return el
+    return None
+
+
+def find_with_node_same_context(tree, target_el, context):
+    for el in tree:
+        if isinstance(el, nodes.WithNode) and context.match_el(tree, el):
             return el
     return None
 

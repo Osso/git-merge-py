@@ -964,3 +964,23 @@ call(value1)  # comment
 call(value2)  # comment
 """
     _test_apply_changes(base, current)
+
+
+def test_with_remove_arg():
+    base = """
+# context
+with f(arg):
+    pass
+
+with another_one:
+    pass
+"""
+    current = """
+# context
+with f():
+    call()
+
+with another_one:
+    pass
+"""
+    _test_apply_changes(base, current)

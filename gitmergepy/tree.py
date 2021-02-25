@@ -96,7 +96,7 @@ class RemoveEls:
                 del tree[index]
 
                 if put_on_new_line:
-                    tree.put_on_new_line(tree[index])
+                    tree.add_endl(index-1)
 
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
@@ -358,11 +358,13 @@ class ReplaceAnnotation:
 class RemoveAllDecoratorArgs(BaseEl):
     def apply(self, tree):
         tree.call = None
+        return []
 
 
 class AddAllDecoratorArgs(BaseEl):
     def apply(self, tree):
         tree.call = self.el.copy()
+        return []
 
 
 class ChangeEl(BaseEl):

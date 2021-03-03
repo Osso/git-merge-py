@@ -16,7 +16,18 @@ from .tree import (AddEls,
                    RemoveEls,
                    RemoveWith,
                    Replace,
+                   ReplaceAttr,
                    ReplaceEls)
+
+
+def compare_formatting(left, right):
+    diff = []
+    names = ('first_formatting', 'second_formatting',
+             'third_formatting', 'fourth_formatting')
+    for name in names:
+        if getattr(left, name).fst() != getattr(right, name).fst():
+            diff += [ReplaceAttr(name, getattr(right, name).copy())]
+    return diff
 
 
 def compute_diff(left, right, indent=""):
@@ -41,7 +52,11 @@ def compute_diff(left, right, indent=""):
     else:
         diff += COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
 
+    # Compare formatting
+    diff += compare_formatting(left, right)
+
     logging.debug('%s compute_diff diff=%r', indent, diff)
+
     return diff
 
 

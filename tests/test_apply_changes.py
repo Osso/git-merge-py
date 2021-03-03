@@ -984,3 +984,14 @@ with another_one:
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_remove_blank_line_fun_args():
+    base = """
+call(
+     value1)
+"""
+    current = """
+call(value1)
+"""
+    _test_apply_changes(base, current)

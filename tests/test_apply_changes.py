@@ -995,3 +995,17 @@ call(
 call(value1)
 """
     _test_apply_changes(base, current)
+
+
+def test_add_blank_line_fun_args():
+    base = """
+call(arg1, arg2,
+     arg3, arg4)
+"""
+    current = """
+call(
+  arg1, arg2,
+  arg3,
+  arg4)
+"""
+    _test_apply_changes(base, current)

@@ -506,3 +506,28 @@ def target():
     pass
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_add_blank_line_fun_args():
+    base = """
+call(arg1, arg2,
+     arg3, arg4)
+"""
+    current = """
+call(
+  arg1, arg2,
+  arg3,
+  arg4)
+"""
+    other = """
+call(
+  arg1, arg2,
+  arg3, arg4)
+"""
+    expected = """
+call(
+  arg1, arg2,
+  arg3,
+  arg4)
+"""
+    _test_merge_changes(base, current, other, expected)

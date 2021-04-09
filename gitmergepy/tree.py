@@ -467,7 +467,6 @@ class ArgOnNewLine:
     def apply(self, tree):
         logging.debug(". putting arg %s on a new line", short_display_el(tree))
         tree.parent.put_on_new_line(tree)
-        tree.parent._synchronise()
         return []
 
 
@@ -776,6 +775,7 @@ class ChangeIndentation:
 
         logging.debug('. indentation %d delta %d',
                       len(tree.indentation), self.relative_indentation)
+
         if self.relative_indentation >= 0:
             tree.indentation += self.relative_indentation * " "
         else:

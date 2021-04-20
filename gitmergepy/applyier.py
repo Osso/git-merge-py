@@ -26,6 +26,9 @@ def apply_changes(tree, changes):
         #                      nodes.IfelseblockNode, nodes.TryNode)):
         #     RedBaron(tree.dumps())
 
+    if isinstance(tree, nodes.CallNode) and tree.value.auto_separator:
+        tree.value.reformat()
+
     # Sanity check
     if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
                          nodes.WithNode, nodes.CallArgumentNode)):

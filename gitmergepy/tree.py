@@ -470,6 +470,16 @@ class ArgOnNewLine:
         return []
 
 
+class ArgRemoveNewLine:
+    def __repr__(self):
+        return "<%s>" % self.__class__.__name__
+
+    def apply(self, tree):
+        logging.debug(". remove arg %s new line", short_display_el(tree))
+        tree.parent.put_on_same_line(tree)
+        return []
+
+
 class Conflict:
     def __init__(self, els, change, reason='', insert_before=True):
         self.els = els

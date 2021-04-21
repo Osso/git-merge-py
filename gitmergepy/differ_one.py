@@ -19,6 +19,7 @@ from .tree import (AddAllDecoratorArgs,
                    AddFunArg,
                    AddImports,
                    ArgOnNewLine,
+                   ArgRemoveNewLine,
                    ChangeAnnotation,
                    ChangeArg,
                    ChangeAssignmentNode,
@@ -98,9 +99,10 @@ def diff_def_node(left, right, indent):
         logging.debug('%s fun changed args %r', indent,
                       short_display_el(new_arg))
         diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
-        if old_arg.previous and not old_arg.previous.endl and \
-                new_arg.previous and new_arg.previous.endl:
+        if not old_arg.on_new_line and new_arg.on_new_line:
             diff_arg += [ArgOnNewLine()]
+        if old_arg.on_new_line and not new_arg.on_new_line:
+            diff_arg += [ArgRemoveNewLine()]
         diff += [ChangeDefArg(new_arg, changes=diff_arg)]
     # Decorators
     to_add, to_remove = diff_list(left.decorators, right.decorators)
@@ -176,9 +178,7 @@ def diff_atom_trailer_node(left, right, indent):
 
 
 def _check_for_arg_changes(arg):
-    endl = ""
-    if arg.previous and arg.previous.endl:
-        endl = "\n"
+    endl = "\n" if arg.on_new_line else ""
     return endl + arg.dumps()
 
 
@@ -191,17 +191,20 @@ def diff_call_node(left, right, indent):
         logging.debug('%s call old arg %r', indent, short_display_el(arg))
     for arg in to_add:
         diff += [AddCallArg(arg, context=gather_context(arg),
-                            on_new_line=arg.previous.endl if arg.previous else False)]
+                            on_new_line=arg.on_new_line)]
     if to_remove:
         diff += [RemoveCallArgs(to_remove)]
 
     changed = changed_in_list(left, right, value_getter=_check_for_arg_changes)
+
     for old_arg, new_arg in changed:
         logging.debug('%s call changed args %r', indent,
                       short_display_el(new_arg))
         diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
         if not old_arg.on_new_line and new_arg.on_new_line:
             diff_arg += [ArgOnNewLine()]
+        if old_arg.on_new_line and not new_arg.on_new_line:
+            diff_arg += [ArgRemoveNewLine()]
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]
     return diff
 

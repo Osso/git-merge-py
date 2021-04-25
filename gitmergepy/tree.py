@@ -461,12 +461,15 @@ class ChangeCallArg(ChangeDefArg):
 
 
 class ArgOnNewLine:
+    def __init__(self, indentation=None):
+        self.indentation = indentation
+
     def __repr__(self):
-        return "<%s>" % self.__class__.__name__
+        return "<%s indent=\"%s\">" % (self.__class__.__name__, self.indentation)
 
     def apply(self, tree):
         logging.debug(". putting arg %s on a new line", short_display_el(tree))
-        tree.parent.put_on_new_line(tree)
+        tree.parent.put_on_new_line(tree, indentation=self.indentation)
         return []
 
 

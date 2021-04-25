@@ -531,3 +531,32 @@ call(
   arg4)
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_add_blank_line_def_args():
+    base = """
+def fun(arg1, arg2,
+        arg3, arg4):
+    pass
+"""
+    current = """
+def fun(
+  arg1, arg2,
+  arg3,
+  arg4):
+    pass
+"""
+    other = """
+def fun(
+  arg1, arg2,
+  arg3, arg4):
+    pass
+"""
+    expected = """
+def fun(
+  arg1, arg2,
+  arg3,
+  arg4):
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)

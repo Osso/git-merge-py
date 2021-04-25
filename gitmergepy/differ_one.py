@@ -100,7 +100,8 @@ def diff_def_node(left, right, indent):
                       short_display_el(new_arg))
         diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
         if not old_arg.on_new_line and new_arg.on_new_line:
-            diff_arg += [ArgOnNewLine()]
+            rel_indent = len(new_arg.indentation) - len(new_arg.parent.parent.indentation)
+            diff_arg += [ArgOnNewLine(indentation=rel_indent*" ")]
         if old_arg.on_new_line and not new_arg.on_new_line:
             diff_arg += [ArgRemoveNewLine()]
         diff += [ChangeDefArg(new_arg, changes=diff_arg)]
@@ -202,7 +203,8 @@ def diff_call_node(left, right, indent):
                       short_display_el(new_arg))
         diff_arg = compute_diff(old_arg, new_arg, indent=indent+INDENT)
         if not old_arg.on_new_line and new_arg.on_new_line:
-            diff_arg += [ArgOnNewLine()]
+            rel_indent = len(new_arg.indentation) - len(new_arg.parent.parent.indentation)
+            diff_arg += [ArgOnNewLine(indentation=rel_indent*" ")]
         if old_arg.on_new_line and not new_arg.on_new_line:
             diff_arg += [ArgRemoveNewLine()]
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]

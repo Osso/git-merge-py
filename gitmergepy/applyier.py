@@ -28,6 +28,8 @@ def apply_changes(tree, changes):
 
     if isinstance(tree, nodes.CallNode) and tree.value.auto_separator:
         tree.value.reformat()
+    elif isinstance(tree, nodes.DefNode):
+        tree.arguments.reformat()
 
     # Sanity check
     if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,

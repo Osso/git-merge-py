@@ -358,7 +358,6 @@ fun1(arg1, arg2)
     _test_apply_changes(base, current)
 
 
-@pytest.mark.skip()
 def test_add_block():
     base = """
 # line 1

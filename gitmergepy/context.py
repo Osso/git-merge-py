@@ -1,6 +1,7 @@
 from redbaron import nodes
 
-from .matcher import match_el_guess
+from .matcher import (find_el,
+                      match_el_guess)
 from .tools import (WHITESPACE_NODES,
                     same_el)
 
@@ -11,6 +12,9 @@ class BeforeContext(list):
         return self.match(tree, index)
 
     def match(self, tree, index):
+        if not self:
+            return True
+
         context = self
         start_index = index - len(context)
         if context[-1] is None:
@@ -66,11 +70,35 @@ class AfterContext(list):
         return AfterContext(self)
 
 
+def significant_context(context):
+    context_whitespace = []
+    for el in context:
+        if not isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
+            return el, context_whitespace
+        context_whitespace.append(el)
+
+    raise Exception("Invalid context")
+
+
 def find_context(tree, context):
-    for index in range(len(tree) + 1):
-        if context.match(tree, index):
-            return index
-    return None
+    context_el, context_whitespace = significant_context(context)
+
+    if context_el is None:
+        index = 0 if isinstance(context, BeforeContext) else -1
+    else:
+        el = find_el(tree, context_el, BeforeContext())
+        if el is None:
+            return None
+        index = tree.index(el)
+        if isinstance(context, BeforeContext):
+            index += 1
+
+    for _ in context_whitespace:
+        if not isinstance(tree[index], WHITESPACE_NODES+(nodes.CommaNode, )):
+            break
+        index += 1
+
+    return index
 
 
 def gather_context(el):

@@ -102,13 +102,13 @@ def test_find_context():
     context = BeforeContext([None])
     assert find_context(tree, context) == 0
     # At the end -2
-    context = BeforeContext([line1, None])
+    context = BeforeContext([line1])
     assert find_context(tree, context) == 1
 
-    context = BeforeContext([line3, None])
-    assert find_context(tree, context) is None
+    context = BeforeContext([line3])
+    assert find_context(tree, context) == 3
 
-    context = AfterContext([line3, None])
+    context = AfterContext([line3])
     assert find_context(tree, context) == 2
 
 

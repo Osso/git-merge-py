@@ -74,7 +74,7 @@ def insert_at_context_coma_list(el, context, tree, on_new_line=False):
 
     # Look for context
     index = find_context(tree, context)
-    if index:
+    if index is not None:
         insert_coma_list(tree, position=index, to_add=el,
                          on_new_line=on_new_line)
         return True

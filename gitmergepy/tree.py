@@ -576,6 +576,7 @@ class MoveFunction(ChangeEl):
         fun = find_func(tree, self.el)
         # If function still exists, move it then apply changes
         if fun:
+            # import pdb; pdb.set_trace()
             tree.remove(fun)
             if not insert_at_context(fun, self.context, tree):
                 tree.append(fun)

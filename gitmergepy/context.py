@@ -94,7 +94,8 @@ def find_context(tree, context):
             index += 1
 
     for _ in context_whitespace:
-        if not isinstance(tree[index], WHITESPACE_NODES+(nodes.CommaNode, )):
+        if not isinstance(tree[index], WHITESPACE_NODES+(nodes.CommaNode,
+                                                         nodes.SpaceNode)):
             break
         index += 1
 

@@ -321,6 +321,9 @@ def old_fun():
 
 def fun2():
     call('fun2')
+
+def fun3():
+    call('fun3')
 """
     current = """
 def fun1():
@@ -328,6 +331,9 @@ def fun1():
 
 def fun2():
     call('fun2')
+
+def fun3():
+    call('fun3')
 """
     _test_apply_changes(base, current)
 

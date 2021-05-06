@@ -84,6 +84,8 @@ def _remove_or_replace(diff, els, context, indent, force_separate):
         diff.pop()
         diff.append(replace)
     else:
+        logging.debug("%s remove els %r, context %r", indent+INDENT, els,
+                      context)
         diff.append(RemoveEls(els, context=context))
 
 

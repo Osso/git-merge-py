@@ -118,6 +118,8 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
         # can also be matched
         if isinstance(stack_left[0], (nodes.FromImportNode, nodes.ImportNode)):
             if not find_import(el_right.parent, stack_left[0]):
+                logging.debug("%s import to remove %r", indent+INDENT,
+                              short_display_el(stack_left[0]))
                 diff += [RemoveEls([stack_left[0]],
                                    context=gather_context(stack_left[0]))]
                 stack_left.pop(0)

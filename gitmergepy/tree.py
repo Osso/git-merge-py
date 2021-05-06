@@ -90,13 +90,16 @@ class RemoveEls:
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
-                # Adjust new lines in case of inline comment
-                put_on_new_line = index > 0 and not el.on_new_line and el.endl
+                put_on_new_line = tree[index].endl
 
                 del tree[index]
 
+                # Adjust new lines in case of inline comment
                 if put_on_new_line:
-                    tree.add_endl(index-1)
+                    try:
+                        tree.put_on_new_line(tree[index])
+                    except IndexError:
+                        pass
 
             else:
                 logging.debug(".. not matching %r", short_display_el(el))

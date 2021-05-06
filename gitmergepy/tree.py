@@ -90,9 +90,10 @@ class RemoveEls:
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
-                put_on_new_line = tree[index].endl
+                put_on_new_line = bool(tree[index].endl)
 
-                del tree[index]
+                tree.hide(tree[index])
+                index += 1
 
                 # Adjust new lines in case of inline comment
                 if put_on_new_line:

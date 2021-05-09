@@ -826,9 +826,9 @@ class AddDictItem(BaseEl):
             previous_key = None
 
         if not previous_key:
-            tree.value.append(self.el)
+            tree.value.append(self.el.copy())
         else:
-            previous_key.insert_after(self.el)
+            previous_key.insert_after(self.el.copy())
 
         return []
 

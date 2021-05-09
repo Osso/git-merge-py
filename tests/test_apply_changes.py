@@ -913,6 +913,21 @@ def test_dict_add_multiline():
     _test_apply_changes(base, current)
 
 
+def test_dict_add_multiline2():
+    base = """
+    a = {
+        'key': 'value'
+    }
+"""
+    current = """
+    a = {
+        'key': 'value',
+        'new_key': 'value'
+    }
+"""
+    _test_apply_changes(base, current)
+
+
 def test_dict_remove():
     base = """
     {'key': 'value', 'new_key': 'value'}
@@ -1012,5 +1027,45 @@ call(
   arg1, arg2,
   arg3,
   arg4)
+"""
+    _test_apply_changes(base, current)
+
+
+def test_embedded_dict():
+    base = """
+d = {
+    "key1": {
+        'sub_key1': {
+            'queue': 'value1'
+        },
+        'sub_key2': {
+            'queue': 'value2',
+        },
+        'sub_key3': {
+            'queue': 'value3'
+        },
+        'sub_key4': {
+            'queue': 'value4'
+        },
+    }
+}
+"""
+    current = """
+d = {
+    "key1": {
+        'sub_key1': {
+            'queue': 'value1'
+        },
+        'sub_key2': {
+            'queue': 'value2',
+        },
+        'sub_key3': {
+            'queue': 'value3'
+        },
+        'sub_key4': {
+            'queue': 'value4'
+        },
+    }
+}
 """
     _test_apply_changes(base, current)

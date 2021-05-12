@@ -922,7 +922,7 @@ def test_dict_add_multiline2():
     current = """
     a = {
         'key': 'value',
-        'new_key': 'value'
+        'new_key': 'value',
     }
 """
     _test_apply_changes(base, current)
@@ -1036,16 +1036,10 @@ def test_embedded_dict():
 d = {
     "key1": {
         'sub_key1': {
-            'queue': 'value1'
-        },
-        'sub_key2': {
-            'queue': 'value2',
+            'queue': 'value1',
         },
         'sub_key3': {
-            'queue': 'value3'
-        },
-        'sub_key4': {
-            'queue': 'value4'
+            'queue': 'value3',
         },
     }
 }
@@ -1054,16 +1048,13 @@ d = {
 d = {
     "key1": {
         'sub_key1': {
-            'queue': 'value1'
+            'queue': 'value1',
         },
         'sub_key2': {
             'queue': 'value2',
         },
         'sub_key3': {
-            'queue': 'value3'
-        },
-        'sub_key4': {
-            'queue': 'value4'
+            'queue': 'value3',
         },
     }
 }

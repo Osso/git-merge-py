@@ -228,7 +228,13 @@ class BaseAddEls:
         el = el_to_add.copy()
 
         # Add endl for code proxy lists
-        if isinstance(el_to_add.associated_sep, nodes.EndlNode):
+        endl = isinstance(el_to_add.associated_sep, nodes.EndlNode)
+        if el_to_add.associated_sep:
+            fmt = el_to_add.associated_sep.second_formatting.get(-1, None)
+            if isinstance(fmt, nodes.EndlNode):
+                endl = True
+
+        if endl:
             tree.insert_with_new_line(index, el)
         else:
             tree.insert(index, el)
@@ -806,10 +812,17 @@ class ChangeIndentation:
                                                      self.relative_indentation)
 
 
-class AddDictItem(BaseEl):
+class AddDictItem(BaseAddEls):
     def __init__(self, el, previous_item):
-        super().__init__(el)
-        self.previous_item = previous_item
+        super().__init__([el], context=[previous_item])
+
+    @property
+    def el(self):
+        return self.to_add[0]
+
+    @property
+    def previous_item(self):
+        return self.context[0]
 
     def apply(self, tree):
         if self.previous_item:
@@ -826,9 +839,11 @@ class AddDictItem(BaseEl):
             previous_key = None
 
         if not previous_key:
-            tree.value.append(self.el.copy())
+            index = len(tree.value)
         else:
-            previous_key.insert_after(self.el.copy())
+            index = tree.index(previous_key) + 1
+
+        self._insert_el(self.el, index, tree)
 
         return []
 

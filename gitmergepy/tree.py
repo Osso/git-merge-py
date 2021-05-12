@@ -230,9 +230,7 @@ class BaseAddEls:
         # Add endl for code proxy lists
         endl = isinstance(el_to_add.associated_sep, nodes.EndlNode)
         if el_to_add.associated_sep:
-            fmt = el_to_add.associated_sep.second_formatting.get(-1, None)
-            if isinstance(fmt, nodes.EndlNode):
-                endl = True
+            endl = endl or bool(el_to_add.associated_sep.endl)
 
         if endl:
             tree.insert_with_new_line(index, el)

@@ -560,3 +560,11 @@ def fun(
     pass
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_dict_add_already_existing():
+    base = "{}"
+    current = "{'key': v}"
+    other = "{'key': v}"
+    expected = "{'key': v}"
+    _test_merge_changes(base, current, other, expected)

@@ -823,6 +823,11 @@ class AddDictItem(BaseAddEls):
         return self.context[0]
 
     def apply(self, tree):
+        if find_key(self.el.key, tree):
+            logging.debug("key %s already exists",
+                          short_display_el(self.el.key))
+            return []
+
         if self.previous_item:
             logging.debug("adding key %s after %s",
                           short_display_el(self.el.key),

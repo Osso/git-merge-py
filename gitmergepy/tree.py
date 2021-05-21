@@ -62,6 +62,14 @@ class RemoveEls:
     def apply(self, tree):
         logging.debug("removing els %s", short_display_list(self.to_remove))
         logging.debug(". context %r", short_context(self.context))
+
+        if isinstance(self.context, AfterContext):
+            assert self.context[0] is None
+            return self.remove_from_the_end(tree)
+
+        return self.remove_with_context(tree)
+
+    def remove_with_context(self, tree):
         # We modify this
         to_remove = self.to_remove.copy()
 
@@ -90,8 +98,25 @@ class RemoveEls:
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
-                tree.hide(tree[index])
+                tree.hide(el)
                 index += 1
+            else:
+                logging.debug(".. not matching %r", short_display_el(el))
+                break
+
+        return []
+
+    def remove_from_the_end(self, tree):
+        for el_to_remove in reversed(self.to_remove):
+            try:
+                el = tree[-1]
+            except IndexError:
+                # End of tree, we can only assume the other elements
+                # are already removed
+                break
+            logging.debug(". removing el %r", short_display_el(el_to_remove))
+            if same_el(el, el_to_remove):
+                tree.hide(el)
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
                 break

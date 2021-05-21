@@ -61,26 +61,26 @@ class RemoveEls:
 
     def apply(self, tree):
         logging.debug("removing els %s", short_display_list(self.to_remove))
+        logging.debug(". context %r", short_context(self.context))
         # We modify this
         to_remove = self.to_remove.copy()
 
-        context_el = None
+        anchor_el = None
         for el_to_remove in to_remove:
-            logging.debug(". context %r", short_context(self.context))
             logging.debug(". looking for el %r",
                           short_display_el(el_to_remove))
-            context_el = find_el(tree, el_to_remove, self.context)
-            if context_el is not None:
-                logging.debug(". found context")
+            anchor_el = find_el(tree, el_to_remove, self.context)
+            if anchor_el is not None:
+                logging.debug(". el found")
                 break
             else:
-                logging.debug(". context not found")
+                logging.debug(". el not found")
                 to_remove.remove(el_to_remove)
 
-        if context_el is None:
+        if anchor_el is None:
             return []
 
-        index = tree.index(context_el)
+        index = tree.index(anchor_el)
         for el_to_remove in to_remove:
             try:
                 el = tree[index]
@@ -90,18 +90,8 @@ class RemoveEls:
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
-                put_on_new_line = bool(tree[index].endl)
-
                 tree.hide(tree[index])
                 index += 1
-
-                # Adjust new lines in case of inline comment
-                if put_on_new_line:
-                    try:
-                        tree.put_on_new_line(tree[index])
-                    except IndexError:
-                        pass
-
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
                 break

@@ -89,18 +89,6 @@ def _remove_or_replace(diff, els, context, indent, force_separate):
         diff.append(RemoveEls(els, context=context))
 
 
-def _remove_or_replace_at_the_end(diff, els, indent, force_separate):
-    if not force_separate and diff and isinstance(diff[-1], AddEls):
-        # Transform add+remove into a ReplaceEls
-        logging.debug("%s transforming into replace", indent+INDENT)
-        replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
-                             context=diff[-1].context)
-        diff.pop()
-        diff.append(replace)
-    else:
-        diff.append(RemoveEls(els, context=AfterContext([None])))
-
-
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
@@ -187,8 +175,9 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         for el in stack_left:
             logging.debug("%s removing leftover %r", indent+INDENT,
                           short_display_el(el))
-        _remove_or_replace_at_the_end(diff, stack_left, indent=indent,
-                                      force_separate=not last_added)
+        _remove_or_replace(diff, stack_left, indent=indent,
+                           context=gather_context(stack_left[0]),
+                           force_separate=not last_added)
 
     # logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff

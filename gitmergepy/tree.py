@@ -144,6 +144,9 @@ class RemoveImports:
     def apply(self, tree):
         apply_diff_to_list(tree.targets, to_add=[], to_remove=self.imports,
                            key_getter=lambda t: t.value)
+        if len(tree.targets) == 1:
+            tree.targets.remove_brackets()
+
         return []
 
 

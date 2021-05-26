@@ -672,14 +672,24 @@ class AddDecorator(ElWithContext):
         if isinstance(context[0], nodes.EndlNode):
             del context[0]
         logging.debug(".. context %s", short_context(context))
-        index = find_context(tree.decorators, context)
+        index = find_context(self.get_elements(tree), context)
         if index is not None:
             logging.debug(".. inserting at %d", index)
-            tree.decorators.insert(index, decorator)
+            self.get_elements(tree).insert(index, decorator)
         else:
             logging.debug(".. context not found, appending")
-            tree.decorators.append(decorator)
+            self.get_elements(tree).append(decorator)
         return []
+
+    @staticmethod
+    def get_elements(tree):
+        return tree.decorators
+
+
+class AddBase(AddDecorator):
+    @staticmethod
+    def get_elements(tree):
+        return tree.inherit_from
 
 
 class RemoveFunArgs:
@@ -712,6 +722,19 @@ class RemoveCallArgs(RemoveFunArgs):
 class RemoveDecorators(RemoveFunArgs):
     def get_args(self, tree):
         return tree.decorators
+
+    def apply(self, tree):
+        to_remove_values = set(id_from_el(el) for el in self.args)
+        args = self.get_args(tree)
+        for el in args:
+            if id_from_el(el) in to_remove_values:
+                args.remove(el)
+        return []
+
+
+class RemoveBases(RemoveDecorators):
+    def get_args(self, tree):
+        return tree.inherit_from
 
     def apply(self, tree):
         to_remove_values = set(id_from_el(el) for el in self.args)

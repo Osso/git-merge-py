@@ -13,6 +13,7 @@ from .tools import (INDENT,
                     id_from_el,
                     short_display_el)
 from .tree import (AddAllDecoratorArgs,
+                   AddBase,
                    AddCallArg,
                    AddDecorator,
                    AddDictItem,
@@ -32,6 +33,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeReturn,
                    ChangeValue,
                    RemoveAllDecoratorArgs,
+                   RemoveBases,
                    RemoveCallArgs,
                    RemoveDecorators,
                    RemoveDictItem,
@@ -223,12 +225,9 @@ def diff_assignment_node(left, right, indent):
     return diff
 
 
-def diff_class_node(left, right, indent):
+def diff_class_node_decorators(left, right, indent):
     diff = []
-    # Name
-    if left.name != right.name:
-        diff += [ReplaceAttr('name', right.name)]
-    # Decorators
+
     to_add, to_remove = diff_list(left.decorators, right.decorators)
     for decorator in to_add:
         diff += [AddDecorator(decorator,
@@ -255,6 +254,46 @@ def diff_class_node(left, right, indent):
         if diff_decorator:
             diff += [ChangeDecorator(left_el, changes=diff_decorator)]
 
+    return diff
+
+
+def diff_class_node_bases(left, right, indent):
+    diff = []
+
+    to_add, to_remove = diff_list(left.inherit_from, right.inherit_from)
+    for base in to_add:
+        diff += [AddBase(base,
+                              context=gather_context(base))]
+    if to_remove:
+        diff += [RemoveBases(to_remove)]
+    if to_add:
+        logging.debug('%s class new bases %r', indent, to_add)
+    if to_remove:
+        logging.debug('%s class old bases %r', indent, to_remove)
+    changed = changed_in_list(left.inherit_from, right.inherit_from)
+    for left_el, right_el in changed:
+        logging.debug('%s class changed base %r ', indent, right_el)
+        diff_base = compute_diff(left_el, right_el, indent=indent+INDENT)
+        if diff_base:
+            diff += [ChangeDecorator(left_el, changes=diff_base)]
+
+    return diff
+
+
+def diff_class_node(left, right, indent):
+    diff = []
+
+    # Name
+    if left.name != right.name:
+        diff += [ReplaceAttr('name', right.name)]
+
+    # Bases
+    diff += diff_class_node_bases(left, right, indent)
+
+    # Decorators
+    diff += diff_class_node_decorators(left, right, indent)
+
+    # Body
     diff += compute_diff_iterables(left.value, right.value, indent=indent+INDENT)
 
     return diff

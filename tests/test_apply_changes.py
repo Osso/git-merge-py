@@ -1070,3 +1070,15 @@ d = {
 }
 """
     _test_apply_changes(base, current)
+
+
+def test_class_bases():
+    base = """
+class C(BaseA):
+    pass
+"""
+    current = """
+class C(BaseB):
+    pass
+"""
+    _test_apply_changes(base, current)

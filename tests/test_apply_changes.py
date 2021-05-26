@@ -241,6 +241,16 @@ from module1 import fun1
     _test_apply_changes(base, current)
 
 
+def test_remove_import_two():
+    base = """
+from module1 import (fun1, fun2, fun3)
+"""
+    current = """
+from module1 import fun1
+"""
+    _test_apply_changes(base, current)
+
+
 def test_remove_with():
     base = """
 with fun():

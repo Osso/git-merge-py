@@ -137,7 +137,7 @@ def apply_diff_to_list(elements, to_add, to_remove, key_getter):
     elements.extend(to_add)
 
     to_remove_values = set(key_getter(el) for el in to_remove)
-    for el in elements:
+    for el in list(elements):
         if key_getter(el) in to_remove_values:
             elements.remove(el)
 

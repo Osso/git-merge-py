@@ -112,7 +112,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         if not stack_left:
             logging.debug("%s stack left empty, new el %r", indent+INDENT,
                           short_display_el(el_right))
-            add_to_diff(diff, el_right, indent)
+            add_to_diff(diff, el_right, last_added=last_added, indent=indent)
             continue
 
         # Actual processing
@@ -168,7 +168,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         else:
             logging.debug("%s new el %r", indent+INDENT,
                           short_display_el(el_right))
-            add_to_diff(diff, el_right, indent+2*INDENT)
+            add_to_diff(diff, el_right, last_added=last_added,
+                        indent=indent+2*INDENT)
             last_added = True
 
     if stack_left:
@@ -183,21 +184,25 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     return diff
 
 
-def add_to_diff(diff, el, indent):
-    # comments for a function
-    comment_before_function = False
+def detect_comment_before_function(el):
+    comment_before_function = None
     if isinstance(el, nodes.CommentNode):
         n = el
         while isinstance(n.next, nodes.CommentNode):
             n = n.next
         if isinstance(n.next, (nodes.DefNode, nodes.ClassNode)):
-            comment_before_function = True
+            comment_before_function = n
 
-    if comment_before_function:
-        context = gather_after_context(n)
+    return comment_before_function
+
+
+def add_to_diff(diff, el, last_added=False, indent=""):
+    comment_before_function = detect_comment_before_function(el)
+    if comment_before_function is not None:
+        context = gather_after_context(comment_before_function)
         logging.debug("%s after context %r", indent, short_context(context))
         diff += [AddEls([el], context=context)]
-    elif diff and isinstance(diff[-1], AddEls):
+    elif diff and isinstance(diff[-1], AddEls) and last_added:
         diff[-1].add_el(el)
     else:
         context = gather_context(el)

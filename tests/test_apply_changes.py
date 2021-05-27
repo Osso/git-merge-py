@@ -1092,3 +1092,19 @@ class C(BaseB):
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_add_2_blocks():
+    """Test for last_added bug in add_to_diff.
+    The bug resulting the 2 blocks being merged."""
+    base = """
+# not changed
+"""
+    current = """
+# line 1
+# line 2
+# not changed
+# line 3
+# line 4
+"""
+    _test_apply_changes(base, current)

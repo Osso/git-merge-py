@@ -55,7 +55,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                     # stack_left[0] is defined somewhere else
                     # we are not modifying it
                     logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                    add_to_diff(diff, el_right, indent+2*INDENT)
+                    add_to_diff(diff, el_right, indent=indent+2*INDENT)
                 else:
                     # stack_left[0] is nowhere else
                     # assume function is modified
@@ -68,7 +68,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                         diff += diff_el
             else:
                 logging.debug("%s new fun %r", indent+INDENT, el_right.name)
-                add_to_diff(diff, el_right, indent+2*INDENT)
+                add_to_diff(diff, el_right, indent=indent+2*INDENT)
     return diff
 
 
@@ -84,7 +84,7 @@ def diff_class_node(stack_left, el_right, indent, context_class):
                             context_class=ChangeClass)
     else:
         logging.debug("%s new class %r", indent+INDENT, el_right.name)
-        add_to_diff(diff, el_right, indent+2*INDENT)
+        add_to_diff(diff, el_right, indent=indent+2*INDENT)
 
     return diff
 
@@ -103,7 +103,7 @@ def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
     else:
         logging.debug("%s new AtomtrailersNode %r", indent+INDENT,
                       el_right.dumps())
-        add_to_diff(diff, el_right, indent+2*INDENT)
+        add_to_diff(diff, el_right, indent=indent+2*INDENT)
 
     return diff
 

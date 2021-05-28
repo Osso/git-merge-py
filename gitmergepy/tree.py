@@ -277,7 +277,9 @@ class ReplaceEls(BaseAddEls):
 
         index = self._look_for_context(tree)
         if index is None:
-            return [Conflict([tree], self, reason="Cannot match context")]
+            add_conflicts(tree, [Conflict(self.to_remove, self,
+                                        reason="Cannot match context")])
+            return []
 
         for el_to_add in self.to_add:
             logging.debug("    el %r", short_display_el(el_to_add))
@@ -849,19 +851,16 @@ class AddDictItem(BaseAddEls):
             logging.debug("adding key %s after %s",
                           short_display_el(self.el.key),
                           short_display_el(self.previous_item.key))
+
+            previous_key = find_key(self.previous_item.key, tree)
+            if not previous_key:
+                index = len(tree.value)
+            else:
+                index = tree.index(previous_key) + 1
         else:
             logging.debug("adding key %s at the beginning",
                           short_display_el(self.el.key))
-
-        if self.previous_item:
-            previous_key = find_key(self.previous_item.key, tree)
-        else:
-            previous_key = None
-
-        if not previous_key:
-            index = len(tree.value)
-        else:
-            index = tree.index(previous_key) + 1
+            index = 0
 
         self._insert_el(self.el, index, tree)
 

@@ -106,7 +106,7 @@ def match_el_guess(left, right, context=None):
     if isinstance(left, nodes.WithNode):
         return left.contexts.dumps() == right.contexts.dumps()
     if isinstance(left, (nodes.IfNode, nodes.ElseNode)):
-        return if_similarity(left, right) > IF_SIMILARITY_THRESHOLD
+        return code_block_similarity(left, right) > IF_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
 
@@ -219,13 +219,13 @@ def find_with_node_same_context(tree, target_el, context):
 
 def find_if(tree, target_el):
     ifs_found = [el for el in tree.find_all('ifelseblock')
-                 if if_similarity(target_el, el) > IF_SIMILARITY_THRESHOLD]
+             if code_block_similarity(target_el, el) > IF_SIMILARITY_THRESHOLD]
     if len(ifs_found) == 1:
         return ifs_found[0]
     return None
 
 
-def if_similarity(left, right):
+def code_block_similarity(left, right):
     left_lines = set(left.dumps().splitlines())
     right_lines = set(right.dumps().splitlines())
     same_lines_count = len(left_lines & right_lines)

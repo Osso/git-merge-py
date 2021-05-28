@@ -118,16 +118,24 @@ def fun1():
 def test_remove_with():
     base = """
 with fun():
+    # line 1
+    # line 2
     call('hello')
 """
     current = """
+# line 1
+# line 2
 call('hello')
 """
     other = """
 with fun():
+    # line 1
+    # line 2
     call('hello world')
 """
     expected = """
+# line 1
+# line 2
 call('hello world')
 """
     _test_merge_changes(base, current, other, expected)
@@ -149,6 +157,30 @@ with fun():
     expected = """
 with fun2():
     call('hello world')
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_with_2():
+    base = """
+with fun():
+    call('hello')
+"""
+    current = """
+with fun2():
+    call('hello')
+"""
+    other = """
+with fun():
+    call('hello')
+with fun():
+    call('world')
+"""
+    expected = """
+with fun2():
+    call('hello')
+with fun():
+    call('world')
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -563,8 +595,8 @@ def fun(
 
 
 def test_dict_add_already_existing():
-    base = "{}"
-    current = "{'key': v}"
-    other = "{'key': v}"
-    expected = "{'key': v}"
+    base = "{'key2': v2, 'key3': v3}"
+    current = "{'key': v, 'key2': v2, 'key3': v3}"
+    other = "{'key': v, 'key2': v2, 'key3': v3}"
+    expected = "{'key': v, 'key2': v2, 'key3': v3}"
     _test_merge_changes(base, current, other, expected)

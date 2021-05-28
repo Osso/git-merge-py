@@ -2,10 +2,10 @@ import logging
 
 from redbaron import nodes
 
-from .context import (AfterContext,
-                      gather_after_context,
+from .context import (gather_after_context,
                       gather_context)
-from .matcher import guess_if_same_el
+from .matcher import (code_block_similarity,
+                      guess_if_same_el)
 from .tools import (INDENT,
                     same_el,
                     short_context,
@@ -89,6 +89,29 @@ def _remove_or_replace(diff, els, context, indent, force_separate):
         diff.append(RemoveEls(els, context=context))
 
 
+def check_removed_withs(stack_left, el_right, indent):
+    """Check for removal of with node + shifting of content"""
+    if (stack_left and
+            isinstance(stack_left[0], nodes.WithNode) and
+            not isinstance(el_right, nodes.WithNode)):
+        orig_with_node = stack_left[0]
+        with_node = orig_with_node.copy()
+        with_node.decrease_indentation()
+
+        lines_in_with = len(stack_left[0])
+        code_block_to_compare = el_right.parent.make_code_block(start=el_right, length=lines_in_with)
+
+        if code_block_similarity(with_node.value, code_block_to_compare) > 0.6:
+            logging.debug("%s with node removal %r", indent+INDENT,
+                          short_display_el(stack_left[0]))
+            del stack_left[0]
+            stack_left[:] = list(with_node) + stack_left
+            return [RemoveWith(orig_with_node,
+                               context=gather_context(el_right))]
+
+    return []
+
+
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
@@ -100,14 +123,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     last_added = False
     for el_right in right:
         # Pre-processing
-        if stack_left and isinstance(stack_left[0], nodes.WithNode) and not \
-                isinstance(el_right, nodes.WithNode):
-            logging.debug("%s with node removal %r", indent+INDENT, short_display_el(stack_left[0]))
-            orig_with_node = stack_left.pop(0)
-            with_node = orig_with_node.copy()
-            with_node.decrease_indentation()
-            stack_left = list(with_node) + stack_left
-            diff += [RemoveWith(orig_with_node, context=gather_context(el_right))]
+        diff += check_removed_withs(stack_left, el_right, indent=indent)
 
         if not stack_left:
             logging.debug("%s stack left empty, new el %r", indent+INDENT,

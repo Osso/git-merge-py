@@ -628,17 +628,18 @@ def test_dict_add_already_existing():
     _test_merge_changes(base, current, other, expected)
 
 
-def test_remove_bug_1():
+def test_remove_with_bug_1():
     base = """
 msisdn = "0600000001"
 
 for key, value in NAPSTER_TEST_DATA.items():
     # base
+    # anchor
     pass
 """
     current = """
-
 for key, value in NAPSTER_TEST_DATA.items():
+    # anchor
     pass
 """
     other = """
@@ -647,11 +648,13 @@ msisdn = "0600000001"
 for key, value in NAPSTER_TEST_DATA.items():
     # base
     # current
+    # anchor
     pass
 """
     expected = """
-
 for key, value in NAPSTER_TEST_DATA.items():
+    # current
+    # anchor
     pass
 """
     _test_merge_changes(base, current, other, expected)

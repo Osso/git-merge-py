@@ -375,6 +375,30 @@ def diff_dict_node(left, right, indent):
     return diff
 
 
+def diff_for_node(left, right, indent):
+    diff = []
+    if left.target.dumps() != right.target.dumps():
+        diff += [ReplaceAttr('target', right.target.copy())]
+
+    if left.iterator.dumps() != right.iterator.dumps():
+        diff += [ReplaceAttr('iterator', right.iterator.copy())]
+
+    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    return diff
+
+
+def diff_while_node(left, right, indent):
+    diff = []
+    if left.value.dumps() != right.value.dumps():
+        diff += [ReplaceAttr('value', right.value.copy())]
+
+    if left.as_.dumps() != right.as_.dumps():
+        diff += [ReplaceAttr('as_', right.as_.copy())]
+
+    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -399,4 +423,6 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.ListArgumentNode: diff_list_argument_node,
     nodes.DictArgumentNode: diff_dict_argument_node,
     nodes.DictNode: diff_dict_node,
+    nodes.ForNode: diff_for_node,
+    nodes.WhileNode: diff_while_node,
 }

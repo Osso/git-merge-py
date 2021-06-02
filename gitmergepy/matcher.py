@@ -103,7 +103,8 @@ def match_el_guess(left, right, context=None):
         return set(m.dumps() for m in left.value) == set(m.dumps() for m in right.value)
     if isinstance(left, nodes.AssignmentNode):
         return left.target.value == right.target.value
-    if isinstance(left, (nodes.IfNode, nodes.ElseNode, nodes.WithNode)):
+    if isinstance(left, (nodes.IfNode, nodes.ElseNode, nodes.WithNode,
+                         nodes.ForNode, nodes.WhileNode)):
         return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD

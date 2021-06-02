@@ -36,19 +36,23 @@ call('hello')
 # more stuff
 """
     other = """# changed stuff
-with fun() as out:
-    call('hello world')
+with fun() as out2:
+    call('hello')
+with fun() as out2:
+    call('hello')
 # more stuff
 """
     expected = """# <<<<<<<<<<
-# Reason Cannot match context
-# <ReplaceEls to_add="call('hello')" to_remove="with fun() as out:" context='# stuff'>
+# Reason Multiple with nodes found
+# <RemoveWith el="with fun() as out:" context='# stuff'>
 # with fun() as out:
 #     call('hello')
 # >>>>>>>>>>
 # changed stuff
-with fun() as out:
-    call('hello world')
+with fun() as out2:
+    call('hello')
+with fun() as out2:
+    call('hello')
 # more stuff
 """
     _test_merge_changes(base, current, other, expected)

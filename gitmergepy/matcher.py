@@ -108,7 +108,7 @@ def match_el_guess(left, right, context=None):
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
 
-    return False
+    return same_el(left, right)
 
 
 def find_el_strong(tree, target_el, context):
@@ -224,8 +224,8 @@ def find_if(tree, target_el):
 
 
 def code_block_similarity(left, right):
-    left_lines = set(left.dumps().splitlines())
-    right_lines = set(right.dumps().splitlines())
+    left_lines = set(left.dumps().splitlines()) - set([""])
+    right_lines = set(right.dumps().splitlines()) - set([""])
     same_lines_count = len(left_lines & right_lines)
     total_lines_count = max(len(left_lines), len(right_lines))
     return same_lines_count / total_lines_count

@@ -185,6 +185,32 @@ with fun():
     _test_merge_changes(base, current, other, expected)
 
 
+def test_change_with_content():
+    base = """# stuff
+with fun() as out:
+    call('hello')
+# more stuff
+"""
+    current = """# stuff
+call('hello')
+# more stuff
+"""
+    other = """# changed stuff
+with fun() as out2:
+    call('hello')
+with fun() as out2:
+    call('hello world')
+# more stuff
+"""
+    expected = """# changed stuff
+call('hello')
+with fun() as out2:
+    call('hello world')
+# more stuff
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_rename_function():
     base = """
 def fun1():
@@ -599,4 +625,33 @@ def test_dict_add_already_existing():
     current = "{'key': v, 'key2': v2, 'key3': v3}"
     other = "{'key': v, 'key2': v2, 'key3': v3}"
     expected = "{'key': v, 'key2': v2, 'key3': v3}"
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_remove_bug_1():
+    base = """
+msisdn = "0600000001"
+
+for key, value in NAPSTER_TEST_DATA.items():
+    # base
+    pass
+"""
+    current = """
+
+for key, value in NAPSTER_TEST_DATA.items():
+    pass
+"""
+    other = """
+msisdn = "0600000001"
+
+for key, value in NAPSTER_TEST_DATA.items():
+    # base
+    # current
+    pass
+"""
+    expected = """
+
+for key, value in NAPSTER_TEST_DATA.items():
+    pass
+"""
     _test_merge_changes(base, current, other, expected)

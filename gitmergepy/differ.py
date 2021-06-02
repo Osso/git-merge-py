@@ -5,7 +5,8 @@ from redbaron import nodes
 from .context import (gather_after_context,
                       gather_context)
 from .matcher import (code_block_similarity,
-                      guess_if_same_el)
+                      guess_if_same_el,
+                      match_el_guess)
 from .tools import (INDENT,
                     same_el,
                     short_context,
@@ -155,21 +156,21 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             last_added = False
         # Look forward a few elements to check if we have a match
         elif not isinstance(el_right, nodes.EmptyLineNode) and \
-               any(same_el(stack_left[i], el_right) for i in range(max_ahead)):
+               any(match_el_guess(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
             for _ in range(10):
-                if not stack_left or same_el(stack_left[0], el_right):
+                if not stack_left or match_el_guess(stack_left[0], el_right):
                     break
                 el = stack_left.pop(0)
 
                 logging.debug("%s removing %r", indent+INDENT,
                               short_display_el(el))
                 els.append(el)
-            if stack_left[0].indentation != el_right.indentation:
-                diff += _changed_el(el_right, stack_left, indent, context_class)
-            else:
+            if same_el(stack_left[0], el_right, discard_indentation=False):
                 stack_left.pop(0)
+            else:
+                diff += _changed_el(el_right, stack_left, indent, context_class)
             if els:
                 _remove_or_replace(diff, els, indent=indent,
                                    context=gather_context(els[0]),

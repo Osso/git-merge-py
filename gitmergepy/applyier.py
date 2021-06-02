@@ -113,6 +113,6 @@ def add_conflict(source_el, conflict):
         _insert(repr(conflict.change))
     if conflict.els:
         for el in conflict.els:
-            for line in el.dumps().splitlines():
+            for line in el.dumps().splitlines()[0:5]:
                 _insert(line.rstrip())
     _insert(after_text)

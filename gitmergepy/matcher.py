@@ -5,7 +5,7 @@ from .tools import (get_name_els_from_call,
                     name_els_to_string,
                     same_el)
 
-IF_SIMILARITY_THRESHOLD = 0.5
+CODE_BLOCK_SIMILARITY_THRESHOLD = 0.5
 DICT_SIMILARITY_THRESHOLD = 0.5
 
 
@@ -103,10 +103,8 @@ def match_el_guess(left, right, context=None):
         return set(m.dumps() for m in left.value) == set(m.dumps() for m in right.value)
     if isinstance(left, nodes.AssignmentNode):
         return left.target.value == right.target.value
-    if isinstance(left, nodes.WithNode):
-        return left.contexts.dumps() == right.contexts.dumps()
-    if isinstance(left, (nodes.IfNode, nodes.ElseNode)):
-        return code_block_similarity(left, right) > IF_SIMILARITY_THRESHOLD
+    if isinstance(left, (nodes.IfNode, nodes.ElseNode, nodes.WithNode)):
+        return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
 
@@ -219,7 +217,7 @@ def find_with_node_same_context(tree, target_el, context):
 
 def find_if(tree, target_el):
     ifs_found = [el for el in tree.find_all('ifelseblock')
-             if code_block_similarity(target_el, el) > IF_SIMILARITY_THRESHOLD]
+             if code_block_similarity(target_el, el) > CODE_BLOCK_SIMILARITY_THRESHOLD]
     if len(ifs_found) == 1:
         return ifs_found[0]
     return None

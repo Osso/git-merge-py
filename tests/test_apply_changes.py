@@ -1108,3 +1108,75 @@ def test_add_2_blocks():
 # line 4
 """
     _test_apply_changes(base, current)
+
+
+def test_context_repeated_replace():
+    base = """
+# context 1
+# context repeated
+# line 1
+# context 2
+# context repeated
+# line 1
+"""
+    current = """
+# context 1
+# context repeated
+# line 1
+# context 2
+# context repeated
+# line 1 changed
+"""
+    _test_apply_changes(base, current)
+
+
+def test_context_repeated_remove():
+    base = """
+# context 1
+# context repeated
+# line 1
+# context 2
+# context repeated
+# line 1
+"""
+    current = """
+# context 1
+# context repeated
+# line 1
+# context 2
+# context repeated
+"""
+    _test_apply_changes(base, current)
+
+
+def test_context_changed_replace():
+    base = """
+# context 1
+# context repeated
+# line 1
+# context 2
+# context repeated
+# line 1
+"""
+    current = """
+# context changed
+# context repeated
+# line 1 changed
+"""
+    _test_apply_changes(base, current)
+
+
+def test_context_changed_remove():
+    base = """
+# context 1
+# context repeated
+# line 1
+# context 2
+# context repeated
+# line 1
+"""
+    current = """
+# context changed
+# context repeated
+"""
+    _test_apply_changes(base, current)

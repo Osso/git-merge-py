@@ -108,6 +108,8 @@ def gather_context(el):
     while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
         el = el.previous
         context.append(el)
+    if el and el.previous:
+        context.append(el.previous)
     return context
 
 

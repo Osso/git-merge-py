@@ -103,10 +103,6 @@ def find_context(tree, context):
 
 
 def gather_context(el):
-    # after_context = gather_after_context(el)
-    # if after_context[-1] is None:
-    #     return after_context
-
     el = el.previous
     context = BeforeContext([el])
     while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):

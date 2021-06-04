@@ -10,6 +10,7 @@ from .applyier import (add_conflict,
                        insert_at_context_coma_list)
 from .context import (AfterContext,
                       find_context,
+                      find_context_with_reduction,
                       gather_after_context)
 from .matcher import (code_block_similarity,
                       find_class,
@@ -182,18 +183,24 @@ class BaseAddEls:
                 index = skip_context_endl(tree, self.context)
         else:
             logging.debug("    context %r", short_context(self.context))
-            index = find_context(tree, self.context)
-            if index is None:
+            indexes = find_context_with_reduction(tree, self.context)
+            if not indexes:
                 # Try smaller context
                 smaller_context = self.context.copy()
                 while isinstance(smaller_context[0], nodes.EndlNode):
                     del smaller_context[0]
                 logging.debug("    smaller_context %r", short_context(smaller_context))
-                index = find_context(tree, smaller_context)
-                if index is None:
-                    logging.debug("    context not found")
-                    return [Conflict(self.to_add, self,
-                                     reason="context not found")]
+                indexes = find_context_with_reduction(tree, smaller_context)
+
+            if not indexes:
+                logging.debug("    context not found")
+                return [Conflict(self.to_add, self,
+                                 reason="context not found")]
+            elif len(indexes) > 1:
+                return [Conflict(self.to_add, self,
+                                 reason="context found %d times" % len(indexes))]
+            index = indexes[0]
+
             if index == 0:
                 at = "the beginning"
             else:
@@ -255,32 +262,34 @@ class ReplaceEls(BaseAddEls):
             short_context(self.context))
 
     def _look_for_context(self, tree):
-        index = 0  # to silence pylint
+        def match_to_remove_at_index(index):
+            # match all to_remove items
+            for offset, el in enumerate(self.to_remove):
+                try:
+                    if not same_el(tree[index+offset], el):
+                        return False
+                except IndexError:
+                    return False
 
-        # First use context
-        for index in range(len(tree) + 1):
-            if self.context.match(tree, index):
-                # match all to_remove items
-                for offset, el in enumerate(self.to_remove):
-                    try:
-                        if not same_el(tree[index+offset], el):
-                            break
-                    except IndexError:
-                        break
-                else:
-                    return index
+            return True
 
-        return None
+        matches = find_context_with_reduction(tree, self.context)
+        return [index for index in matches if match_to_remove_at_index(index)]
 
     def apply(self, tree):
         logging.debug("replacing els")
         logging.debug("    context %r", short_context(self.context))
 
-        index = self._look_for_context(tree)
-        if index is None:
+        indexes = self._look_for_context(tree)
+        if not indexes:
             add_conflicts(tree, [Conflict(self.to_remove, self,
                                         reason="Cannot match context")])
             return []
+        if len(indexes) > 1:
+            add_conflicts(tree, [Conflict(self.to_remove, self,
+                                        reason="Context matched %d times" % len(indexes))])
+            return []
+        index = indexes[0]
 
         for el_to_add in self.to_add:
             logging.debug("    el %r", short_display_el(el_to_add))
@@ -675,8 +684,9 @@ class AddDecorator(ElWithContext):
         if isinstance(context[0], nodes.EndlNode):
             del context[0]
         logging.debug(".. context %s", short_context(context))
-        index = find_context(self.get_elements(tree), context)
-        if index is not None:
+        indexes = find_context(self.get_elements(tree), context)
+        if indexes:
+            index = indexes[0]
             logging.debug(".. inserting at %d", index)
             self.get_elements(tree).insert(index, decorator)
         else:

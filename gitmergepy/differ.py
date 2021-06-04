@@ -5,6 +5,7 @@ from redbaron import nodes
 from .context import (gather_after_context,
                       gather_context)
 from .matcher import (code_block_similarity,
+                      find_el_strong,
                       guess_if_same_el,
                       match_el_guess)
 from .tools import (INDENT,
@@ -122,9 +123,29 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
 
     diff = []
     last_added = False
+    node_types_that_can_be_found_by_id = (nodes.DefNode,
+                                          nodes.ClassNode,
+                                          nodes.FromImportNode)
+
     for el_right in right:
         # Pre-processing
         diff += check_removed_withs(stack_left, el_right, indent=indent)
+        # Handle the case of an element we can know it is deleted thanks to
+        # to find_el_strong
+        while stack_left and isinstance(stack_left[0], node_types_that_can_be_found_by_id):
+            if find_el_strong(right, stack_left[0], None):
+                break
+            if not find_el_strong(stack_left, el_right, None):
+                break
+
+            logging.debug("%s removing el by id %r", indent+INDENT,
+                          short_display_el(stack_left[0]))
+            context = gather_context(stack_left[0])
+            to_remove = [stack_left.pop(0)]
+            while stack_left and isinstance(stack_left[0], (nodes.EmptyLineNode, nodes.SpaceNode)):
+                to_remove.append(stack_left.pop(0))
+            diff.append(RemoveEls(to_remove,
+                                  context=context))
 
         if not stack_left:
             logging.debug("%s stack left empty, new el %r", indent+INDENT,
@@ -133,9 +154,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             continue
 
         # Actual processing
-        node_types_that_can_be_found_by_id = (nodes.DefNode,
-                                              nodes.ClassNode,
-                                              nodes.FromImportNode)
         max_ahead = min(10, len(stack_left))
         # Direct match
         if same_el(stack_left[0], el_right):

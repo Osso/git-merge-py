@@ -43,10 +43,10 @@ def insert_at_context(el, context, tree):
     elif context[-1] is None:  # insert at the beginning
         tree.insert(0, el)
     else:  # look for context
-        index = find_context(tree, context)
-        if index:
+        indexes = find_context(tree, context)
+        if indexes:
             # Move function to new position
-            tree.insert(index, el)
+            tree.insert(indexes[0], el)
         else:
             return False
     return True
@@ -66,9 +66,9 @@ def insert_at_context_coma_list(el, context, tree, on_new_line=False):
         return True
 
     # Look for context
-    index = find_context(tree, context)
-    if index is not None:
-        insert_coma_list(tree, position=index, to_add=el,
+    indexes = find_context(tree, context)
+    if indexes:
+        insert_coma_list(tree, position=indexes[0], to_add=el,
                          on_new_line=on_new_line)
         return True
 

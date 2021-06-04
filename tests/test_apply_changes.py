@@ -337,7 +337,7 @@ def fun1():
     call('fun1')
 
 def old_fun():
-    call('new fun')
+    call('old fun')
 
 def fun2():
     call('fun2')

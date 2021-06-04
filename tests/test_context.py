@@ -100,16 +100,16 @@ def test_find_context():
 
     # At the end
     context = BeforeContext([None])
-    assert find_context(tree, context) == 0
+    assert find_context(tree, context) == [0]
     # At the end -2
     context = BeforeContext([line1])
-    assert find_context(tree, context) == 1
+    assert find_context(tree, context) == [1]
 
     context = BeforeContext([line3])
-    assert find_context(tree, context) == 3
+    assert find_context(tree, context) == [3]
 
     context = AfterContext([line3])
-    assert find_context(tree, context) == 2
+    assert find_context(tree, context) == [2]
 
 
 def test_find_context_decorator():
@@ -123,4 +123,4 @@ def fun():
     fun = tree[0]
     decorator1 = fun.decorators[0]
     context = BeforeContext([decorator1])
-    assert find_context(fun.decorators, context) == 1
+    assert find_context(fun.decorators, context) == [1]

@@ -1,3 +1,6 @@
+from itertools import (dropwhile,
+                       takewhile)
+
 from redbaron import nodes
 
 from .matcher import (find_el,
@@ -31,7 +34,7 @@ class BeforeContext(list):
             return False
 
         for context_el, el in zip(reversed(context), els):
-            if not same_el(context_el, el) and not match_el_guess(context_el, el):
+            if not match_el_guess(context_el, el):
                 return False
 
         return True
@@ -61,7 +64,7 @@ class AfterContext(list):
             return False
 
         for context_el, el in zip(context, els):
-            if not same_el(context_el, el):
+            if not match_el_guess(context_el, el):
                 return False
 
         return True
@@ -70,36 +73,28 @@ class AfterContext(list):
         return AfterContext(self)
 
 
-def significant_context(context):
-    context_whitespace = []
-    for el in context:
-        if not isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
-            return el, context_whitespace
-        context_whitespace.append(el)
+def find_context_with_reduction(tree, context):
+    relevant_context = context.copy()
 
-    raise Exception("Invalid context")
+    for _ in range(3):
+        matches = find_context(tree, relevant_context)
+        if matches:
+            return matches
+        del relevant_context[-1]
+        if not relevant_context:
+            break
+
+    return []
 
 
 def find_context(tree, context):
-    context_el, context_whitespace = significant_context(context)
+    matches = []
 
-    if context_el is None:
-        index = 0 if isinstance(context, BeforeContext) else -1
-    else:
-        el = find_el(tree, context_el, BeforeContext())
-        if el is None:
-            return None
-        index = tree.index(el)
-        if isinstance(context, BeforeContext):
-            index += 1
+    for index in range(len(tree) + 1):
+        if context.match(tree, index):
+            matches.append(index)
 
-    for _ in context_whitespace:
-        if not isinstance(tree[index], WHITESPACE_NODES+(nodes.CommaNode,
-                                                         nodes.SpaceNode)):
-            break
-        index += 1
-
-    return index
+    return matches
 
 
 def gather_context(el):

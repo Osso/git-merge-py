@@ -4,7 +4,7 @@ from itertools import (dropwhile,
 from redbaron import nodes
 
 from .matcher import (find_el,
-                      match_el_guess)
+                      same_el_guess)
 from .tools import (WHITESPACE_NODES,
                     same_el)
 
@@ -34,7 +34,7 @@ class BeforeContext(list):
             return False
 
         for context_el, el in zip(reversed(context), els):
-            if not match_el_guess(context_el, el):
+            if not same_el_guess(context_el, el):
                 return False
 
         return True
@@ -64,7 +64,7 @@ class AfterContext(list):
             return False
 
         for context_el, el in zip(context, els):
-            if not match_el_guess(context_el, el):
+            if not same_el_guess(context_el, el):
                 return False
 
         return True

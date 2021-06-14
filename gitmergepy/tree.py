@@ -12,7 +12,8 @@ from .context import (AfterContext,
                       find_context,
                       find_context_with_reduction,
                       gather_after_context)
-from .matcher import (code_block_similarity,
+from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
+                      code_block_similarity,
                       find_class,
                       find_el,
                       find_func,
@@ -773,7 +774,7 @@ class RemoveWith(ElWithContext):
                 similiarity = code_block_similarity(el.value, self.el.value)
                 if with_node_as == el_node_as or similiarity == 1:
                     same_with_nodes += [el]
-                if with_node_as & el_node_as or similiarity > 0.5:
+                if with_node_as & el_node_as or similiarity > CODE_BLOCK_SIMILARITY_THRESHOLD:
                     similar_with_nodes += [el]
                     if self.context:
                         if (self.context[-1] is None and previous_el is None or

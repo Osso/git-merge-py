@@ -6,8 +6,8 @@ from .context import (gather_after_context,
                       gather_context)
 from .matcher import (code_block_similarity,
                       find_el_strong,
-                      guess_if_same_el,
-                      match_el_guess)
+                      guess_if_same_el_for_diff_iterable,
+                      same_el_guess)
 from .tools import (INDENT,
                     same_el,
                     short_context,
@@ -174,11 +174,11 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             last_added = False
         # Look forward a few elements to check if we have a match
         elif not isinstance(el_right, nodes.EmptyLineNode) and \
-               any(match_el_guess(stack_left[i], el_right) for i in range(max_ahead)):
+               any(same_el_guess(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
             for _ in range(10):
-                if not stack_left or match_el_guess(stack_left[0], el_right):
+                if not stack_left or same_el_guess(stack_left[0], el_right):
                     break
                 el = stack_left.pop(0)
 
@@ -194,7 +194,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                    context=gather_context(els[0]),
                                    force_separate=not last_added)
             last_added = False
-        elif guess_if_same_el(stack_left[0], el_right):
+        elif guess_if_same_el_for_diff_iterable(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,
                           short_display_el(el_right))
             diff += _changed_el(el_right, stack_left, indent+INDENT,

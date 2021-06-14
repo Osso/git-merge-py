@@ -1,15 +1,17 @@
 from redbaron import nodes
 
-from .tools import (get_name_els_from_call,
+from .tools import (get_call_els,
+                    get_name_els_from_call,
                     id_from_el,
                     name_els_to_string,
                     same_el)
 
 CODE_BLOCK_SIMILARITY_THRESHOLD = 0.5
 DICT_SIMILARITY_THRESHOLD = 0.5
+ARGS_SIMILARITY_THRESHOLD = 0.6
 
 
-def guess_if_same_el(left, right):
+def guess_if_same_el_for_diff_iterable(left, right):
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
 
@@ -18,7 +20,7 @@ def guess_if_same_el(left, right):
                          nodes.ReturnNode)):
         return True
 
-    if match_el_guess(left, right, None):
+    if same_el_guess(left, right, None):
         return True
 
     return False
@@ -89,16 +91,52 @@ def find_single(tree, types):
     return None
 
 
-def match_el_guess(left, right, context=None):
+def same_call_guess(left, right):
+    name_els_left = get_name_els_from_call(left)
+    name_els_right = get_name_els_from_call(right)
+
+    # Same function
+    if name_els_to_string(name_els_left) != name_els_to_string(name_els_right):
+        return False
+    # Same number of calls
+    if len(get_call_els(left)) != len(get_call_els(right)):
+        return False
+
+    if (left.parent and right.parent and
+            len(left.parent.find_all(left.baron_type, recursive=False)) == 1 and
+            len(right.parent.find_all(right.baron_type, recursive=False)) == 1):
+        return True
+
+    left_args = get_call_els(left)[0]
+    right_args = get_call_els(right)[0]
+    # If first arg is a string and it's different, probably not the same call
+    if (len(left_args) > 0 and len(right_args) > 0 and  # pylint: disable=len-as-condition
+            isinstance(left_args[0], nodes.StringNode) and
+            left_args[0].dumps() != right_args[0].dumps()):
+        return False
+
+    # If first arg is a string and it's different, probably not the same call
+    if (len(left_args) > 1 and len(right_args) > 1 and
+            isinstance(left_args[1], nodes.StringNode) and
+            left_args[0].dumps() == right_args[0].dumps() and
+            left_args[1].dumps() != right_args[1].dumps()):
+        return False
+
+    # Check arguments similarity
+    if args_similarity(get_call_els(left)[0], get_call_els(right)[0]) > ARGS_SIMILARITY_THRESHOLD:
+        return True
+
+    return False
+
+
+def same_el_guess(left, right, context=None):
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
 
     if isinstance(left, nodes.DefNode):
         return left.name == right.name
-    # if isinstance(left, nodes.AtomtrailersNode):
-    #     name_els_left = get_name_els_from_call(left)
-    #     name_els_right = get_name_els_from_call(right)
-    #     return name_els_to_string(name_els_left) == name_els_to_string(name_els_right)
+    if isinstance(left, nodes.AtomtrailersNode):
+        return same_call_guess(left, right)
     if isinstance(left, nodes.FromImportNode):
         return set(m.dumps() for m in left.value) == set(m.dumps() for m in right.value)
     if isinstance(left, nodes.AssignmentNode):
@@ -192,7 +230,7 @@ def find_el(tree, target_el, context):
         if el:
             return el
 
-    el = _find_el(match_el_guess)
+    el = _find_el(same_el_guess)
     if el:
         return el
     return None
@@ -238,6 +276,16 @@ def dict_similarity(left, right):
     same_lines_count = len(left_lines & right_lines)
     total_lines_count = max(len(left_lines), len(right_lines))
     return same_lines_count / total_lines_count
+
+
+def args_similarity(left, right):
+    left_args = set(arg.dumps() for arg in left)
+    right_args = set(arg.dumps() for arg in right)
+    same_args_count = len(left_args & right_args)
+    args_count = max(len(left_args), len(right_args))
+    if args_count == 0:
+        return 1
+    return same_args_count / args_count
 
 
 def find_key(key_node, dict_node):

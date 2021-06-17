@@ -95,12 +95,16 @@ if cond:
     pass
 else:
     pass
+    # another
+    pass
 """
     current = """
 if cond:
     pass
 else:
     call('hello')
+    # another
+    pass
 """
     other = """
 if cond:
@@ -108,10 +112,12 @@ if cond:
 else:
     # passing here
     pass
+    # another
+    pass
 """
     expected = """
 # <<<<<<<<<<
-# Reason Cannot match context
+# Reason Els matched 2 times
 # <ReplaceEls to_add="    call('hello')" to_remove="    pass" context='None'>
 #     pass
 # >>>>>>>>>>
@@ -119,6 +125,8 @@ if cond:
     pass
 else:
     # passing here
+    pass
+    # another
     pass
 """
     _test_merge_changes(base, current, other, expected)

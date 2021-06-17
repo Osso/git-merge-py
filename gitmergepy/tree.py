@@ -262,20 +262,25 @@ class ReplaceEls(BaseAddEls):
             ', '.join(short_display_el(el) for el in self.to_remove),
             short_context(self.context))
 
-    def _look_for_context(self, tree):
-        def match_to_remove_at_index(index):
-            # match all to_remove items
-            for offset, el in enumerate(self.to_remove):
-                try:
-                    if not same_el(tree[index+offset], el):
-                        return False
-                except IndexError:
+    def match_to_remove_at_index(self, tree, index):
+        # match all to_remove items
+        for offset, el in enumerate(self.to_remove):
+            try:
+                if not same_el(tree[index+offset], el):
                     return False
+            except IndexError:
+                return False
 
-            return True
+        return True
 
+    def _look_for_context(self, tree):
         matches = find_context_with_reduction(tree, self.context)
-        return [index for index in matches if match_to_remove_at_index(index)]
+        return [index for index in matches
+                if self.match_to_remove_at_index(tree, index)]
+
+    def _look_for_els(self, tree):
+        return [index for index in range(len(tree))
+                if self.match_to_remove_at_index(tree, index)]
 
     def apply(self, tree):
         logging.debug("replacing els")
@@ -283,12 +288,16 @@ class ReplaceEls(BaseAddEls):
 
         indexes = self._look_for_context(tree)
         if not indexes:
+            logging.debug(". cannot match context")
+            indexes = self._look_for_els(tree)
+
+        if not indexes:
             add_conflicts(tree, [Conflict(self.to_remove, self,
-                                        reason="Cannot match context")])
+                                        reason="Cannot match els")])
             return []
         if len(indexes) > 1:
             add_conflicts(tree, [Conflict(self.to_remove, self,
-                                        reason="Context matched %d times" % len(indexes))])
+                                        reason="Els matched %d times" % len(indexes))])
             return []
         index = indexes[0]
 

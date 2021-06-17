@@ -662,53 +662,39 @@ for key, value in NAPSTER_TEST_DATA.items():
 
 def test_context_bug_1():
     base = """
- def populate_amazon_table_for_extract(self):
-    _, to_dt = self.compute_dates_for_extract()
-    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
-    # MSISDN_GOOD_MSISDN = "0617180391"
-    with sql_session() as session:
+ def fun(self):
+    p1, p2 = two()
+    # deleted
+    with f():
         self.set_main_loop()
-        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
-        self._processoro.process_pending_commands(session=session)
-        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+        f1("stuff", s=s)
 """
     current = """
-def populate_amazon_table_for_extract(self):
-    _, to_dt = self.compute_dates_for_extract()
-    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
-    proc = ProcessingServiceOrian()
-    amazon = AmazonProvisioningMobile()
-    proc.register_service(amazon)
-    # MSISDN_GOOD_MSISDN = "0617180391"
-    with sql_session() as session:
+def fun(self):
+    p1, p2 = two()
+    # new line 1
+    # new line 2
+    # deleted
+    with f():
         # self.set_main_loop()
-        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
-        proc.process_pending_commands(session=session)
-        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+        f1("stuff", s=s)
 """
     other = """
- def populate_amazon_table_for_extract(self):
-    _, to_dt = self.compute_dates_for_extract()
-    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
-    with sql_session() as session:
-        # MSISDN_GOOD_MSISDN = "0617180391" ==> CR + ACTIVATE
+ def fun(self):
+    p1, p2 = two()
+    with f():
+        # comment
         self.set_main_loop()
-        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
-        self._main_loop(session=session)
-        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+        f1("stuff", s=s)
 """
     expected = """
-def populate_amazon_table_for_extract(self):
-    _, to_dt = self.compute_dates_for_extract()
-    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
-    proc = ProcessingServiceOrian()
-    amazon = AmazonProvisioningMobile()
-    proc.register_service(amazon)
-    # MSISDN_GOOD_MSISDN = "0617180391"
-    with sql_session() as session:
+def fun(self):
+    p1, p2 = two()
+    # new line 1
+    # new line 2
+    with f():
+        # comment
         # self.set_main_loop()
-        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
-        proc.process_pending_commands(session=session)
-        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+        f1("stuff", s=s)
 """
     _test_merge_changes(base, current, other, expected)

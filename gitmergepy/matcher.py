@@ -140,7 +140,7 @@ def same_el_guess(left, right, context=None):
     if isinstance(left, nodes.FromImportNode):
         return set(m.dumps() for m in left.value) == set(m.dumps() for m in right.value)
     if isinstance(left, nodes.AssignmentNode):
-        return left.target.value == right.target.value
+        return left.target.dumps() == right.target.dumps()
     if isinstance(left, (nodes.IfNode, nodes.ElseNode, nodes.WithNode,
                          nodes.ForNode, nodes.WhileNode)):
         return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD

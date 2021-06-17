@@ -658,3 +658,57 @@ for key, value in NAPSTER_TEST_DATA.items():
     pass
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_context_bug_1():
+    base = """
+ def populate_amazon_table_for_extract(self):
+    _, to_dt = self.compute_dates_for_extract()
+    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
+    # MSISDN_GOOD_MSISDN = "0617180391"
+    with sql_session() as session:
+        self.set_main_loop()
+        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
+        self._processoro.process_pending_commands(session=session)
+        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+"""
+    current = """
+def populate_amazon_table_for_extract(self):
+    _, to_dt = self.compute_dates_for_extract()
+    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
+    proc = ProcessingServiceOrian()
+    amazon = AmazonProvisioningMobile()
+    proc.register_service(amazon)
+    # MSISDN_GOOD_MSISDN = "0617180391"
+    with sql_session() as session:
+        # self.set_main_loop()
+        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
+        proc.process_pending_commands(session=session)
+        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+"""
+    other = """
+ def populate_amazon_table_for_extract(self):
+    _, to_dt = self.compute_dates_for_extract()
+    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
+    with sql_session() as session:
+        # MSISDN_GOOD_MSISDN = "0617180391" ==> CR + ACTIVATE
+        self.set_main_loop()
+        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
+        self._main_loop(session=session)
+        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+"""
+    expected = """
+def populate_amazon_table_for_extract(self):
+    _, to_dt = self.compute_dates_for_extract()
+    p1, p3, p4, p5, p6, p10 = "AMAZON_PRIME", "1", "AMAZON_M", "PAYANT", "SFR", "AMZ1|PRM1"
+    proc = ProcessingServiceOrian()
+    amazon = AmazonProvisioningMobile()
+    proc.register_service(amazon)
+    # MSISDN_GOOD_MSISDN = "0617180391"
+    with sql_session() as session:
+        # self.set_main_loop()
+        kpsa_create(service_type="SVA68", msisdn=MSISDN_GOOD_MSISDN, p1=p1, p3=p3, p4=p4, p5=p5, p6=p6, p10=p10)
+        proc.process_pending_commands(session=session)
+        user = get_user_object(session=session, msisdn=MSISDN_GOOD_MSISDN)
+"""
+    _test_merge_changes(base, current, other, expected)

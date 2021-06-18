@@ -4,7 +4,8 @@ from redbaron import nodes
 
 from .context import (gather_after_context,
                       gather_context)
-from .matcher import (code_block_similarity,
+from .matcher import (CODE_BLOCK_SAME_THRESHOLD,
+                      code_block_similarity,
                       find_el_strong,
                       guess_if_same_el_for_diff_iterable,
                       same_el_guess)
@@ -133,9 +134,19 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Handle the case of an element we can know it is deleted thanks to
         # to find_el_strong
         while stack_left and isinstance(stack_left[0], node_types_that_can_be_found_by_id):
+            # Check to see if element has been moved
             if find_el_strong(right, stack_left[0], None):
                 break
-            if not find_el_strong(stack_left, el_right, None):
+            # Check to see if element on the same line still exists
+            matching_el_by_name = find_el_strong(stack_left, el_right, None)
+            if not matching_el_by_name:
+                break
+            # Double renaming case
+            if (
+                    # looks the same as element on same line
+                    code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD and
+                    # looks different than element with same name
+                    code_block_similarity(el_right, matching_el_by_name) < CODE_BLOCK_SAME_THRESHOLD):
                 break
 
             logging.debug("%s removing el by id %r", indent+INDENT,

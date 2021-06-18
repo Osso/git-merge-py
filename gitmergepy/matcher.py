@@ -7,6 +7,7 @@ from .tools import (get_call_els,
                     same_el)
 
 CODE_BLOCK_SIMILARITY_THRESHOLD = 0.5
+CODE_BLOCK_SAME_THRESHOLD = 0.8
 DICT_SIMILARITY_THRESHOLD = 0.5
 ARGS_SIMILARITY_THRESHOLD = 0.6
 

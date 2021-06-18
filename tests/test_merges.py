@@ -65,6 +65,22 @@ from module1 import (fun2,
     _test_merge_changes(base, current, other, expected)
 
 
+def test_add_import_not_existing():
+    base = """
+from module1 import fun1
+"""
+    current = """
+from module1 import (fun1,
+                     fun2)
+"""
+    other = """
+"""
+    expected = """
+from module1 import fun2
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_move_function():
     base = """def fun1():
     call('hello')

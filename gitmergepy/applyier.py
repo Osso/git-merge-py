@@ -15,7 +15,6 @@ PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
 def apply_changes(tree, changes):
     conflicts = []
-
     for change in changes:
         conflicts += change.apply(tree)
 

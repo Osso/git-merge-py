@@ -115,13 +115,16 @@ class AddImports:
                                               for el in self.imports))
 
     def apply(self, tree):
+        logging.debug("adding imports: %r", self.imports)
         existing_imports = set(el.value for el in tree.targets)
 
-        if self.add_brackets:
+        # Never add brackets for single import
+        if self.add_brackets and tree.targets:
             tree.targets.add_brackets()
 
         for import_el in self.imports:
             if import_el.value not in existing_imports:
+                logging.debug(". adding import: %r", self.imports)
                 if import_el.endl:
                     tree.targets.append_with_new_line(import_el.copy())
                 else:
@@ -559,14 +562,21 @@ class ChangeImport(ChangeEl):
 
     def apply(self, tree):
         logging.debug("changing import %r", short_display_el(self.el))
-        if self.el:
-            el = find_import(tree, self.el)
-            if el:
-                logging.debug(". found")
-                return apply_changes(el, self.changes)
 
-        logging.debug(". not found, adding")
-        return AddEls([self.el], context=self.context).apply(tree)
+        # if self.el:
+        el = find_import(tree, self.el)
+        if el:
+            logging.debug(". found")
+        else:
+            logging.debug(". not found, adding")
+            conflicts = AddEls([self.el], context=self.context).apply(tree)
+            if conflicts:
+                return conflicts
+            el = find_import(tree, self.el)
+            el.targets.clear()
+            el.targets.remove_brackets()
+
+        return apply_changes(el, self.changes)
 
 
 class ChangeClass(ChangeEl):

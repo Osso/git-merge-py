@@ -17,9 +17,7 @@ from .tree import (AddImports,
                    ChangeFun,
                    ChangeImport,
                    MoveFunction,
-                   RemoveEls,
-                   RenameClass,
-                   RenameDef)
+                   RemoveEls)
 
 
 def _changed_el(el, stack_left, indent, context_class):
@@ -72,7 +70,11 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                         diff += diff_el
             elif code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
                 logging.debug("%s renamed def %r", indent+INDENT, el_right.name)
-                diff += [ChangeFun(stack_left[0], [RenameDef(el_right)],
+                el_diff = compute_diff(stack_left[0], el_right,
+                                       indent=indent+INDENT)
+                assert el_diff  # at least a rename
+                diff_el[0].old_name = old_name
+                diff += [ChangeFun(stack_left[0], el_diff,
                                    context=gather_context(el_right))]
             else:
                 logging.debug("%s new fun %r", indent+INDENT, el_right.name)
@@ -89,8 +91,11 @@ def diff_class_node(stack_left, el_right, indent, context_class):
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeClass)
     elif code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
-        logging.debug("%s renamed class %r", indent+INDENT, el_right.name)
-        diff += [ChangeClass(stack_left[0], [RenameClass(el_right)],
+        logging.debug("%s renamed class %r to %r", indent+INDENT,
+                      stack_left[0].name, el_right.name)
+        el_diff = compute_diff(stack_left[0], el_right, indent=indent+INDENT)
+        assert el_diff  # at least a rename
+        diff += [ChangeClass(stack_left[0], el_diff,
                              context=gather_context(el_right))]
         stack_left.pop(0)
     else:

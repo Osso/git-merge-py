@@ -5,7 +5,9 @@ from redbaron import nodes
 from .context import gather_context
 from .differ import (add_to_diff,
                      compute_diff)
-from .matcher import (find_func,
+from .matcher import (CODE_BLOCK_SAME_THRESHOLD,
+                      code_block_similarity,
+                      find_func,
                       find_import)
 from .tools import (INDENT,
                     id_from_el,
@@ -15,7 +17,9 @@ from .tree import (AddImports,
                    ChangeFun,
                    ChangeImport,
                    MoveFunction,
-                   RemoveEls)
+                   RemoveEls,
+                   RenameClass,
+                   RenameDef)
 
 
 def _changed_el(el, stack_left, indent, context_class):
@@ -66,6 +70,10 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                     if diff_el:
                         diff_el[0].old_name = old_name
                         diff += diff_el
+            elif code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
+                logging.debug("%s renamed def %r", indent+INDENT, el_right.name)
+                diff += [ChangeFun(stack_left[0], [RenameDef(el_right)],
+                                   context=gather_context(el_right))]
             else:
                 logging.debug("%s new fun %r", indent+INDENT, el_right.name)
                 add_to_diff(diff, el_right, indent=indent+2*INDENT)
@@ -78,10 +86,13 @@ def diff_class_node(stack_left, el_right, indent, context_class):
     diff = []
 
     if isinstance(stack_left[0], nodes.ClassNode) and stack_left[0].name == el_right.name:
-        # Class has not been moved
-        logging.debug("%s not moved", indent+INDENT)
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeClass)
+    elif code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
+        logging.debug("%s renamed class %r", indent+INDENT, el_right.name)
+        diff += [ChangeClass(stack_left[0], [RenameClass(el_right)],
+                             context=gather_context(el_right))]
+        stack_left.pop(0)
     else:
         logging.debug("%s new class %r", indent+INDENT, el_right.name)
         add_to_diff(diff, el_right, indent=indent+2*INDENT)

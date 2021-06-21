@@ -39,6 +39,8 @@ from .tree import (AddAllDecoratorArgs,
                    RemoveDictItem,
                    RemoveFunArgs,
                    RemoveImports,
+                   RenameClass,
+                   RenameDef,
                    Replace,
                    ReplaceAnnotation,
                    ReplaceAttr,
@@ -84,7 +86,7 @@ def diff_def_node(left, right, indent):
     diff = []
     # Name
     if left.name != right.name:
-        diff += [ReplaceAttr('name', right.name)]
+        diff += [RenameDef(right)]
     # Args
     to_add, to_remove = diff_list(left.arguments, right.arguments)
     for arg in to_add:
@@ -285,7 +287,7 @@ def diff_class_node(left, right, indent):
 
     # Name
     if left.name != right.name:
-        diff += [ReplaceAttr('name', right.name)]
+        diff += [RenameClass(right)]
 
     # Bases
     diff += diff_class_node_bases(left, right, indent)

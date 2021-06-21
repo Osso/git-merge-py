@@ -924,3 +924,17 @@ class ChangeDictItem(BaseEl):
         if not item:
             return []
         return apply_changes(item.value, self.changes)
+
+
+class RenameClass(BaseEl):
+    def apply(self, tree):
+        logging.debug("renaming class %s to %s", tree.name, self.el.name)
+        tree.name = self.el.name
+        return []
+
+
+class RenameDef(BaseEl):
+    def apply(self, tree):
+        logging.debug("renaming def %s to %s", tree.name, self.el.name)
+        tree.name = self.el.name
+        return []

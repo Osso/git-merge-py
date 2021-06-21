@@ -714,3 +714,79 @@ def fun(self):
         f1("stuff", s=s)
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_rename_function_same_body():
+    base = """
+def fun(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    pass
+"""
+    current = """
+def renamed_fun(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    pass
+"""
+    other = """
+def fun(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    # changed body
+    pass
+"""
+    expected = """
+def renamed_fun(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    # changed body
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_rename_class_same_body():
+    base = """
+class C(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    pass
+"""
+    current = """
+class RenamedClass(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    pass
+"""
+    other = """
+class C(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    # changed body
+    pass
+"""
+    expected = """
+class RenamedClass(self):
+    # body 1
+    # body 2
+    # body 3
+    # body 4
+    # changed body
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)

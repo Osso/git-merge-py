@@ -30,7 +30,14 @@ def guess_if_same_el_for_diff_iterable(left, right):
 def find_func(tree, func_node):
     assert isinstance(func_node, nodes.DefNode)
 
-    for el in tree:
+    # In reverse to handle double renaming
+    # e.g.
+    # class A: a()
+    # class B: b()
+    # becoming
+    # class C: a()
+    # class A: b()
+    for el in reversed(tree):
         if isinstance(el, nodes.DefNode):
             if func_node.name == el.name:
                 return el
@@ -41,7 +48,14 @@ def find_func(tree, func_node):
 def find_class(tree, class_node):
     assert isinstance(class_node, nodes.ClassNode)
 
-    for el in tree:
+    # In reverse to handle double renaming
+    # e.g.
+    # class A: a()
+    # class B: b()
+    # becoming
+    # class C: a()
+    # class A: b()
+    for el in reversed(tree):
         if isinstance(el, nodes.ClassNode):
             if class_node.name == el.name:
                 return el

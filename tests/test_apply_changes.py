@@ -1180,3 +1180,27 @@ def test_context_changed_remove():
 # context repeated
 """
     _test_apply_changes(base, current)
+
+
+def test_double_rename_class():
+    base = """
+class A: a()
+class B: b()
+"""
+    current = """
+class C: a()
+class A: b()
+"""
+    _test_apply_changes(base, current)
+
+
+def test_double_rename_def():
+    base = """
+def A(): a()
+def B(): b()
+"""
+    current = """
+def C(): a()
+def A(): b()
+"""
+    _test_apply_changes(base, current)

@@ -79,7 +79,7 @@ def _changed_el(el, stack_left, indent, context_class):
 
 def _remove_or_replace(diff, els, context, indent, force_separate):
     if not force_separate and diff and isinstance(diff[-1], AddEls) and \
-            same_el(diff[-1].context[-1], context[-1]):
+            same_el(diff[-1].context[0], context[0]):
         # Transform add+remove into a ReplaceEls
         logging.debug("%s transforming into replace", indent+INDENT)
         replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
@@ -157,6 +157,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 to_remove.append(stack_left.pop(0))
             diff.append(RemoveEls(to_remove,
                                   context=context))
+            last_added = False
 
         if not stack_left:
             logging.debug("%s stack left empty, new el %r", indent+INDENT,

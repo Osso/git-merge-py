@@ -121,10 +121,13 @@ def changed_in_list(left, right, key_getter=id_from_el,
     both_keys = left_keys & right_keys
 
     changed = []
-    left_els = [el for el in left if key_getter(el) in both_keys]
-    right_els = [el for el in right if key_getter(el) in both_keys]
+    left_els_map = {key_getter(el): el for el in left
+                    if key_getter(el) in both_keys}
+    rights_els_map = {key_getter(el): el for el in right
+                      if key_getter(el) in both_keys}
 
-    for left_el, right_el in zip(left_els, right_els):
+    for key, left_el in left_els_map.items():
+        right_el = rights_els_map[key]
         if value_getter(left_el) != value_getter(right_el):
             changed.append((left_el, right_el))
 

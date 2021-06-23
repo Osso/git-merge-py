@@ -32,6 +32,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDictItem,
                    ChangeReturn,
                    ChangeValue,
+                   MoveArg,
                    RemoveAllDecoratorArgs,
                    RemoveBases,
                    RemoveCallArgs,
@@ -108,7 +109,10 @@ def diff_def_node(left, right, indent):
             diff_arg += [ArgOnNewLine(indentation=rel_indent*" ")]
         if old_arg.on_new_line and not new_arg.on_new_line:
             diff_arg += [ArgRemoveNewLine()]
+        if old_arg.index_on_parent != new_arg.index_on_parent:
+            diff_arg += [MoveArg(context=gather_context(new_arg))]
         diff += [ChangeDefArg(new_arg, changes=diff_arg)]
+
     # Decorators
     to_add, to_remove = diff_list(left.decorators, right.decorators)
     for decorator in to_add:
@@ -184,7 +188,7 @@ def diff_atom_trailer_node(left, right, indent):
 
 def _check_for_arg_changes(arg):
     endl = "\n" if arg.on_new_line else ""
-    return endl + arg.dumps()
+    return endl + arg.dumps() + '_%d' % arg.index_on_parent
 
 
 def diff_call_node(left, right, indent):

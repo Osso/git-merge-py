@@ -9,6 +9,7 @@ from .applyier import (add_conflict,
                        insert_at_context,
                        insert_at_context_coma_list)
 from .context import (AfterContext,
+                      BeforeContext,
                       find_context,
                       find_context_with_reduction,
                       gather_after_context)
@@ -937,4 +938,18 @@ class RenameDef(BaseEl):
     def apply(self, tree):
         logging.debug("renaming def %s to %s", tree.name, self.el.name)
         tree.name = self.el.name
+        return []
+
+
+class MoveArg:
+    def __init__(self, context):
+        self.context = context
+
+    def apply(self, tree):
+        logging.debug(".. moving %s after %s",
+                      short_display_el(tree), self.context[0])
+        tree.parent.remove(tree)
+        assert insert_at_context_coma_list(tree,
+                                           BeforeContext(self.context[0:]),
+                                           tree.parent)
         return []

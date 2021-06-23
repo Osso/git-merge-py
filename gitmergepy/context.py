@@ -6,6 +6,7 @@ from redbaron import nodes
 from .matcher import (find_el,
                       same_el_guess)
 from .tools import (WHITESPACE_NODES,
+                    empty_lines,
                     same_el)
 
 
@@ -81,7 +82,7 @@ def find_context_with_reduction(tree, context):
         if matches:
             return matches
         del relevant_context[-1]
-        if not relevant_context:
+        if not relevant_context or empty_lines(relevant_context):
             break
 
     return []

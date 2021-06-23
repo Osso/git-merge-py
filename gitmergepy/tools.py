@@ -201,7 +201,5 @@ def same_el(left, right, discard_indentation=True):
 
 
 def empty_lines(els):
-    for el in els:
-        if not isinstance(el, nodes.EndlNode):
-            return False
-    return True
+    return all(isinstance(el, (nodes.EmptyLineNode, nodes.EndlNode))
+               for el in els)

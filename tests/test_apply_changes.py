@@ -201,6 +201,17 @@ from module1 import (fun1,
     _test_apply_changes(base, current)
 
 
+def test_add_import_as_is():
+    base = """
+# comment
+"""
+    current = """
+from module1 import (fun1,
+                     fun2)
+"""
+    _test_apply_changes(base, current)
+
+
 def test_remove_import_first():
     base = """
 from module1 import fun1, fun2

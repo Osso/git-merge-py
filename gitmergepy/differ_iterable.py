@@ -156,6 +156,7 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
         # new import
         logging.debug("%s new import %r", indent+INDENT, id_from_el(el_right))
         diff += [ChangeImport(el_right, changes=[AddImports(el_right.targets)],
+                              can_be_added_as_is=True,
                               context=gather_context(el_right))]
         remove_import_if_not_found(stack_left)
 

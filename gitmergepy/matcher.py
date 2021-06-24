@@ -311,3 +311,9 @@ def find_key(key_node, dict_node):
             return dict_item
 
     return None
+
+
+def same_arg_guess(left, right):
+    if left.target:
+        return left.target.dumps() == right.target.dumps()
+    return same_el(left.value, right.value)

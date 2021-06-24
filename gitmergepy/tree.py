@@ -9,7 +9,6 @@ from .applyier import (add_conflict,
                        insert_at_context,
                        insert_at_context_coma_list)
 from .context import (AfterContext,
-                      BeforeContext,
                       find_context,
                       find_context_with_reduction,
                       gather_after_context)
@@ -19,7 +18,8 @@ from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
                       find_el,
                       find_func,
                       find_import,
-                      find_key)
+                      find_key,
+                      same_arg_guess)
 from .tools import (apply_diff_to_list,
                     as_from_contexts,
                     get_call_els,
@@ -949,7 +949,14 @@ class MoveArg:
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
         tree.parent.remove(tree)
-        assert insert_at_context_coma_list(tree,
-                                           BeforeContext(self.context[0:]),
-                                           tree.parent)
-        return []
+
+        if self.context[0] is None:
+            tree.parent.insert(0, tree)
+            return []
+
+        for el in tree.parent:
+            if same_arg_guess(self.context[0], el):
+                el.insert_after(tree)
+                return []
+
+        return [Conflict([tree], self, reason="Context not found")]

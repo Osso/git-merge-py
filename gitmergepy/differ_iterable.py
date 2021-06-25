@@ -145,6 +145,8 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
         el_diff = compute_diff(el, el_right, indent=indent+INDENT)
         if el_diff:
             diff += [ChangeImport(el, el_diff, context=gather_context(el))]
+        else:
+            logging.debug("%s not changed", indent+INDENT)
 
         if el is stack_left[0]:
             stack_left.pop(0)

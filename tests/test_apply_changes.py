@@ -1,10 +1,11 @@
 import logging
 
-import pytest
 from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
+from gitmergepy.tree import (ChangeImport,
+                             MoveImport)
 
 
 def _test_apply_changes(base, current):
@@ -1227,3 +1228,22 @@ def fun(arg2, arg1):
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_move_import():
+    base = """
+from module1 import fun1
+from module2 import fun2
+from module3 import fun3
+"""
+    current = """
+from module1 import fun1
+from module3 import fun3
+from module2 import fun2
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert len(changes) == 1
+    assert isinstance(changes[0], ChangeImport)
+    assert len(changes[0].changes) == 1
+    assert isinstance(changes[0].changes[0], MoveImport)

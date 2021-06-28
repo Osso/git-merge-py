@@ -17,6 +17,7 @@ from .tree import (AddImports,
                    ChangeFun,
                    ChangeImport,
                    MoveFunction,
+                   MoveImport,
                    RemoveEls)
 
 
@@ -143,11 +144,17 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
     el = find_import(stack_left, el_right)
     if el:
         el_diff = compute_diff(el, el_right, indent=indent+INDENT)
-        if el_diff:
-            diff += [ChangeImport(el, el_diff, context=gather_context(el))]
-        else:
+        if not el_diff:
             logging.debug("%s not changed", indent+INDENT)
 
+        if el is not stack_left[0]:
+            logging.debug("%s moved", indent+INDENT)
+            el_diff += [MoveImport(el_right, context=gather_context(el_right))]
+
+        if el_diff:
+            diff += [ChangeImport(el, el_diff, context=gather_context(el))]
+
+        # Remove el from stack
         if el is stack_left[0]:
             stack_left.pop(0)
         else:

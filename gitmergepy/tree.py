@@ -964,3 +964,23 @@ class MoveArg:
                 return []
 
         return [Conflict([tree], self, reason="Context not found")]
+
+
+class MoveImport(ElWithContext):
+    def apply(self, tree):
+        logging.debug(".. moving %s after %s",
+                      short_display_el(tree), self.context[0])
+        tree.parent.remove(tree)
+
+        if self.context[0] is None:
+            tree.parent.insert(0, tree)
+            return []
+
+        indexes = find_context(tree.parent, self.context)
+        if not indexes:
+            return [Conflict([tree], self, reason="Context not found")]
+        if len(indexes) > 1:
+            return [Conflict([tree], self, reason="Multiple contexts found")]
+
+        tree.parent.insert_with_new_line(indexes[0], self.el.copy())
+        return []

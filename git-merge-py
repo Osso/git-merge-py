@@ -6,7 +6,8 @@ import traceback
 
 from redbaron import RedBaron
 
-from gitmergepy.applyier import apply_changes
+from gitmergepy.applyier import (add_conflicts,
+                                 apply_changes)
 from gitmergepy.differ import compute_diff_iterables
 
 
@@ -45,7 +46,8 @@ def merge_files(base_file, current_file, other_file):
 def merge_ast(base_ast, current_ast, other_ast):
     changes = compute_diff_iterables(base_ast, other_ast)
     # logging.info("Changes %r", changes)
-    apply_changes(current_ast, changes)
+    conflicts = apply_changes(current_ast, changes)
+    add_conflicts(current_ast, conflicts)
 
 
 if __name__ == '__main__':

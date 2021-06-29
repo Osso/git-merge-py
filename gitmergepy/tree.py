@@ -6,7 +6,6 @@ from redbaron.base_nodes import NodeList
 from .applyier import (add_conflict,
                        add_conflicts,
                        apply_changes,
-                       insert_at_context,
                        insert_at_context_coma_list)
 from .context import (AfterContext,
                       find_context,
@@ -189,13 +188,6 @@ class BaseAddEls:
         else:
             logging.debug("    context %r", short_context(self.context))
             indexes = find_context_with_reduction(tree, self.context)
-            if not indexes:
-                # Try smaller context
-                smaller_context = self.context.copy()
-                while isinstance(smaller_context[0], nodes.EndlNode):
-                    del smaller_context[0]
-                logging.debug("    smaller_context %r", short_context(smaller_context))
-                indexes = find_context_with_reduction(tree, smaller_context)
 
             if not indexes:
                 logging.debug("    context not found")
@@ -968,17 +960,24 @@ class MoveImport(ElWithContext):
     def apply(self, tree):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
-        tree.parent.remove(tree)
 
         if self.context[0] is None:
+            tree.parent.remove(tree)
             tree.parent.insert(0, tree)
             return []
 
+        tree.parent.hide(tree)
+
         indexes = find_context(tree.parent, self.context)
         if not indexes:
-            return [Conflict([tree], self, reason="Context not found")]
+            msg = "Context not found"
+            logging.debug(".. %s", msg.lower())
+            return [Conflict([tree], self, reason=msg)]
         if len(indexes) > 1:
-            return [Conflict([tree], self, reason="Multiple contexts found")]
+            msg = "Multiple contexts found"
+            logging.debug(".. %s", msg.lower())
+            return [Conflict([tree], self, reason=msg)]
 
         tree.parent.insert_with_new_line(indexes[0], self.el.copy())
+        tree.parent.remove(tree)
         return []

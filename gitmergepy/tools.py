@@ -194,6 +194,9 @@ def same_el(left, right, discard_indentation=True):
     if left is None and right is None:
         return True
 
+    if isinstance(left, (nodes.SpaceNode, nodes.EmptyLineNode)):
+        return left.dumps() == right.dumps()
+
     # For speed
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False

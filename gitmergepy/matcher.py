@@ -145,6 +145,9 @@ def same_call_guess(left, right):
 
 
 def same_el_guess(left, right, context=None):
+    if isinstance(left, (nodes.SpaceNode, nodes.EmptyLineNode)):
+        return left.dumps() == right.dumps()
+
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
 

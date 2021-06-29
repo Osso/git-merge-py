@@ -37,19 +37,22 @@ def diff_def_node(stack_left, el_right, indent, context_class):
     diff = []
 
     # We have encountered a function
-    if isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
+    if stack_left and isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
         # Function has not been moved
         logging.debug("%s not moved", indent+INDENT)
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeFun)
     else:
-        # Function has been moved, look for it
-        el = find_func(stack_left, el_right)
+        if hasattr(el_right, 'matched_el'):  # Already matched earlier
+            el = el_right.matched_el
+        else:  # Function has been moved, look for it
+            el = find_func(stack_left, el_right)
         if el:
             logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
-            stack_left.remove(el)
+            if not hasattr(el_right, 'matched_el'):
+                stack_left.remove(el)
             diff += [MoveFunction(el, changes=el_diff, context=context)]
         else:
             if isinstance(stack_left[0], nodes.DefNode) and el_right.parent:
@@ -133,7 +136,7 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
         nonlocal diff
         # Try to keep in left and right stacks in sync, so that empty lines
         # can also be matched
-        if isinstance(stack_left[0], (nodes.FromImportNode, nodes.ImportNode)):
+        if stack_left and isinstance(stack_left[0], (nodes.FromImportNode, nodes.ImportNode)):
             if not find_import(el_right.parent, stack_left[0]):
                 logging.debug("%s import to remove %r", indent+INDENT,
                               short_display_el(stack_left[0]))
@@ -141,13 +144,17 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
                                    context=gather_context(stack_left[0]))]
                 stack_left.pop(0)
 
-    el = find_import(stack_left, el_right)
+    if hasattr(el_right, 'matched_el'):  # Already matched earlier
+        el = el_right.matched_el
+    else:
+        el = find_import(stack_left, el_right)
+
     if el:
         el_diff = compute_diff(el, el_right, indent=indent+INDENT)
         if not el_diff:
             logging.debug("%s not changed", indent+INDENT)
 
-        if el is not stack_left[0]:
+        if not stack_left or el is not stack_left[0]:
             logging.debug("%s moved", indent+INDENT)
             el_diff += [MoveImport(el_right, context=gather_context(el_right))]
 
@@ -155,11 +162,12 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
             diff += [ChangeImport(el, el_diff, context=gather_context(el))]
 
         # Remove el from stack
-        if el is stack_left[0]:
-            stack_left.pop(0)
-        else:
-            stack_left.remove(el)
-            remove_import_if_not_found(stack_left)
+        if not hasattr(el_right, 'matched_el'):
+            if el is stack_left[0]:
+                stack_left.pop(0)
+            else:
+                stack_left.remove(el)
+                remove_import_if_not_found(stack_left)
 
     else:
         # new import

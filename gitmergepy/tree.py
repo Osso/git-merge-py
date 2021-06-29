@@ -616,12 +616,10 @@ class MoveFunction(ChangeEl):
         # If function still exists, move it then apply changes
         if fun:
             logging.debug("moving fun %r", short_display_el(fun))
-            tree.remove(fun)
-            if not insert_at_context(fun, self.context, tree):
-                tree.append(fun)
-                add_conflict(tree, Conflict([], self,
-                                            reason="Context not found, added at the end"))
-                return []
+            indexes = find_context(tree, self.context)
+            if len(indexes) == 1:
+                tree.remove(fun)
+                tree.insert(indexes[0], fun)
             conflicts = apply_changes(fun, self.changes)
             add_conflicts(tree, conflicts)
         return []

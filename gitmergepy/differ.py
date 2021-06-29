@@ -115,9 +115,14 @@ def check_removed_withs(stack_left, el_right, indent):
     return []
 
 
-def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
+def call_diff_iterable(el, stack_left, indent, context_class):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
+    return COMPUTE_DIFF_ITERABLE_CALLS[type(el)](stack_left, el, indent,
+                                                 context_class=context_class)
+
+
+def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     logging.debug("%s compute_diff_iterables %r <=> %r", indent,
                   type(left).__name__, type(right).__name__)
     stack_left = list(left)
@@ -159,7 +164,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                   context=context))
             last_added = False
 
-        if not stack_left:
+        if not stack_left and not hasattr(el_right, 'matched_el'):
             logging.debug("%s stack left empty, new el %r", indent+INDENT,
                           short_display_el(el_right))
             add_to_diff(diff, el_right, last_added=last_added, indent=indent)
@@ -168,7 +173,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Actual processing
         max_ahead = min(10, len(stack_left))
         # Direct match
-        if same_el(stack_left[0], el_right):
+        if stack_left and same_el(stack_left[0], el_right):
             # Exactly same element
             logging.debug("%s same el %r", indent+INDENT,
                           short_display_el(el_right))
@@ -176,13 +181,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                 diff += _changed_el(el_right, stack_left, indent, context_class)
             else:
                 stack_left.pop(0)
-            last_added = False
-        # Custom handlers for def, class, etc.
-        elif isinstance(el_right, node_types_that_can_be_found_by_id):
-            diff += COMPUTE_DIFF_ITERABLE_CALLS[type(el_right)](stack_left,
-                                                                el_right,
-                                                                indent+INDENT,
-                                                                context_class)
             last_added = False
         # Look forward a few elements to check if we have a match
         elif not isinstance(el_right, nodes.EmptyLineNode) and \
@@ -194,17 +192,34 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                     break
                 el = stack_left.pop(0)
 
-                logging.debug("%s removing %r", indent+INDENT,
-                              short_display_el(el))
-                els.append(el)
-            if same_el(stack_left[0], el_right, discard_indentation=False):
-                stack_left.pop(0)
+                matching_el_by_id = find_el_strong(el_right.parent,
+                                                   target_el=el, context=[])
+                if matching_el_by_id:
+                    logging.debug("%s marking as found %r", indent+INDENT,
+                                  short_display_el(el))
+                    matching_el_by_id.matched_el = el
+                else:
+                    logging.debug("%s removing %r", indent+INDENT,
+                                  short_display_el(el))
+                    els.append(el)
+            if isinstance(el_right, node_types_that_can_be_found_by_id):
+                diff += call_diff_iterable(el_right,
+                                           stack_left=stack_left,
+                                           indent=indent+INDENT,
+                                           context_class=context_class)
             else:
                 diff += _changed_el(el_right, stack_left, indent, context_class)
             if els:
                 _remove_or_replace(diff, els, indent=indent,
                                    context=gather_context(els[0]),
                                    force_separate=not last_added)
+            last_added = False
+        # Custom handlers for def, class, etc.
+        elif isinstance(el_right, node_types_that_can_be_found_by_id):
+            diff += call_diff_iterable(el_right,
+                                       stack_left=stack_left,
+                                       indent=indent+INDENT,
+                                       context_class=context_class)
             last_added = False
         elif guess_if_same_el_for_diff_iterable(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,

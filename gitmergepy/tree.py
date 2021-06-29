@@ -98,7 +98,6 @@ class RemoveEls:
                 index += 1
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
-                break
 
         return []
 
@@ -562,7 +561,11 @@ class ChangeImport(ChangeEl):
         if el:
             logging.debug(". found")
         else:
-            logging.debug(". not found, adding")
+            logging.debug(". not found")
+            if not any(isinstance(c, AddImports) for c in self.changes):
+                return []
+
+            logging.debug(". adding")
             conflicts = AddEls([self.el], context=self.context).apply(tree)
             if conflicts:
                 return conflicts
@@ -966,18 +969,20 @@ class MoveImport(ElWithContext):
             tree.parent.insert(0, tree)
             return []
 
-        tree.parent.hide(tree)
+        tree.hidden = True
 
-        indexes = find_context(tree.parent, self.context)
+        indexes = find_context_with_reduction(tree.parent, self.context)
         if not indexes:
+            tree.hidden = False
             msg = "Context not found"
             logging.debug(".. %s", msg.lower())
             return [Conflict([tree], self, reason=msg)]
-        if len(indexes) > 1:
-            msg = "Multiple contexts found"
-            logging.debug(".. %s", msg.lower())
-            return [Conflict([tree], self, reason=msg)]
+        # if len(indexes) > 1:
+        #     tree.hidden = False
+        #     msg = "Multiple contexts found"
+        #     logging.debug(".. %s", msg.lower())
+        #     return [Conflict([tree], self, reason=msg)]
 
         tree.parent.insert_with_new_line(indexes[0], self.el.copy())
-        tree.parent.remove(tree)
+        # tree.parent.remove(tree)
         return []

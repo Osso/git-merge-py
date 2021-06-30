@@ -964,12 +964,11 @@ class MoveImport(ElWithContext):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
 
-        if self.context[0] is None:
-            tree.parent.remove(tree)
-            tree.parent.insert(0, tree)
-            return []
-
         tree.hidden = True
+
+        if self.context[0] is None:
+            tree.parent.insert(0, tree.copy())
+            return []
 
         indexes = find_context_with_reduction(tree.parent, self.context)
         if not indexes:
@@ -983,6 +982,6 @@ class MoveImport(ElWithContext):
         #     logging.debug(".. %s", msg.lower())
         #     return [Conflict([tree], self, reason=msg)]
 
-        tree.parent.insert_with_new_line(indexes[0], self.el.copy())
+        tree.parent.insert_with_new_line(indexes[0], tree.copy())
         # tree.parent.remove(tree)
         return []

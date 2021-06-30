@@ -259,8 +259,14 @@ def find_with_node(tree):
 
 
 def find_el_exact_match_with_context(tree, target_el, context):
-    for el in tree:
-        if same_el(el, target_el) and context.match_el(tree, el):
+    from .context import find_context, AfterContext
+    for index in find_context(tree, context):
+        if isinstance(context, AfterContext):
+            index -= 1
+        if index == len(tree):
+            continue
+        el = tree[index]
+        if same_el(el, target_el):
             return el
     return None
 

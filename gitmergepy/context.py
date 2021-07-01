@@ -10,16 +10,19 @@ class BeforeContext(list):
         index = tree.index(el)
         return self.match(tree, index)
 
-    def _skip_hidden(self, els, prev_elements):
+    def _skip_els(self, els, prev_elements, old_tree):
+        def _filter(el):
+            return (old_tree and el.new) or (not old_tree and el.hidden)
+
         not_hidden_prev_elements = [el for el in prev_elements
-                                    if not el.hidden]
+                                    if not _filter(el)]
         for el in els:
-            if el.hidden:
+            if _filter(el):
                 els.remove(el)
                 if prev_elements:
                     els.insert(0, not_hidden_prev_elements.pop())
 
-    def match(self, tree, index, skip_hidden=False):
+    def match(self, tree, index, old_tree=False):
         if not self:
             return True
 
@@ -34,8 +37,8 @@ class BeforeContext(list):
             return False
 
         els = tree[start_index:index]
-        if skip_hidden:
-            self._skip_hidden(els, prev_elements=tree[:start_index])
+        self._skip_els(els, prev_elements=tree[:start_index],
+                       old_tree=old_tree)
 
         if len(els) != len(context):
             return False
@@ -55,16 +58,19 @@ class AfterContext(list):
         index = tree.index(el) + 1
         return self.match(tree, index)
 
-    def _skip_hidden(self, els, next_elements):
+    def _skip_els(self, els, next_elements, old_tree):
+        def _filter(el):
+            return (old_tree and el.new) or (not old_tree and el.hidden)
+
         not_hidden_next_elements = [el for el in next_elements
-                                    if not el.hidden]
+                                    if not _filter(el)]
         for el in els:
-            if el.hidden:
+            if _filter(el):
                 els.remove(el)
                 if next_elements:
                     els.append(not_hidden_next_elements.pop(0))
 
-    def match(self, tree, index, skip_hidden=False):
+    def match(self, tree, index, old_tree=False):
         context = self
 
         if context[-1] is None:
@@ -75,8 +81,7 @@ class AfterContext(list):
         end_index = index + len(context)
 
         els = tree[index:end_index]
-        if skip_hidden:
-            self._skip_hidden(els, next_elements=tree[end_index:])
+        self._skip_els(els, next_elements=tree[end_index:], old_tree=old_tree)
 
         if len(els) != len(context):
             return False
@@ -105,20 +110,20 @@ def find_context_with_reduction(tree, context):
     return []
 
 
-def _find_context(tree, context, skip_hidden):
+def _find_context(tree, context, old_tree):
     matches = []
 
     for index in range(len(tree) + 1):
-        if context.match(tree, index, skip_hidden=skip_hidden):
+        if context.match(tree, index, old_tree=old_tree):
             matches.append(index)
 
     return matches
 
 
 def find_context(tree, context):
-    indexes = _find_context(tree, context, skip_hidden=True)
+    indexes = _find_context(tree, context, old_tree=False)
     if not indexes:
-        indexes = _find_context(tree, context, skip_hidden=False)
+        indexes = _find_context(tree, context, old_tree=True)
     return indexes
 
 

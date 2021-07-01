@@ -1,7 +1,8 @@
 import logging
 
 from redbaron import nodes
-from redbaron.base_nodes import NodeList
+from redbaron.base_nodes import (BaseNode,
+                                 NodeList)
 
 from .applyier import (add_conflict,
                        add_conflicts,
@@ -29,6 +30,8 @@ from .tools import (apply_diff_to_list,
                     short_display_list,
                     skip_context_endl,
                     sort_imports)
+
+BaseNode.new = False
 
 
 class BaseEl:
@@ -976,12 +979,15 @@ class MoveImport(ElWithContext):
             msg = "Context not found"
             logging.debug(".. %s", msg.lower())
             return [Conflict([tree], self, reason=msg)]
+
         # if len(indexes) > 1:
         #     tree.hidden = False
         #     msg = "Multiple contexts found"
         #     logging.debug(".. %s", msg.lower())
         #     return [Conflict([tree], self, reason=msg)]
 
-        tree.parent.insert_with_new_line(indexes[0], tree.copy())
+        new_el = tree.copy()
+        new_el.is_new = True
+        tree.parent.insert_with_new_line(indexes[0], new_el)
         # tree.parent.remove(tree)
         return []

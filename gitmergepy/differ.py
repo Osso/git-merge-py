@@ -77,7 +77,7 @@ def _changed_el(el, stack_left, indent, context_class):
     return diff
 
 
-def _remove_or_replace(diff, els, context, indent, force_separate):
+def __remove_or_replace(diff, els, context, indent, force_separate):
     if not force_separate and diff and isinstance(diff[-1], AddEls) and \
             same_el(diff[-1].context[0], context[0]):
         # Transform add+remove into a ReplaceEls
@@ -90,6 +90,21 @@ def _remove_or_replace(diff, els, context, indent, force_separate):
         logging.debug("%s remove els %r, context %r", indent+INDENT, els,
                       context)
         diff.append(RemoveEls(els, context=context))
+
+
+def _remove_or_replace(diff, els, context, indent, force_separate):
+    _els = []
+
+    for el in els:
+        if el.already_processed:
+            if _els:
+                __remove_or_replace(diff, _els, context, indent, force_separate)
+                _els = []
+        else:
+            _els.append(el)
+
+    if _els:
+        __remove_or_replace(diff, _els, context, indent, force_separate)
 
 
 def check_removed_withs(stack_left, el_right, indent):
@@ -261,6 +276,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         for el in stack_left:
             logging.debug("%s removing leftover %r", indent+INDENT,
                           short_display_el(el))
+            if el.already_processed:
+                logging.debug("%s already already processed", indent+2*INDENT)
         _remove_or_replace(diff, stack_left, indent=indent,
                            context=gather_context(stack_left[0]),
                            force_separate=not last_added)

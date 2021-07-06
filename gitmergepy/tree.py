@@ -227,6 +227,7 @@ class BaseAddEls:
             tree.value._data[index-1][1] = None
 
         el = el_to_add.copy()
+        el.new = True
 
         # Add endl for code proxy lists
         endl = isinstance(el_to_add.associated_sep, nodes.EndlNode)
@@ -987,7 +988,6 @@ class MoveImport(ElWithContext):
         #     return [Conflict([tree], self, reason=msg)]
 
         new_el = tree.copy()
-        new_el.is_new = True
+        new_el.new = True
         tree.parent.insert_with_new_line(indexes[0], new_el)
-        # tree.parent.remove(tree)
         return []

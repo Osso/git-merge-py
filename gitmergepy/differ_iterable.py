@@ -52,7 +52,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
             if not hasattr(el_right, 'matched_el'):
-                stack_left.remove(el)
+                el.already_processed = True
             diff += [MoveFunction(el, changes=el_diff, context=context)]
         else:
             if isinstance(stack_left[0], nodes.DefNode) and el_right.parent:
@@ -166,7 +166,7 @@ def diff_from_import_node(stack_left, el_right, indent, context_class):
             if el is stack_left[0]:
                 stack_left.pop(0)
             else:
-                stack_left.remove(el)
+                el.already_processed = True
                 remove_import_if_not_found(stack_left)
 
     else:

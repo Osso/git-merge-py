@@ -134,6 +134,10 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                           nodes.FromImportNode)
 
     for el_right in right:
+        if stack_left and stack_left[0].already_processed:
+            last_added = False
+            stack_left.pop(0)
+
         # Pre-processing
         diff += check_removed_withs(stack_left, el_right, indent=indent)
         # Handle the case of an element we can know it is deleted thanks to
@@ -187,10 +191,28 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                any(same_el_guess(stack_left[i], el_right) for i in range(max_ahead)):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
+
+            def _flush_remove():
+                nonlocal last_added, els
+
+                if not els:
+                    return
+
+                _remove_or_replace(diff, els, indent=indent,
+                                   context=gather_context(els[0]),
+                                   force_separate=not last_added)
+                last_added = False
+                els = []
+
             for _ in range(10):
                 if not stack_left or same_el_guess(stack_left[0], el_right):
                     break
+
                 el = stack_left.pop(0)
+
+                if el.already_processed:
+                    _flush_remove()
+                    continue
 
                 matching_el_by_id = find_el_strong(el_right.parent,
                                                    target_el=el, context=[])
@@ -198,6 +220,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                     logging.debug("%s marking as found %r", indent+INDENT,
                                   short_display_el(el))
                     matching_el_by_id.matched_el = el
+                    _flush_remove()
                 else:
                     logging.debug("%s removing %r", indent+INDENT,
                                   short_display_el(el))

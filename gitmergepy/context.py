@@ -19,7 +19,7 @@ class BeforeContext(list):
         for el in els:
             if _filter(el):
                 els.remove(el)
-                if prev_elements:
+                if not_hidden_prev_elements:
                     els.insert(0, not_hidden_prev_elements.pop())
 
     def match(self, tree, index, old_tree=False):
@@ -67,7 +67,7 @@ class AfterContext(list):
         for el in els:
             if _filter(el):
                 els.remove(el)
-                if next_elements:
+                if not_hidden_next_elements:
                     els.append(not_hidden_next_elements.pop(0))
 
     def match(self, tree, index, old_tree=False):

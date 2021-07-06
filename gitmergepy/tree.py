@@ -32,6 +32,7 @@ from .tools import (apply_diff_to_list,
                     sort_imports)
 
 BaseNode.new = False
+BaseNode.already_processed = False
 
 
 class BaseEl:

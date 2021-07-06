@@ -1247,3 +1247,22 @@ from module2 import fun2
     assert isinstance(changes[0], ChangeImport)
     assert len(changes[0].changes) == 1
     assert isinstance(changes[0].changes[0], MoveImport)
+
+
+def test_old_new_tree_separation():
+    """the comment is deleted twice and separated by a moved element"""
+    base = """
+# comment
+from module1 import fun1
+from module2 import fun2
+# comment
+from module3 import fun3
+# comment
+"""
+    current = """
+from module3 import fun3
+# comment
+from module2 import fun2
+from module1 import fun1
+"""
+    _test_apply_changes(base, current)

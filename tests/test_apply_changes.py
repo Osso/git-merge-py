@@ -126,6 +126,28 @@ def fun1():
     _test_apply_changes(base, current)
 
 
+def test_move_function_with_empty_lines():
+    base = """def fun1():
+    call('fun1')
+
+def fun2():
+    call('fun2')
+
+# end
+"""
+    current = """def fun2():
+    call('fun2')
+
+def fun1():
+    call('fun1')
+
+# end
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert len(changes) == 1
+
+
 def test_add_import():
     base = """
 from module1 import fun1

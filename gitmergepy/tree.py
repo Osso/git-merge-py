@@ -611,15 +611,40 @@ class ChangeClass(ChangeEl):
 
 
 class MoveFunction(ChangeEl):
+    def __init__(self, el, changes, context=None, empty_lines=None):
+        super().__init__(el, changes=changes, context=context)
+        self.empty_lines = empty_lines or []
+
+    def __repr__(self):
+        return "<%s el=\"%s\" changes=%r context=%r empty_lines=%r>" % (
+            self.__class__.__name__, short_display_el(self.el), self.changes,
+            short_context(self.context), self.empty_lines)
+
     def apply(self, tree):
         fun = find_func(tree, self.el)
         # If function still exists, move it then apply changes
         if fun:
             logging.debug("moving fun %r", short_display_el(fun))
-            indexes = find_context(tree, self.context)
+            indexes = find_context_with_reduction(tree, self.context)
             if len(indexes) == 1:
-                tree.remove(fun)
-                tree.insert(indexes[0], fun)
+                index = indexes[0]
+                tree.hide(fun)
+                line = fun.next
+                for _ in self.empty_lines:
+                    if not isinstance(line, nodes.EmptyLineNode):
+                        break
+                    tree.hide(line)
+                    line = line.next
+
+                new_fun = fun.copy()
+                new_fun.new = True
+                tree.insert(index, new_fun)
+
+                for line in self.empty_lines:
+                    index += 1
+                    new_line = nodes.EmptyLineNode()
+                    new_line.new = True
+                    tree.insert_with_new_line(index, new_line)
             conflicts = apply_changes(fun, self.changes)
             add_conflicts(tree, conflicts)
         return []

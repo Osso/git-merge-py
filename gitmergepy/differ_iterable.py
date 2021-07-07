@@ -36,10 +36,27 @@ def diff_def_node(stack_left, el_right, indent, context_class):
     logging.debug("%s changed fun %r", indent, short_display_el(el_right))
     diff = []
 
+    def _process_empty_lines(el):
+        empty_lines = []
+
+        _el = el.next
+        _el_right = el_right.next
+        for _ in range(2):
+            if not isinstance(_el, nodes.EmptyLineNode) or not isinstance(_el_right, nodes.EmptyLineNode):
+                break
+            empty_lines.append(_el)
+            _el.already_processed = True
+            _el_right.already_processed = True
+            _el = _el.next
+            _el_right = _el_right.next
+
+        return empty_lines
+
     # We have encountered a function
     if stack_left and isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
         # Function has not been moved
         logging.debug("%s not moved", indent+INDENT)
+        # empty_lines = _process_empty_lines(stack_left[0])
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeFun)
     else:
@@ -53,7 +70,9 @@ def diff_def_node(stack_left, el_right, indent, context_class):
             context = gather_context(el_right)
             if not hasattr(el_right, 'matched_el'):
                 el.already_processed = True
-            diff += [MoveFunction(el, changes=el_diff, context=context)]
+            empty_lines = _process_empty_lines(el)
+            diff += [MoveFunction(el, changes=el_diff, context=context,
+                                  empty_lines=empty_lines)]
         else:
             if isinstance(stack_left[0], nodes.DefNode) and el_right.parent:
                 el = find_func(el_right.parent, stack_left[0])

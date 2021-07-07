@@ -149,7 +149,14 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                           nodes.FromImportNode)
 
     for el_right in right:
-        if stack_left and stack_left[0].already_processed:
+        if el_right.already_processed:
+            logging.debug("%s already processed %r", indent+INDENT,
+                          short_display_el(el_right))
+            continue
+
+        while stack_left and stack_left[0].already_processed:
+            logging.debug("%s already processed in stack %r", indent+INDENT,
+                          short_display_el(stack_left[0]))
             last_added = False
             stack_left.pop(0)
 
@@ -207,48 +214,49 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
             els = []
 
-            def _flush_remove():
-                nonlocal last_added, els
-
+            def _flush_remove(els):
                 if not els:
                     return
-
                 _remove_or_replace(diff, els, indent=indent,
                                    context=gather_context(els[0]),
                                    force_separate=not last_added)
-                last_added = False
-                els = []
+                del els[:]
 
             for _ in range(10):
                 if not stack_left or same_el_guess(stack_left[0], el_right):
                     break
 
                 el = stack_left.pop(0)
-
                 if el.already_processed:
-                    _flush_remove()
+                    _flush_remove(els)
                     continue
 
                 matching_el_by_id = find_el_strong(el_right.parent,
                                                    target_el=el, context=[])
                 if matching_el_by_id:
-                    logging.debug("%s marking as found %r", indent+INDENT,
+                    logging.debug("%s marking as found %r", indent+2*INDENT,
                                   short_display_el(el))
                     matching_el_by_id.matched_el = el
-                    _flush_remove()
+                    matching_el_by_id.already_processed = True
+                    diff += call_diff_iterable(matching_el_by_id,
+                                               stack_left=stack_left,
+                                               indent=indent+2*INDENT,
+                                               context_class=context_class)
+                    _flush_remove(els)
                 else:
-                    logging.debug("%s removing %r", indent+INDENT,
+                    logging.debug("%s removing %r", indent+2*INDENT,
                                   short_display_el(el))
                     els.append(el)
             if isinstance(el_right, node_types_that_can_be_found_by_id):
                 diff += call_diff_iterable(el_right,
                                            stack_left=stack_left,
-                                           indent=indent+INDENT,
+                                           indent=indent+2*INDENT,
                                            context_class=context_class)
             else:
-                diff += _changed_el(el_right, stack_left, indent, context_class)
+                diff += _changed_el(el_right, stack_left, indent+INDENT,
+                                    context_class)
             if els:
-                _remove_or_replace(diff, els, indent=indent,
+                _remove_or_replace(diff, els, indent=indent+INDENT,
                                    context=gather_context(els[0]),
                                    force_separate=not last_added)
             last_added = False

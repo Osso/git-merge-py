@@ -99,13 +99,28 @@ class AfterContext(list):
 def find_context_with_reduction(tree, context):
     relevant_context = context.copy()
 
-    for _ in range(3):
+    # Simple case: exact context found
+    matches = find_context(tree, relevant_context)
+    if matches:
+        return matches
+
+    # Empty lines mismatch
+    if isinstance(relevant_context[0], nodes.EmptyLineNode):
+        while relevant_context and isinstance(relevant_context[0],
+                                              nodes.EmptyLineNode):
+            del relevant_context[0]
         matches = find_context(tree, relevant_context)
         if matches:
             return matches
+
+    # Try with 2 lines of context then 1
+    for _ in range(2):
         del relevant_context[-1]
         if not relevant_context or empty_lines(relevant_context):
             break
+        matches = find_context(tree, relevant_context)
+        if matches:
+            return matches
 
     return []
 

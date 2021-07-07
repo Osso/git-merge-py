@@ -1007,12 +1007,6 @@ class MoveImport(ElWithContext):
             logging.debug(".. %s", msg.lower())
             return [Conflict([tree], self, reason=msg)]
 
-        # if len(indexes) > 1:
-        #     tree.hidden = False
-        #     msg = "Multiple contexts found"
-        #     logging.debug(".. %s", msg.lower())
-        #     return [Conflict([tree], self, reason=msg)]
-
         new_el = tree.copy()
         new_el.new = True
         tree.parent.insert_with_new_line(indexes[0], new_el)

@@ -1272,7 +1272,6 @@ from module2 import fun2
     assert isinstance(changes[0].changes[0], MoveImport)
 
 
-@pytest.mark.skip
 def test_old_new_tree_separation():
     """the comment is deleted twice and separated by a moved element"""
     base = """

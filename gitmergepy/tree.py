@@ -989,7 +989,30 @@ class MoveArg:
         return [Conflict([tree], self, reason="Context not found")]
 
 
-class MoveImport(ElWithContext):
+def get_anchors(el):
+    return el.__dict__.setdefault("anchored_elements", [])
+
+
+def anchor(el, to):
+    get_anchors(to).append(el)
+
+
+def move_anchored(el):
+    # import pdb; pdb.set_trace()
+    for anchored_el in get_anchors(el):
+        anchored_el.move_after(el)
+        move_anchored(anchored_el)
+
+
+def copy_and_transfer_anchors(el):
+    new_el = el.copy()
+    new_el.new = True
+    new_el.anchored_elements = get_anchors(el)
+    el.anchored_elements = []
+    return new_el
+
+
+class MoveEl(ElWithContext):
     def apply(self, tree):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
@@ -1007,7 +1030,12 @@ class MoveImport(ElWithContext):
             logging.debug(".. %s", msg.lower())
             return [Conflict([tree], self, reason=msg)]
 
-        new_el = tree.copy()
-        new_el.new = True
+        new_el = copy_and_transfer_anchors(tree)
         tree.parent.insert_with_new_line(indexes[0], new_el)
+        move_anchored(new_el)
+        anchor(new_el, to=new_el.previous)
         return []
+
+
+class MoveImport(MoveEl):
+    pass

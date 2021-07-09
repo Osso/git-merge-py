@@ -90,6 +90,8 @@ class RemoveEls:
 
         index = tree.index(anchor_el)
         for el_to_remove in to_remove:
+            if "pylint" in el_to_remove.dumps():
+                import pdb; pdb.set_trace()
             try:
                 el = tree[index]
             except IndexError:

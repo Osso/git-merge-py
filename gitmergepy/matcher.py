@@ -202,6 +202,10 @@ def find_el_strong(tree, target_el, context):
     return None
 
 
+def find_els_exact(tree, target_el):
+    return [el for el in tree if same_el(el, target_el)]
+
+
 def find_el(tree, target_el, context):
     el = find_el_strong(tree, target_el, context)
     if el is not None:
@@ -223,9 +227,9 @@ def find_el(tree, target_el, context):
                 return el
         return None
 
-    el = _find_el(match_el_without_context)
-    if el:
-        return el
+    els = find_els_exact(tree, target_el)
+    if len(els) == 1:
+        return els[0]
 
     # Start guessing here
     if isinstance(target_el, nodes.IfelseblockNode):

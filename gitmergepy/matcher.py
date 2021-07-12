@@ -230,6 +230,8 @@ def find_el(tree, target_el, context):
     els = find_els_exact(tree, target_el)
     if len(els) == 1:
         return els[0]
+    if len(els) > 1:
+        return None
 
     # Start guessing here
     if isinstance(target_el, nodes.IfelseblockNode):

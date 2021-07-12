@@ -66,32 +66,47 @@ class RemoveEls:
             self.__class__.__name__, short_display_list(self.to_remove),
             short_context(self.context))
 
+    def find_anchor(self, tree):
+        # We modify this
+        to_remove = self.to_remove.copy()
+
+        skipped_to_remove = []
+        anchor_el = None
+        for el_to_remove in to_remove:
+            if isinstance(el_to_remove, (nodes.SpaceNode, nodes.EmptyLineNode)):
+                logging.debug(". skipping empty space anchor")
+            else:
+                logging.debug(". looking for el %r",
+                              short_display_el(el_to_remove))
+                anchor_el = find_el(tree, el_to_remove, self.context)
+                if anchor_el is not None:
+                    logging.debug(". el found")
+                    break
+                else:
+                    logging.debug(". el not found")
+
+            skipped_to_remove.append(to_remove.pop(0))
+
+        if anchor_el:
+            for el in reversed(skipped_to_remove):
+                if same_el(anchor_el.previous, el):
+                    anchor_el = anchor_el.previous
+                    to_remove.insert(0, skipped_to_remove.pop())
+
+        return anchor_el, to_remove
+
     def apply(self, tree):
         logging.debug("removing els %s", short_display_list(self.to_remove))
         logging.debug(". context %r", short_context(self.context))
 
-        # We modify this
-        to_remove = self.to_remove.copy()
-
-        anchor_el = None
-        for el_to_remove in to_remove:
-            logging.debug(". looking for el %r",
-                          short_display_el(el_to_remove))
-            anchor_el = find_el(tree, el_to_remove, self.context)
-            if anchor_el is not None:
-                logging.debug(". el found")
-                break
-            else:
-                logging.debug(". el not found")
-                to_remove.remove(el_to_remove)
-
+        anchor_el, to_remove = self.find_anchor(tree)
         if anchor_el is None:
             return []
 
         index = tree.index(anchor_el)
         for el_to_remove in to_remove:
-            if "pylint" in el_to_remove.dumps():
-                import pdb; pdb.set_trace()
+            # if "pylint" in el_to_remove.dumps():
+            # import pdb; pdb.set_trace()
             try:
                 el = tree[index]
             except IndexError:

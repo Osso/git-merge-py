@@ -657,11 +657,12 @@ class MoveFunction(ChangeEl):
                 new_fun.new = True
                 tree.insert(index, new_fun)
 
-                for line in self.empty_lines:
-                    index += 1
-                    new_line = nodes.EmptyLineNode()
-                    new_line.new = True
-                    tree.insert_with_new_line(index, new_line)
+                if new_fun.next:
+                    for line in self.empty_lines:
+                        index += 1
+                        new_line = nodes.EmptyLineNode()
+                        new_line.new = True
+                        tree.insert_with_new_line(index, new_line)
             conflicts = apply_changes(fun, self.changes)
             add_conflicts(tree, conflicts)
         return []

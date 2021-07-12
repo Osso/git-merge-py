@@ -323,8 +323,8 @@ class ReplaceEls(BaseAddEls):
             self._insert_el(el_to_add, index, tree)
             index += 1
 
-        for el_to_add in self.to_remove:
-            del tree[index]
+        for offset, _ in enumerate(self.to_remove):
+            tree.hide(tree[index+offset])
 
         return []
 

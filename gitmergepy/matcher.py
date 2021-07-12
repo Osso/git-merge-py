@@ -266,6 +266,7 @@ def find_with_node(tree):
 
 def find_el_exact_match_with_context(tree, target_el, context):
     from .context import find_context, AfterContext
+
     for index in find_context(tree, context):
         if isinstance(context, AfterContext):
             index -= 1

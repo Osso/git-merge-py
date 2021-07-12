@@ -40,13 +40,16 @@ def diff_def_node(stack_left, el_right, indent, context_class):
         empty_lines = []
 
         _el = el.next
-        _el_right = el_right.next
+        _el_right = el_right
         for _ in range(2):
-            if not isinstance(_el, nodes.EmptyLineNode) or not isinstance(_el_right, nodes.EmptyLineNode):
+            if not isinstance(_el, nodes.EmptyLineNode):
                 break
             empty_lines.append(_el)
             _el.already_processed = True
-            _el_right.already_processed = True
+            if (isinstance(_el_right.next, nodes.EmptyLineNode) and
+                    _el_right.already_processed):
+                _el_right.next.already_processed = True
+
             _el = _el.next
             _el_right = _el_right.next
 

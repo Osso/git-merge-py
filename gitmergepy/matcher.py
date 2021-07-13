@@ -202,8 +202,15 @@ def find_el_strong(tree, target_el, context):
     return None
 
 
-def find_els_exact(tree, target_el):
-    return [el for el in tree if same_el(el, target_el)]
+def find_els_exact(tree, target_el, old_tree=False):
+    if old_tree:
+        def filter(el):
+            return not el.new
+    else:
+        def filter(el):
+            return not el.hidden
+
+    return [el for el in tree if same_el(el, target_el) if filter(el)]
 
 
 def find_el(tree, target_el, context):
@@ -221,19 +228,22 @@ def find_el(tree, target_el, context):
         return None
 
     # Match with exact element
-    def _find_el(func):
-        for el in tree:
-            if func(el, target_el, context):
-                return el
-        return None
-
-    els = find_els_exact(tree, target_el)
+    els = find_els_exact(tree, target_el, old_tree=False)
+    if len(els) == 1:
+        return els[0]
+    els = find_els_exact(tree, target_el, old_tree=True)
     if len(els) == 1:
         return els[0]
     if len(els) > 1:
         return None
 
     # Start guessing here
+    def _find_el(func):
+        for el in tree:
+            if func(el, target_el, context):
+                return el
+        return None
+
     if isinstance(target_el, nodes.IfelseblockNode):
         el = _find_el(match_el_with_if_condition)
         if el:

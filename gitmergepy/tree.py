@@ -78,6 +78,8 @@ class RemoveEls:
             else:
                 logging.debug(". looking for el %r",
                               short_display_el(el_to_remove))
+                if "{'pims_cache', 'sfrpass_relation'" in el_to_remove.dumps():
+                    import pdb; pdb.set_trace()
                 anchor_el = find_el(tree, el_to_remove, self.context)
                 if anchor_el is not None:
                     logging.debug(". el found")
@@ -105,8 +107,6 @@ class RemoveEls:
 
         index = tree.index(anchor_el)
         for el_to_remove in to_remove:
-            # if "pylint" in el_to_remove.dumps():
-            # import pdb; pdb.set_trace()
             try:
                 el = tree[index]
             except IndexError:
@@ -1016,7 +1016,6 @@ def anchor(el, to):
 
 
 def move_anchored(el):
-    # import pdb; pdb.set_trace()
     for anchored_el in get_anchors(el):
         anchored_el.move_after(el)
         move_anchored(anchored_el)

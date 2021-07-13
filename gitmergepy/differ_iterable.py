@@ -71,8 +71,8 @@ def diff_def_node(stack_left, el_right, indent, context_class):
             logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
-            if not hasattr(el_right, 'matched_el'):
-                el.already_processed = True
+            el.already_processed = True
+            el_right.already_processed = True
             empty_lines = _process_empty_lines(el)
             diff += [MoveFunction(el, changes=el_diff, context=context,
                                   empty_lines=empty_lines)]

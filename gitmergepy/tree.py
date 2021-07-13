@@ -72,14 +72,12 @@ class RemoveEls:
 
         skipped_to_remove = []
         anchor_el = None
-        for el_to_remove in to_remove:
+        for el_to_remove in self.to_remove:
             if isinstance(el_to_remove, (nodes.SpaceNode, nodes.EmptyLineNode)):
                 logging.debug(". skipping empty space anchor")
             else:
                 logging.debug(". looking for el %r",
                               short_display_el(el_to_remove))
-                if "{'pims_cache', 'sfrpass_relation'" in el_to_remove.dumps():
-                    import pdb; pdb.set_trace()
                 anchor_el = find_el(tree, el_to_remove, self.context)
                 if anchor_el is not None:
                     logging.debug(". el found")

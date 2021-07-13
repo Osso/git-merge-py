@@ -55,6 +55,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
 
         return empty_lines
 
+    import pdb; pdb.set_trace()
     # We have encountered a function
     if stack_left and isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
         # Function has not been moved

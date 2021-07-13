@@ -152,6 +152,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         if el_right.already_processed:
             logging.debug("%s already processed %r", indent+INDENT,
                           short_display_el(el_right))
+            last_added = False
             continue
 
         while stack_left and stack_left[0].already_processed:

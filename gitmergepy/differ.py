@@ -123,13 +123,12 @@ def _flush_remove(els, diff, force_separate, indent):
 
 
 def process_stack_till_el(stack_left, stop_el, tree, diff, context_class,
-                          last_added, indent):
+                          indent, force_separate=False):
     els = []
-
     while stack_left and not same_el(stack_left[0], stop_el):
         el = stack_left.pop(0)
         if el.already_processed:
-            _flush_remove(els, diff=diff, force_separate=not last_added,
+            _flush_remove(els, diff=diff, force_separate=force_separate,
                           indent=indent)
             continue
 
@@ -140,7 +139,7 @@ def process_stack_till_el(stack_left, stop_el, tree, diff, context_class,
     if els:
         _remove_or_replace(diff, els, indent=indent+INDENT,
                            context=gather_context(els[0]),
-                           force_separate=not last_added)
+                           force_separate=force_separate)
 
 
 def process_stack_el(stack_left, el_to_delete, tree, els, diff, context_class,
@@ -165,6 +164,9 @@ def process_stack_el(stack_left, el_to_delete, tree, els, diff, context_class,
 
 
 def process_el(stack_left, el_right, context_class, indent):
+    if el_right.already_processed:
+        return []
+
     diff = []
 
     if same_el(stack_left[0], el_right):
@@ -296,7 +298,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             process_stack_till_el(stack_left=stack_left, stop_el=stop_el,
                                   tree=right, diff=diff,
                                   context_class=context_class,
-                                  last_added=last_added, indent=indent+INDENT)
+                                  indent=indent+INDENT,
+                                  force_separate=not last_added)
             diff += process_el(stack_left=stack_left,
                                el_right=el_right,
                                context_class=context_class,

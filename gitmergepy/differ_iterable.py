@@ -70,12 +70,17 @@ def diff_def_node(stack_left, el_right, indent, context_class):
             el = find_func(stack_left, el_right)
         if el:
             logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
-            # process_stack_till_el(stack_left, el)
-            el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
-            context = gather_context(el_right)
             el.already_processed = True
             el_right.already_processed = True
             empty_lines = _process_empty_lines(el)
+            if el in stack_left:
+                process_stack_till_el(stack_left, stop_el=el,
+                                      tree=el_right.parent,
+                                      diff=diff,
+                                      context_class=context_class,
+                                      indent=indent)
+            el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
+            context = gather_context(el_right)
             diff += [MoveFunction(el, changes=el_diff, context=context,
                                   empty_lines=empty_lines)]
         else:

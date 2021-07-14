@@ -655,7 +655,7 @@ class MoveFunction(ChangeEl):
                 new_fun.new = True
                 tree.insert(index, new_fun)
 
-                if new_fun.next:
+                if new_fun.displayable_next:
                     for line in self.empty_lines:
                         index += 1
                         new_line = nodes.EmptyLineNode()

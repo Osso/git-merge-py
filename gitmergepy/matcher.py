@@ -274,17 +274,36 @@ def find_with_node(tree):
     return tree.find('with')
 
 
-def find_el_exact_match_with_context(tree, target_el, context):
-    from .context import find_context, AfterContext
+def _find_el_exact_match_with_context(tree, target_el, context, old_tree):
+    from .context import _find_context, AfterContext
 
-    for index in find_context(tree, context):
+    for index in _find_context(tree, context, old_tree=old_tree):
         if isinstance(context, AfterContext):
             index -= 1
         if index == len(tree):
             continue
+        if old_tree:
+            while tree[index].new:
+                index += 1
+        else:
+            while tree[index].hidden:
+                index += 1
         el = tree[index]
         if same_el(el, target_el):
             return el
+
+    return None
+
+
+def find_el_exact_match_with_context(tree, target_el, context):
+    el = _find_el_exact_match_with_context(tree, target_el, context,
+                                           old_tree=False)
+    if el:
+        return el
+    el = _find_el_exact_match_with_context(tree, target_el, context,
+                                           old_tree=True)
+    if el:
+        return el
     return None
 
 

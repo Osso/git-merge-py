@@ -4,7 +4,8 @@ from redbaron import nodes
 
 from .context import gather_context
 from .differ import (add_to_diff,
-                     compute_diff)
+                     compute_diff,
+                     process_stack_till_el)
 from .matcher import (CODE_BLOCK_SAME_THRESHOLD,
                       code_block_similarity,
                       find_func,
@@ -55,7 +56,6 @@ def diff_def_node(stack_left, el_right, indent, context_class):
 
         return empty_lines
 
-    import pdb; pdb.set_trace()
     # We have encountered a function
     if stack_left and isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
         # Function has not been moved
@@ -70,6 +70,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
             el = find_func(stack_left, el_right)
         if el:
             logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
+            # process_stack_till_el(stack_left, el)
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
             el.already_processed = True

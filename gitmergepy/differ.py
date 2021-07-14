@@ -122,7 +122,7 @@ def _flush_remove(els, diff, force_separate, indent):
     del els[:]
 
 
-def process_stack_till_el(stack_left, stop_el, tree, diff, context_class,
+def process_stack_till_el(stack_left, stop_el, tree, diff,
                           indent, force_separate=False):
     els = []
     while stack_left and not same_el(stack_left[0], stop_el):
@@ -135,8 +135,7 @@ def process_stack_till_el(stack_left, stop_el, tree, diff, context_class,
             continue
 
         process_stack_el(stack_left=stack_left, el_to_delete=el, tree=tree,
-                         els=els, diff=diff, context_class=context_class,
-                         indent=indent)
+                         els=els, diff=diff, indent=indent)
 
     if els:
         _remove_or_replace(diff, els, indent=indent+INDENT,
@@ -144,7 +143,7 @@ def process_stack_till_el(stack_left, stop_el, tree, diff, context_class,
                            force_separate=force_separate)
 
 
-def process_stack_el(stack_left, el_to_delete, tree, els, diff, context_class,
+def process_stack_el(stack_left, el_to_delete, tree, els, diff,
                      indent, force_separate=False):
     matching_el_by_id = find_el_strong(tree, target_el=el_to_delete,
                                        context=[])
@@ -158,14 +157,14 @@ def process_stack_el(stack_left, el_to_delete, tree, els, diff, context_class,
         diff.extend(call_diff_iterable(matching_el_by_id,
                                        stack_left=stack_left,
                                        indent=indent+2*INDENT,
-                                       context_class=context_class))
+                                       diff=diff))
     else:
         logging.debug("%s removing %r", indent+2*INDENT,
                       short_display_el(el_to_delete))
         els.append(el_to_delete)
 
 
-def process_el(stack_left, el_right, context_class, indent):
+def process_el(stack_left, el_right, indent, global_diff):
     if el_right.already_processed:
         return []
 
@@ -179,10 +178,10 @@ def process_el(stack_left, el_right, context_class, indent):
         diff += call_diff_iterable(el_right,
                                    stack_left=stack_left,
                                    indent=indent+2*INDENT,
-                                   context_class=context_class)
+                                   diff=diff)
     else:
         diff += _changed_el(el_right, stack_left, indent+INDENT,
-                            context_class)
+                            context_class=ChangeEl)
 
     return diff
 
@@ -227,7 +226,6 @@ def simplify_white_lines(diff, indent):
                found):
         found = False
         for el in reversed(diff[:-1]):
-            logging.debug("%s el %r", indent, el)
             if isinstance(el, AddEls) and isinstance(el.to_add[-1], nodes.EmptyLineNode):
                 logging.debug("%s simplifying white line el", indent)
                 found = True
@@ -242,11 +240,11 @@ def simplify_white_lines(diff, indent):
                 break
 
 
-def call_diff_iterable(el, stack_left, indent, context_class):
+def call_diff_iterable(el, stack_left, indent, diff):
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
     return COMPUTE_DIFF_ITERABLE_CALLS[type(el)](stack_left, el, indent,
-                                                 context_class=context_class)
+                                                 global_diff=diff)
 
 
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
@@ -324,20 +322,19 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             stop_el = look_ahead(stack_left, el_right)
             process_stack_till_el(stack_left=stack_left, stop_el=stop_el,
                                   tree=right, diff=diff,
-                                  context_class=context_class,
                                   indent=indent+INDENT,
                                   force_separate=not last_added)
             diff += process_el(stack_left=stack_left,
                                el_right=el_right,
-                               context_class=context_class,
-                               indent=indent+INDENT)
+                               indent=indent+INDENT,
+                               global_diff=diff)
             last_added = False
         # Custom handlers for def, class, etc.
         elif isinstance(el_right, NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
             diff += call_diff_iterable(el_right,
                                        stack_left=stack_left,
                                        indent=indent+INDENT,
-                                       context_class=context_class)
+                                       diff=diff)
             last_added = False
         elif guess_if_same_el_for_diff_iterable(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,

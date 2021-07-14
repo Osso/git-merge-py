@@ -13,5 +13,5 @@ def test_simplify_white_lines():
         RemoveEls([node("stuff")], context=[]),
         RemoveEls([nodes.EmptyLineNode()], context=[]),
     ]
-    simplify_white_lines(diff)
+    simplify_white_lines(diff, indent="")
     assert len(diff) == 2

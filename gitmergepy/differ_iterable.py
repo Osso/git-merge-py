@@ -16,6 +16,7 @@ from .tools import (INDENT,
                     short_display_el)
 from .tree import (AddImports,
                    ChangeClass,
+                   ChangeEl,
                    ChangeFun,
                    ChangeImport,
                    MoveFunction,
@@ -34,7 +35,7 @@ def _changed_el(el, stack_left, indent, context_class):
     return diff
 
 
-def diff_def_node(stack_left, el_right, indent, context_class):
+def diff_def_node(stack_left, el_right, indent, global_diff):
     logging.debug("%s changed fun %r", indent, short_display_el(el_right))
     diff = []
 
@@ -82,9 +83,10 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                 process_stack_till_el(stack_left, stop_el=el,
                                       tree=el_right.parent,
                                       diff=diff,
-                                      context_class=context_class,
                                       indent=indent)
-                simplify_white_lines(diff, indent=indent+INDENT)
+                global_diff.extend(diff)
+                simplify_white_lines(global_diff, indent=indent+INDENT)
+                diff = []
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
             diff += [MoveFunction(el, changes=el_diff, context=context,
@@ -121,7 +123,7 @@ def diff_def_node(stack_left, el_right, indent, context_class):
     return diff
 
 
-def diff_class_node(stack_left, el_right, indent, context_class):
+def diff_class_node(stack_left, el_right, indent, global_diff):
     logging.debug("%s changed class %r", indent,
                   short_display_el(el_right))
     diff = []
@@ -144,7 +146,7 @@ def diff_class_node(stack_left, el_right, indent, context_class):
     return diff
 
 
-def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
+def diff_atom_trailer_node(stack_left, el_right, indent, global_diff):
     diff = []
     if id_from_el(el_right) == id_from_el(stack_left[0]) or \
             el_right[0] == stack_left[0][0] == 'super':
@@ -153,7 +155,8 @@ def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
         el_left = stack_left.pop(0)
         el_diff = compute_diff(el_left, el_right, indent=indent+INDENT)
         if el_diff:
-            diff += [context_class(el_left, el_diff, context=gather_context(el_left))]
+            diff += [ChangeEl(el_left, el_diff,
+                              context=gather_context(el_left))]
         logging.debug("%s modified call diff %r", indent+INDENT, diff)
     else:
         logging.debug("%s new AtomtrailersNode %r", indent+INDENT,
@@ -163,7 +166,7 @@ def diff_atom_trailer_node(stack_left, el_right, indent, context_class):
     return diff
 
 
-def diff_from_import_node(stack_left, el_right, indent, context_class):
+def diff_from_import_node(stack_left, el_right, indent, global_diff):
     logging.debug("%s changed import %r", indent, short_display_el(el_right))
     diff = []
 

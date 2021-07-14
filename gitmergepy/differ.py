@@ -128,6 +128,8 @@ def process_stack_till_el(stack_left, stop_el, tree, diff, context_class,
     while stack_left and not same_el(stack_left[0], stop_el):
         el = stack_left.pop(0)
         if el.already_processed:
+            logging.debug("%s el aready processed %r, flushing", indent+INDENT,
+                          short_display_el(el))
             _flush_remove(els, diff=diff, force_separate=force_separate,
                           indent=indent)
             continue
@@ -213,6 +215,31 @@ def look_ahead(stack_left, el_right, max_ahead=10):
         if same_el_guess(el, el_right):
             return el
     return None
+
+
+def simplify_white_lines(diff, indent):
+    if not diff:
+        return
+
+    found = True
+    while (isinstance(diff[-1], RemoveEls) and
+               isinstance(diff[-1].to_remove[0], nodes.EmptyLineNode) and
+               found):
+        found = False
+        for el in reversed(diff[:-1]):
+            logging.debug("%s el %r", indent, el)
+            if isinstance(el, AddEls) and isinstance(el.to_add[-1], nodes.EmptyLineNode):
+                logging.debug("%s simplifying white line el", indent)
+                found = True
+                el.to_add.pop()
+                if not el.to_add:
+                    diff.remove(el)
+                diff[-1].to_remove.pop(0)
+                if not diff[-1].to_remove:
+                    diff.pop()
+                break
+            if not isinstance(el, RemoveEls):
+                break
 
 
 def call_diff_iterable(el, stack_left, indent, context_class):

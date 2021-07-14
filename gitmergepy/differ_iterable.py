@@ -5,7 +5,8 @@ from redbaron import nodes
 from .context import gather_context
 from .differ import (add_to_diff,
                      compute_diff,
-                     process_stack_till_el)
+                     process_stack_till_el,
+                     simplify_white_lines)
 from .matcher import (CODE_BLOCK_SAME_THRESHOLD,
                       code_block_similarity,
                       find_func,
@@ -78,12 +79,12 @@ def diff_def_node(stack_left, el_right, indent, context_class):
             el_right.already_processed = True
             empty_lines = _process_empty_lines(el)
             if not moved and el in stack_left:
-                # import pdb; pdb.set_trace()
                 process_stack_till_el(stack_left, stop_el=el,
                                       tree=el_right.parent,
                                       diff=diff,
                                       context_class=context_class,
                                       indent=indent)
+                simplify_white_lines(diff, indent=indent+INDENT)
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
             diff += [MoveFunction(el, changes=el_diff, context=context,

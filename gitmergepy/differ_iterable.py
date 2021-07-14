@@ -65,15 +65,20 @@ def diff_def_node(stack_left, el_right, indent, context_class):
                             context_class=ChangeFun)
     else:
         if hasattr(el_right, 'matched_el'):  # Already matched earlier
-            el = el_right.matched_el
-        else:  # Function has been moved, look for it
-            el = find_func(stack_left, el_right)
-        if el:
             logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
+            el = el_right.matched_el
+            moved = True
+        else:  # Function has been moved, look for it
+            logging.debug("%s %r ahead, processing stack", indent+INDENT,
+                          el_right.name)
+            el = find_func(stack_left, el_right)
+            moved = False
+        if el:
             el.already_processed = True
             el_right.already_processed = True
             empty_lines = _process_empty_lines(el)
-            if el in stack_left:
+            if not moved and el in stack_left:
+                # import pdb; pdb.set_trace()
                 process_stack_till_el(stack_left, stop_el=el,
                                       tree=el_right.parent,
                                       diff=diff,

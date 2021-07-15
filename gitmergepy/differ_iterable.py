@@ -89,8 +89,12 @@ def diff_def_node(stack_left, el_right, indent, global_diff):
                 diff = []
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
-            diff += [MoveFunction(el, changes=el_diff, context=context,
-                                  empty_lines=empty_lines)]
+            if moved:
+                diff += [MoveFunction(el, changes=el_diff, context=context,
+                                      empty_lines=empty_lines)]
+            elif el_diff:
+                diff += [ChangeFun(el, changes=el_diff, context=context)]
+                #  empty_lines=empty_lines
         else:
             if isinstance(stack_left[0], nodes.DefNode) and el_right.parent:
                 el = find_func(el_right.parent, stack_left[0])

@@ -92,8 +92,9 @@ def __remove_or_replace(diff, els, context, indent, force_separate):
         diff.pop()
         diff.append(replace)
     else:
-        logging.debug("%s remove els %r, context %r", indent+INDENT, els,
-                      context)
+        logging.debug("%s remove els %r, context %r", indent+INDENT,
+                      ", ".join(short_display_el(el) for el in els),
+                      short_context(context))
         diff.append(RemoveEls(els, context=context))
 
 
@@ -354,7 +355,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             logging.debug("%s removing leftover %r", indent+INDENT,
                           short_display_el(el))
             if el.already_processed:
-                logging.debug("%s already already processed", indent+2*INDENT)
+                logging.debug("%s already processed", indent+2*INDENT)
         _remove_or_replace(diff, stack_left, indent=indent,
                            context=gather_context(stack_left[0]),
                            force_separate=not last_added)

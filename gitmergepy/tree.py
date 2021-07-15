@@ -78,6 +78,7 @@ class RemoveEls:
             else:
                 logging.debug(". looking for el %r",
                               short_display_el(el_to_remove))
+                import pdb; pdb.set_trace()
                 anchor_el = find_el(tree, el_to_remove, self.context)
                 if anchor_el is not None:
                     logging.debug(". el found")

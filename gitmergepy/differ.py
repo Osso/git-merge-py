@@ -316,6 +316,13 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             else:
                 stack_left.pop(0)
             last_added = False
+        # Custom handlers for def, class, etc.
+        elif isinstance(el_right, NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
+            diff += call_diff_iterable(el_right,
+                                       stack_left=stack_left,
+                                       indent=indent+INDENT,
+                                       diff=diff)
+            last_added = False
         # Look forward a few elements to check if we have a match
         elif not empty_lines([el_right]) and look_ahead(stack_left, el_right):
             logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
@@ -328,13 +335,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                el_right=el_right,
                                indent=indent+INDENT,
                                global_diff=diff)
-            last_added = False
-        # Custom handlers for def, class, etc.
-        elif isinstance(el_right, NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
-            diff += call_diff_iterable(el_right,
-                                       stack_left=stack_left,
-                                       indent=indent+INDENT,
-                                       diff=diff)
             last_added = False
         elif guess_if_same_el_for_diff_iterable(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,

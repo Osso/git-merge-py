@@ -356,11 +356,9 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                           short_display_el(el))
             if el.already_processed:
                 logging.debug("%s already processed", indent+2*INDENT)
-        _remove_or_replace(diff, stack_left, indent=indent,
-                           context=gather_context(stack_left[0]),
-                           force_separate=not last_added)
+        process_stack_till_el(stack_left, stop_el=None, tree=right,
+                              diff=diff, indent=indent)
 
-    # logging.debug("%s compute_diff_iterables %r", indent, diff)
     return diff
 
 

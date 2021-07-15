@@ -1035,7 +1035,7 @@ class MoveEl(ElWithContext):
         tree.hidden = True
 
         if self.context[0] is None:
-            tree.parent.insert(0, tree.copy())
+            tree.parent.insert_with_new_line(0, tree.copy())
             return []
 
         indexes = find_context_with_reduction(tree.parent, self.context)

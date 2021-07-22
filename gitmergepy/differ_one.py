@@ -30,8 +30,11 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDecoratorArgs,
                    ChangeDefArg,
                    ChangeDictItem,
+                   ChangeHeader,
                    ChangeReturn,
                    ChangeValue,
+                   MakeInline,
+                   MakeMultiline,
                    MoveArg,
                    RemoveAllDecoratorArgs,
                    RemoveBases,
@@ -88,6 +91,7 @@ def diff_def_node(left, right, indent):
     # Name
     if left.name != right.name:
         diff += [RenameDef(right)]
+
     # Args
     to_add, to_remove = diff_list(left.arguments, right.arguments)
     for arg in to_add:
@@ -140,6 +144,9 @@ def diff_def_node(left, right, indent):
         if diff_decorator:
             diff += [ChangeDecorator(left_el, changes=diff_decorator)]
 
+    diff += diff_inline_vs_multiline(left, right, indent=indent)
+
+    # Body
     diff += compute_diff_iterables(left.value, right.value, indent=indent)
 
     return diff
@@ -299,6 +306,9 @@ def diff_class_node(left, right, indent):
     # Decorators
     diff += diff_class_node_decorators(left, right, indent)
 
+    # Inline vs multiline
+    diff += diff_inline_vs_multiline(left, right, indent=indent)
+
     # Body
     diff += compute_diff_iterables(left.value, right.value, indent=indent+INDENT)
 
@@ -405,6 +415,20 @@ def diff_while_node(left, right, indent):
     return diff
 
 
+def diff_pass_node(left, right, indent):
+    return []
+
+
+def diff_inline_vs_multiline(left, right, indent):
+    if left.value.header and not right.value.header:
+        return [MakeInline()]
+    elif not left.value.header and right.value.header:
+        return [MakeMultiline()]
+    else:
+        return []
+
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -431,4 +455,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.DictNode: diff_dict_node,
     nodes.ForNode: diff_for_node,
     nodes.WhileNode: diff_while_node,
+    nodes.PassNode: diff_pass_node,
 }

@@ -23,6 +23,9 @@ def apply_changes(tree, changes):
     elif isinstance(tree, nodes.DefNode):
         tree.arguments.reformat()
 
+    if isinstance(tree, (nodes.ClassNode, nodes.DefNode)):
+        tree.value._synchronise()
+
     # Sanity check
     if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
                          nodes.WithNode, nodes.CallArgumentNode)):

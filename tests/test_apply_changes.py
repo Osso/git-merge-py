@@ -1289,3 +1289,87 @@ from module2 import fun2
 from module1 import fun1
 """
     _test_apply_changes(base, current)
+
+
+def test_def_to_inline():
+    base = """
+def fun(): pass
+"""
+    current = """
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_def_to_multiline():
+    base = """
+def fun():
+    pass
+"""
+    current = """
+def fun(): pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_def_header():
+    base = """
+def fun():
+    pass
+"""
+    current = """
+def fun():
+
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_def_header_2():
+    base = """
+def fun():
+    pass
+"""
+    current = """
+def fun():
+
+
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_class_header():
+    base = """
+class C:
+    pass
+"""
+    current = """
+class C:
+
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_class_to_inline():
+    base = """
+class C: pass
+"""
+    current = """
+class C:
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_class_to_multiline():
+    base = """
+class C:
+    pass
+"""
+    current = """
+class C: pass
+"""
+    _test_apply_changes(base, current)

@@ -1,7 +1,8 @@
 import logging
 
 from redbaron import nodes
-from redbaron.base_nodes import (BaseNode,
+from redbaron.base_nodes import (INDENT_UNIT,
+                                 BaseNode,
                                  NodeList)
 
 from .applyier import (add_conflict,
@@ -244,7 +245,6 @@ class BaseAddEls:
 
         el = el_to_add.copy()
         el.new = True
-
         # Add endl for code proxy lists
         endl = isinstance(el_to_add.associated_sep, nodes.EndlNode)
         if el_to_add.associated_sep:
@@ -1054,3 +1054,38 @@ class MoveEl(ElWithContext):
 
 class MoveImport(MoveEl):
     pass
+
+
+class ChangeHeader:
+    def __init__(self, changes):
+        self.changes = changes
+
+    def apply(self, tree):
+        logging.debug(".. changing header")
+        return apply_changes(tree.value.header, self.changes)
+
+
+class MakeInline:
+    def apply(self, tree):
+        logging.debug(".. making inline")
+        if not tree.value.header:
+            logging.debug(".. already inline")
+        tree.value.header = []
+        tree.value._synchronise()
+
+        if isinstance(tree, nodes.ClassNode):
+            tree.sixth_formatting = [" "]
+        return []
+
+
+class MakeMultiline:
+    def apply(self, tree):
+        logging.debug(".. making multiline")
+        if tree.value.header:
+            logging.debug(".. already multiline")
+        tree.value.header = [nodes.EndlNode(parent=tree)]
+        tree.value._synchronise()
+
+        if isinstance(tree, nodes.ClassNode):
+            tree.sixth_formatting = []
+        return []

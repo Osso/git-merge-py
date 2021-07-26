@@ -222,9 +222,15 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
     return diff
 
 
+def diff_return_node(stack_left, el_right, indent, global_diff):
+    assert el_right.matched_el
+    return compute_diff(el_right.matched_el, el_right, indent)
+
+
 COMPUTE_DIFF_ITERABLE_CALLS = {
     nodes.DefNode: diff_def_node,
     nodes.ClassNode: diff_class_node,
     nodes.AtomtrailersNode: diff_atom_trailer_node,
     nodes.FromImportNode: diff_from_import_node,
+    nodes.ReturnNode: diff_return_node,
 }

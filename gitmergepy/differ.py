@@ -125,8 +125,9 @@ def _flush_remove(els, diff, force_separate, indent):
 
 def process_stack_till_el(stack_left, stop_el, tree, diff,
                           indent, force_separate=False):
+    """stop_el is None means continue till the end of the stack"""
     els = []
-    while stack_left and not same_el(stack_left[0], stop_el):
+    while stack_left and not (stop_el and same_el(stack_left[0], stop_el)):
         el = stack_left.pop(0)
         if el.already_processed:
             logging.debug("%s el aready processed %r, flushing", indent+INDENT,

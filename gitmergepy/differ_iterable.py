@@ -132,10 +132,13 @@ def diff_class_node(stack_left, el_right, indent, global_diff):
                   short_display_el(el_right))
     diff = []
 
-    if isinstance(stack_left[0], nodes.ClassNode) and stack_left[0].name == el_right.name:
+    if (stack_left and isinstance(stack_left[0], nodes.ClassNode) and
+            stack_left[0].name == el_right.name):
         diff += _changed_el(el_right, stack_left, indent=indent,
                             context_class=ChangeClass)
-    elif code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
+    elif (stack_left and
+            code_block_similarity(el_right,
+                                  stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD):
         logging.debug("%s renamed class %r to %r", indent+INDENT,
                       stack_left[0].name, el_right.name)
         el_diff = compute_diff(stack_left[0], el_right, indent=indent+INDENT)

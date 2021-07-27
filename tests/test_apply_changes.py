@@ -1401,3 +1401,17 @@ def fun(arg1,
 
     changes = compute_diff(RedBaron(base), RedBaron(current))
     assert len(changes) == 1
+
+
+def test_remove_import_match_stack():
+    base = """
+from module1 import fun1
+
+from module2 import fun2
+from module3 import fun3
+"""
+    current = """
+from module1 import fun1
+from module3 import fun3
+"""
+    _test_apply_changes(base, current)

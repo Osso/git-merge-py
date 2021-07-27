@@ -179,15 +179,28 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
 
     def remove_import_if_not_found(stack):
         nonlocal diff
+        to_remove = []
         # Try to keep in left and right stacks in sync, so that empty lines
         # can also be matched
-        if stack_left and isinstance(stack_left[0], (nodes.FromImportNode, nodes.ImportNode)):
-            if not find_import(el_right.parent, stack_left[0]):
+        import pdb; pdb.set_trace()
+        while stack_left and isinstance(stack_left[0], (nodes.FromImportNode,
+                                                        nodes.ImportNode,
+                                                        nodes.EmptyLineNode)):
+            if isinstance(stack_left[0], nodes.EmptyLineNode):
+                logging.debug("%s blank line to remove %r", indent+INDENT,
+                              short_display_el(stack_left[0]))
+                to_remove.append(stack_left[0])
+                stack_left.pop(0)
+            elif not find_import(el_right.parent, stack_left[0]):
                 logging.debug("%s import to remove %r", indent+INDENT,
                               short_display_el(stack_left[0]))
-                diff += [RemoveEls([stack_left[0]],
-                                   context=gather_context(stack_left[0]))]
+                to_remove.append(stack_left[0])
                 stack_left.pop(0)
+            else:
+                break
+        if to_remove:
+            diff += [RemoveEls(to_remove,
+                               context=gather_context(to_remove[0]))]
 
     if hasattr(el_right, 'matched_el'):  # Already matched earlier
         el = el_right.matched_el
@@ -202,6 +215,7 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
         if not stack_left or el is not stack_left[0]:
             logging.debug("%s moved", indent+INDENT)
             el_diff += [MoveImport(el_right, context=gather_context(el_right))]
+            # import pdb; pdb.set_trace()
 
         if el_diff:
             diff += [ChangeImport(el, el_diff, context=gather_context(el))]

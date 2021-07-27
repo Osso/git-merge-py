@@ -230,6 +230,8 @@ def diff_call_node(left, right, indent):
             diff_arg += [ArgOnNewLine(indentation=rel_indent*" ")]
         if old_arg.on_new_line and not new_arg.on_new_line:
             diff_arg += [ArgRemoveNewLine()]
+        if id_from_el(get_previous_arg(old_arg, to_remove)) != id_from_el(get_previous_arg(new_arg, to_remove)):
+            diff_arg += [MoveArg(context=gather_context(new_arg))]
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]
     return diff
 

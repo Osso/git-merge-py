@@ -1253,6 +1253,16 @@ def fun(arg2, arg1):
     _test_apply_changes(base, current)
 
 
+def test_call_move_arg():
+    base = """
+fun(arg1, arg2)
+"""
+    current = """
+fun(arg2, arg1)
+"""
+    _test_apply_changes(base, current)
+
+
 def test_move_import():
     base = """
 from module1 import fun1

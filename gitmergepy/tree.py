@@ -787,6 +787,8 @@ class RemoveFunArgs:
             if id_from_el(el) in to_remove_values:
                 logging.debug(". removing arg %r from %r",
                               short_display_el(el), short_display_el(args))
+                if el.endl:
+                    el.put_on_new_line()
                 args.remove(el)
         return []
 

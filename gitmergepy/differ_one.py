@@ -30,7 +30,6 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDecoratorArgs,
                    ChangeDefArg,
                    ChangeDictItem,
-                   ChangeHeader,
                    ChangeReturn,
                    ChangeValue,
                    MakeInline,
@@ -49,6 +48,14 @@ from .tree import (AddAllDecoratorArgs,
                    ReplaceAnnotation,
                    ReplaceAttr,
                    ReplaceTarget)
+
+
+def get_previous_arg(arg, deleted):
+    previous = arg.previous
+    deleted = set(id_from_el(el) for el in deleted)
+    while id_from_el(previous) in deleted:
+        previous = previous.previous
+    return previous
 
 
 def diff_redbaron(left, right, indent):
@@ -113,9 +120,10 @@ def diff_def_node(left, right, indent):
             diff_arg += [ArgOnNewLine(indentation=rel_indent*" ")]
         if old_arg.on_new_line and not new_arg.on_new_line:
             diff_arg += [ArgRemoveNewLine()]
-        if old_arg.index_on_parent != new_arg.index_on_parent:
+        if id_from_el(get_previous_arg(old_arg, to_remove)) != id_from_el(get_previous_arg(new_arg, to_remove)):
             diff_arg += [MoveArg(context=gather_context(new_arg))]
-        diff += [ChangeDefArg(new_arg, changes=diff_arg)]
+        if diff_arg:
+            diff += [ChangeDefArg(new_arg, changes=diff_arg)]
 
     # Decorators
     to_add, to_remove = diff_list(left.decorators, right.decorators)
@@ -422,11 +430,9 @@ def diff_pass_node(left, right, indent):
 def diff_inline_vs_multiline(left, right, indent):
     if left.value.header and not right.value.header:
         return [MakeInline()]
-    elif not left.value.header and right.value.header:
+    if not left.value.header and right.value.header:
         return [MakeMultiline()]
-    else:
-        return []
-
+    return []
 
 
 COMPUTE_DIFF_ONE_CALLS = {

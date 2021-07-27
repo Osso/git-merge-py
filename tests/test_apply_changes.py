@@ -1373,3 +1373,21 @@ class C:
 class C: pass
 """
     _test_apply_changes(base, current)
+
+
+def test_def_remove_arg_before_new_line():
+    """and check that arg3 doesn't get a MoveArg"""
+    base = """
+def fun(arg1, arg2,
+        arg3):
+    pass
+"""
+    current = """
+def fun(arg1,
+        arg3):
+    pass
+"""
+    _test_apply_changes(base, current)
+
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert len(changes) == 1

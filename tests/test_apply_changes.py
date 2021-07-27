@@ -1415,3 +1415,19 @@ from module1 import fun1
 from module3 import fun3
 """
     _test_apply_changes(base, current)
+
+
+def test_remove_white_space_anchor():
+    base = """
+from module1 import fun1
+
+from module2 import fun2
+from module3 import fun3
+"""
+    current = """
+from module1 import fun1
+from module3 import fun3
+from module2 import fun2
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))

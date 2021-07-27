@@ -23,6 +23,7 @@ from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
                       same_arg_guess)
 from .tools import (apply_diff_to_list,
                     as_from_contexts,
+                    empty_lines,
                     get_call_els,
                     id_from_el,
                     same_el,
@@ -74,7 +75,7 @@ class RemoveEls:
         skipped_to_remove = []
         anchor_el = None
         for el_to_remove in self.to_remove:
-            if isinstance(el_to_remove, (nodes.SpaceNode, nodes.EmptyLineNode)):
+            if isinstance(el_to_remove, (nodes.SpaceNode, nodes.EmptyLineNode)) and not empty_lines(self.to_remove):
                 logging.debug(". skipping empty space anchor")
             else:
                 logging.debug(". looking for el %r",

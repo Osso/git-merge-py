@@ -182,7 +182,6 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
         to_remove = []
         # Try to keep in left and right stacks in sync, so that empty lines
         # can also be matched
-        import pdb; pdb.set_trace()
         while stack_left and isinstance(stack_left[0], (nodes.FromImportNode,
                                                         nodes.ImportNode,
                                                         nodes.EmptyLineNode)):

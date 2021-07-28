@@ -1430,4 +1430,3 @@ from module3 import fun3
 from module2 import fun2
 """
     _test_apply_changes(base, current)
-    changes = compute_diff(RedBaron(base), RedBaron(current))

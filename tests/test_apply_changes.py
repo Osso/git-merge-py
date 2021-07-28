@@ -1430,3 +1430,13 @@ from module3 import fun3
 from module2 import fun2
 """
     _test_apply_changes(base, current)
+
+
+def test_add_named_to_argument():
+    base = """
+call(value1)
+"""
+    current = """
+call(arg1=value1)
+"""
+    _test_apply_changes(base, current)

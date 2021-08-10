@@ -827,6 +827,7 @@ class RemoveBases(RemoveDecorators):
 
 class RemoveWith(ElWithContext):
     def apply(self, tree):
+        logging.debug('removing "with"')
         el_node_as = as_from_contexts(self.el.contexts)
 
         # Similar

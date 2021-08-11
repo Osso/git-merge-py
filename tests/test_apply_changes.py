@@ -297,6 +297,23 @@ call('hello')
     _test_apply_changes(base, current)
 
 
+def test_remove_with_backslash():
+    base = """
+with fun():
+    do()
+    get() \\
+        .one()
+    more()
+"""
+    current = """
+do()
+get() \\
+    .one()
+more()
+"""
+    _test_apply_changes(base, current)
+
+
 def test_change_with():
     base = """
 with fun():

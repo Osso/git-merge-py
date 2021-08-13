@@ -21,7 +21,8 @@ from .tree import (AddEls,
                    RemoveWith,
                    Replace,
                    ReplaceAttr,
-                   ReplaceEls)
+                   ReplaceEls,
+                   SameEl)
 
 NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID = (nodes.DefNode,
                                       nodes.ClassNode,
@@ -175,7 +176,7 @@ def process_el(stack_left, el_right, indent, global_diff):
     if same_el(stack_left[0], el_right):
         logging.debug("%s same el %r", indent+INDENT,
                       short_display_el(el_right))
-        stack_left.pop(0)
+        diff += [SameEl(stack_left.pop(0))]
     elif isinstance(el_right, NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
         diff += call_diff_iterable(el_right,
                                    stack_left=stack_left,

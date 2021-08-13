@@ -1093,3 +1093,8 @@ class MakeMultiline:
         if isinstance(tree, nodes.ClassNode):
             tree.sixth_formatting = []
         return []
+
+
+class SameEl(BaseEl):
+    def apply(self, tree):
+        return []

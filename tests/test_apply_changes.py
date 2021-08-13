@@ -1,12 +1,12 @@
 import logging
 
-import pytest
 from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
 from gitmergepy.tree import (ChangeImport,
-                             MoveImport)
+                             MoveImport,
+                             SameEl)
 
 
 def _test_apply_changes(base, current):
@@ -146,7 +146,7 @@ def fun1():
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    assert len(changes) == 1
+    assert len([c for c in changes if not isinstance(c, SameEl)]) == 1
 
 
 def test_add_import():
@@ -1293,10 +1293,10 @@ from module2 import fun2
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    assert len(changes) == 1
-    assert isinstance(changes[0], ChangeImport)
-    assert len(changes[0].changes) == 1
-    assert isinstance(changes[0].changes[0], MoveImport)
+    assert len([c for c in changes if not isinstance(c, SameEl)]) == 1
+    assert isinstance(changes[1], ChangeImport)
+    assert len(changes[1].changes) == 1
+    assert isinstance(changes[1].changes[0], MoveImport)
 
 
 def test_old_new_tree_separation():

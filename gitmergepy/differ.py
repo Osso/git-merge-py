@@ -167,26 +167,26 @@ def process_stack_el(stack_left, el_to_delete, tree, els, diff,
         els.append(el_to_delete)
 
 
-def process_el(stack_left, el_right, indent, global_diff):
+def process_same_el(el_right, stack_left, indent):
+    logging.debug("%s same el %r", indent+INDENT,
+                  short_display_el(el_right))
+
+    if stack_left[0].indentation != el_right.indentation:
+        return _changed_el(el_right, stack_left, indent=indent,
+                           context_class=ChangeEl)
+
+    return [SameEl(stack_left.pop(0))]
+
+
+def process_matched_el_from_look_ahead(el_right, stack_left, indent):
     if el_right.already_processed:
         return []
 
-    diff = []
-
     if same_el(stack_left[0], el_right):
-        logging.debug("%s same el %r", indent+INDENT,
-                      short_display_el(el_right))
-        diff += [SameEl(stack_left.pop(0))]
-    elif isinstance(el_right, NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
-        diff += call_diff_iterable(el_right,
-                                   stack_left=stack_left,
-                                   indent=indent+2*INDENT,
-                                   diff=diff)
-    else:
-        diff += _changed_el(el_right, stack_left, indent+INDENT,
-                            context_class=ChangeEl)
+        return process_same_el(el_right, stack_left, indent=indent)
 
-    return diff
+    return _changed_el(el_right, stack_left, indent=indent+INDENT,
+                       context_class=ChangeEl)
 
 
 def check_removed_withs(stack_left, el_right, indent):
@@ -312,12 +312,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Direct match
         if stack_left and same_el(stack_left[0], el_right):
             # Exactly same element
-            logging.debug("%s same el %r", indent+INDENT,
-                          short_display_el(el_right))
-            if stack_left[0].indentation != el_right.indentation:
-                diff += _changed_el(el_right, stack_left, indent, context_class)
-            else:
-                stack_left.pop(0)
+            diff += process_same_el(el_right, stack_left, indent=indent+INDENT)
             last_added = False
         # Custom handlers for def, class, etc.
         elif isinstance(el_right, NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
@@ -328,16 +323,16 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             last_added = False
         # Look forward a few elements to check if we have a match
         elif not empty_lines([el_right]) and look_ahead(stack_left, el_right):
-            logging.debug("%s same el ahead %r", indent+INDENT, short_display_el(el_right))
+            logging.debug("%s same el ahead %r", indent+INDENT,
+                          short_display_el(el_right))
             stop_el = look_ahead(stack_left, el_right)
             process_stack_till_el(stack_left=stack_left, stop_el=stop_el,
                                   tree=right, diff=diff,
                                   indent=indent+INDENT,
                                   force_separate=not last_added)
-            diff += process_el(stack_left=stack_left,
-                               el_right=el_right,
-                               indent=indent+INDENT,
-                               global_diff=diff)
+            diff += process_matched_el_from_look_ahead(el_right=el_right,
+                                                       stack_left=stack_left,
+                                                       indent=indent+INDENT)
             last_added = False
         elif guess_if_same_el_for_diff_iterable(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,

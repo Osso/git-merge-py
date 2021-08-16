@@ -37,6 +37,18 @@ BaseNode.new = False
 BaseNode.already_processed = False
 
 
+def first_index_after_cursor(tree, indexes):
+    assert indexes
+
+    cursor_index = tree.index(tree.cursor)
+    index = None
+    for index in indexes:
+        if index > cursor_index:
+            break
+
+    return index
+
+
 class BaseEl:
     def __init__(self, el):
         self.el = el
@@ -116,6 +128,7 @@ class RemoveEls:
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
                 tree.hide(el)
+                tree.cursor = el
                 index += 1
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
@@ -213,10 +226,10 @@ class BaseAddEls:
                 logging.debug("    context not found")
                 return [Conflict(self.to_add, self,
                                  reason="context not found")]
-            elif len(indexes) > 1:
-                return [Conflict(self.to_add, self,
-                                 reason="context found %d times" % len(indexes))]
+
             index = indexes[0]
+            if len(indexes) > 1:
+                index = first_index_after_cursor(tree, indexes)
 
             if index == 0:
                 at = "the beginning"
@@ -237,6 +250,7 @@ class BaseAddEls:
             logging.debug("    el %r", short_display_el(el_to_add))
             self._insert_el(el_to_add, index, tree)
             index += 1
+            tree.cursor = el_to_add
 
         return []
 
@@ -311,11 +325,10 @@ class ReplaceEls(BaseAddEls):
             add_conflicts(tree, [Conflict(self.to_remove, self,
                                         reason="Cannot match els")])
             return []
-        if len(indexes) > 1:
-            add_conflicts(tree, [Conflict(self.to_remove, self,
-                                        reason="Els matched %d times" % len(indexes))])
-            return []
+
         index = indexes[0]
+        if len(indexes) > 1:
+            index = first_index_after_cursor(tree, indexes)
 
         for el_to_add in self.to_add:
             logging.debug("    el %r", short_display_el(el_to_add))
@@ -323,7 +336,9 @@ class ReplaceEls(BaseAddEls):
             index += 1
 
         for offset, _ in enumerate(self.to_remove):
-            tree.hide(tree[index+offset])
+            el = tree[index+offset]
+            tree.hide(el)
+            tree.cursor = el
 
         return []
 
@@ -429,6 +444,7 @@ class ChangeEl(BaseEl):
             logging.debug(". not found")
         else:
             logging.debug(". found")
+            tree.cursor = el
             conflicts = apply_changes(el, self.changes)
             if self.write_conflicts:
                 add_conflicts(el, conflicts)

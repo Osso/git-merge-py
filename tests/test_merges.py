@@ -17,12 +17,14 @@ def _test_merge_changes(base, current, other, expected):
     for change in changes:
         logging.debug(change)
     logging.debug("=========")
+
     base_ast_patched = RedBaron(base)
     apply_changes(base_ast_patched, changes)
     logging.debug("======= changes applied to base =======")
     logging.debug(base_ast_patched.dumps())
     logging.debug("=========")
     assert base_ast_patched.dumps() == current_ast.dumps()
+
     apply_changes(other_ast, changes)
     logging.debug("======= changes applied to other =======")
     logging.debug(other_ast.dumps())
@@ -787,6 +789,44 @@ class RenamedClass(self):
     # body 3
     # body 4
     # changed body
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_if_else_2():
+    base = """
+if cond:
+    pass
+else:
+    pass
+    # another
+    pass
+"""
+    current = """
+if cond:
+    pass
+else:
+    call('hello')
+    # another
+    pass
+"""
+    other = """
+if cond:
+    pass
+else:
+    # passing here
+    pass
+    # another
+    pass
+"""
+    expected = """
+if cond:
+    pass
+else:
+    # passing here
+    call('hello')
+    # another
     pass
 """
     _test_merge_changes(base, current, other, expected)

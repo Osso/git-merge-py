@@ -15,8 +15,11 @@ PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
 
 def apply_changes(tree, changes):
-    if isinstance(tree, (NodeList, RedBaron)):
-        tree.cursor = tree[0]
+    if isinstance(tree, (NodeList, CodeBlockMixin)):
+        try:
+            tree.cursor = tree[0]
+        except IndexError:
+            tree.cursor = None
     conflicts = []
     for change in changes:
         conflicts += change.apply(tree)

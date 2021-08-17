@@ -1,9 +1,9 @@
 import logging
 
 from redbaron import nodes
-from redbaron.base_nodes import (INDENT_UNIT,
-                                 BaseNode,
+from redbaron.base_nodes import (BaseNode,
                                  NodeList)
+from redbaron.node_mixin import CodeBlockMixin
 
 from .applyier import (add_conflict,
                        add_conflicts,
@@ -444,7 +444,6 @@ class ChangeEl(BaseEl):
             logging.debug(". not found")
         else:
             logging.debug(". found")
-            tree.cursor = el
             conflicts = apply_changes(el, self.changes)
             if self.write_conflicts:
                 add_conflicts(el, conflicts)
@@ -895,6 +894,7 @@ class RemoveWith(ElWithContext):
         with_node.parent._data[index:index] = with_node.value._data
         with_node.parent._synchronise()
         tree.remove(with_node)
+        tree.cursor = el
         return []
 
 
@@ -1113,4 +1113,12 @@ class MakeMultiline:
 
 class SameEl(BaseEl):
     def apply(self, tree):
+        from .differ import look_ahead
+
+        if isinstance(tree, CodeBlockMixin):
+            cursor_index = tree.cursor.index_on_parent
+            el = look_ahead(tree[cursor_index:], self.el, max_ahead=10)
+            if el:
+                tree.cursor = el
+
         return []

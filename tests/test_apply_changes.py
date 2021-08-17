@@ -1457,3 +1457,17 @@ call(value1)
 call(arg1=value1)
 """
     _test_apply_changes(base, current)
+
+
+def test_cursor():
+    base = """
+# line 1
+# line 1
+# line 1
+"""
+    current = """
+# line 1
+# line 1  # changed
+# line 1
+"""
+    _test_apply_changes(base, current)

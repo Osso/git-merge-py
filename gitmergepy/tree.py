@@ -37,6 +37,11 @@ BaseNode.new = False
 BaseNode.already_processed = False
 
 
+def set_cursor(tree, el):
+    logging.debug('setting cursor to %s', short_display_el(el))
+    tree.cursor = el
+
+
 def first_index_after_cursor(tree, indexes):
     assert indexes
 
@@ -128,7 +133,7 @@ class RemoveEls:
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el(el, el_to_remove):
                 tree.hide(el)
-                tree.cursor = el
+                set_cursor(tree, el)
                 index += 1
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
@@ -250,7 +255,7 @@ class BaseAddEls:
             logging.debug("    el %r", short_display_el(el_to_add))
             self._insert_el(el_to_add, index, tree)
             index += 1
-            tree.cursor = el_to_add
+            set_cursor(tree, el_to_add)
 
         return []
 
@@ -338,7 +343,7 @@ class ReplaceEls(BaseAddEls):
         for offset, _ in enumerate(self.to_remove):
             el = tree[index+offset]
             tree.hide(el)
-            tree.cursor = el
+            set_cursor(tree, el)
 
         return []
 
@@ -894,7 +899,7 @@ class RemoveWith(ElWithContext):
         with_node.parent._data[index:index] = with_node.value._data
         with_node.parent._synchronise()
         tree.remove(with_node)
-        tree.cursor = el
+        set_cursor(tree, el)
         return []
 
 
@@ -1119,6 +1124,6 @@ class SameEl(BaseEl):
             cursor_index = tree.cursor.index_on_parent
             el = look_ahead(tree[cursor_index:], self.el, max_ahead=10)
             if el:
-                tree.cursor = el
+                set_cursor(tree, el)
 
         return []

@@ -255,7 +255,6 @@ class BaseAddEls:
             logging.debug("    el %r", short_display_el(el_to_add))
             self._insert_el(el_to_add, index, tree)
             index += 1
-            set_cursor(tree, el_to_add)
 
         return []
 
@@ -274,6 +273,8 @@ class BaseAddEls:
             tree.insert_with_new_line(index, el)
         else:
             tree.insert(index, el)
+
+        set_cursor(tree, el)
 
         # Handle comma separated lists and such that don't add a new line
         # by default

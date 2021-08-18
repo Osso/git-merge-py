@@ -303,6 +303,8 @@ class ReplaceEls(BaseAddEls):
         for offset, el in enumerate(self.to_remove):
             try:
                 if not same_el(tree[index+offset], el):
+                    if offset > 0 and isinstance(tree[index+offset], nodes.CommentNode):
+                        continue
                     return False
             except IndexError:
                 return False
@@ -341,8 +343,11 @@ class ReplaceEls(BaseAddEls):
             self._insert_el(el_to_add, index, tree)
             index += 1
 
-        for offset, _ in enumerate(self.to_remove):
+        for offset, el_to_remove in enumerate(self.to_remove):
             el = tree[index+offset]
+            if isinstance(el, nodes.CommentNode) and not isinstance(el_to_remove, nodes.CommentNode):
+                tree.hide(el)
+                el = el.next
             tree.hide(el)
             set_cursor(tree, el)
 

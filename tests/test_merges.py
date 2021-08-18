@@ -856,3 +856,33 @@ with fun() as out2:
 # more stuff
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_replace_with_new_comment():
+    base = """
+# body 1
+# body 2
+call()
+call2()
+"""
+    current = """
+# body 1
+# body 2
+# body 3
+stuff()
+more_stuff()
+"""
+    other = """
+# body 1
+# body 2
+call()  # useless comment
+call2()
+"""
+    expected = """
+# body 1
+# body 2
+# body 3
+stuff()
+more_stuff()
+"""
+    _test_merge_changes(base, current, other, expected)

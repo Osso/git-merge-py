@@ -794,7 +794,7 @@ class RenamedClass(self):
     _test_merge_changes(base, current, other, expected)
 
 
-def test_if_else_2():
+def test_if_else_3():
     base = """
 if cond:
     pass

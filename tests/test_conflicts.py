@@ -25,39 +25,6 @@ def _test_merge_changes(base, current, other, expected):
     return other_ast
 
 
-def test_change_with():
-    base = """# stuff
-with fun() as out:
-    call('hello')
-# more stuff
-"""
-    current = """# stuff
-call('hello')
-# more stuff
-"""
-    other = """# changed stuff
-with fun() as out2:
-    call('hello')
-with fun() as out2:
-    call('hello')
-# more stuff
-"""
-    expected = """# <<<<<<<<<<
-# Reason Multiple with nodes found
-# <RemoveWith el="with fun() as out:" context='# stuff'>
-# with fun() as out:
-#     call('hello')
-# >>>>>>>>>>
-# changed stuff
-with fun() as out2:
-    call('hello')
-with fun() as out2:
-    call('hello')
-# more stuff
-"""
-    _test_merge_changes(base, current, other, expected)
-
-
 def test_if_else():
     base = """
 if cond:

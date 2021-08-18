@@ -830,3 +830,29 @@ else:
     pass
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_change_with_3():
+    base = """# stuff
+with fun() as out:
+    call('hello')
+# more stuff
+"""
+    current = """# stuff
+call('hello')
+# more stuff
+"""
+    other = """# changed stuff
+with fun() as out2:
+    call('hello')
+with fun() as out2:
+    call('hello')
+# more stuff
+"""
+    expected = """# changed stuff
+call('hello')
+with fun() as out2:
+    call('hello')
+# more stuff
+"""
+    _test_merge_changes(base, current, other, expected)

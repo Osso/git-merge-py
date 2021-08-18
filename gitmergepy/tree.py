@@ -885,6 +885,14 @@ class RemoveWith(ElWithContext):
         elif len(context_with_nodes) == 1:
             logging.debug('. similar with context node found')
             with_node = context_with_nodes[0]
+        elif len(same_with_nodes) > 1:
+            indexes = [el.index_on_parent for el in same_with_nodes]
+            index = first_index_after_cursor(tree, indexes)
+            with_node = tree[index]
+        elif len(similar_with_nodes) > 1:
+            indexes = [el.index_on_parent for el in similar_with_nodes]
+            index = first_index_after_cursor(tree, indexes)
+            with_node = tree[index]
         else:
             add_conflict(tree, Conflict([self.el], self,
                                         reason="Multiple with nodes found",

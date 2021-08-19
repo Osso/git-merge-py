@@ -292,11 +292,11 @@ class ReplaceEls(BaseAddEls):
         super().__init__(to_add=to_add, context=context)
 
     def __repr__(self):
-        return "<%s to_add=\"%s\" to_remove=\"%s\" context=%r>" % (
+        return "<%s\nto_add:\n* %s\nto_remove:\n* %s\ncontext:\n%s\n>" % (
             self.__class__.__name__,
-            ', '.join(short_display_el(el) for el in self.to_add),
-            ', '.join(short_display_el(el) for el in self.to_remove),
-            short_context(self.context))
+            '\n* '.join(short_display_el(el).lstrip(" ") for el in self.to_add),
+            '\n* '.join(short_display_el(el).lstrip(" ") for el in self.to_remove),
+            '\n* '.join(line.lstrip(" ") for line in short_context(self.context).split("|")))
 
     def match_to_remove_at_index(self, tree, index):
         # match all to_remove items

@@ -118,7 +118,8 @@ def add_conflict(source_el, conflict):
     if conflict.reason:
         _insert("Reason %s" % conflict.reason)
     if conflict.change:
-        _insert(repr(conflict.change))
+        for line in repr(conflict.change).splitlines():
+            _insert(line)
     if conflict.els:
         for el in conflict.els:
             for line in el.dumps().splitlines()[0:5]:

@@ -1,11 +1,14 @@
 from redbaron import nodes
 
+from Levenshtein import distance as levenshtein
+
 from .tools import (get_call_els,
                     get_name_els_from_call,
                     id_from_el,
                     name_els_to_string,
                     same_el)
 
+MAX_LEVENSHTEIN_DISTANCE = 2
 CODE_BLOCK_SIMILARITY_THRESHOLD = 0.5
 CODE_BLOCK_SAME_THRESHOLD = 0.8
 DICT_SIMILARITY_THRESHOLD = 0.5
@@ -158,7 +161,7 @@ def same_el_guess(left, right, context=None):
     if isinstance(left, nodes.FromImportNode):
         return set(m.dumps() for m in left.value) == set(m.dumps() for m in right.value)
     if isinstance(left, nodes.AssignmentNode):
-        return left.target.dumps() == right.target.dumps()
+        return levenshtein(left.target.dumps(), right.target.dumps()) < MAX_LEVENSHTEIN_DISTANCE
     if isinstance(left, (nodes.IfNode, nodes.ElseNode, nodes.WithNode,
                          nodes.ForNode, nodes.WhileNode)):
         return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD

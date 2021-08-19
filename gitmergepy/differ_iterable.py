@@ -214,7 +214,6 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
         if not stack_left or el is not stack_left[0]:
             logging.debug("%s moved", indent+INDENT)
             el_diff += [MoveImport(el_right, context=gather_context(el_right))]
-            # import pdb; pdb.set_trace()
 
         if el_diff:
             diff += [ChangeImport(el, el_diff, context=gather_context(el))]

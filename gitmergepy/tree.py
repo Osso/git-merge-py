@@ -20,7 +20,8 @@ from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
                       find_func,
                       find_import,
                       find_key,
-                      same_arg_guess)
+                      same_arg_guess,
+                      same_el_guess)
 from .tools import (apply_diff_to_list,
                     as_from_contexts,
                     empty_lines,
@@ -302,7 +303,7 @@ class ReplaceEls(BaseAddEls):
         # match all to_remove items
         for offset, el in enumerate(self.to_remove):
             try:
-                if not same_el(tree[index+offset], el):
+                if not same_el_guess(tree[index+offset], el):
                     if offset > 0 and isinstance(tree[index+offset], nodes.CommentNode):
                         continue
                     return False

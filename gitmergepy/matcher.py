@@ -120,6 +120,7 @@ def same_call_guess(left, right):
     if len(get_call_els(left)) != len(get_call_els(right)):
         return False
 
+    # Only one call in parent, we assume it's the same one
     if (left.parent and right.parent and
             len(left.parent.find_all(left.baron_type, recursive=False)) == 1 and
             len(right.parent.find_all(right.baron_type, recursive=False)) == 1):
@@ -133,7 +134,7 @@ def same_call_guess(left, right):
             left_args[0].dumps() != right_args[0].dumps()):
         return False
 
-    # If first arg is a string and it's different, probably not the same call
+    # If second arg is a string and it's different, probably not the same call
     if (len(left_args) > 1 and len(right_args) > 1 and
             isinstance(left_args[1], nodes.StringNode) and
             left_args[0].dumps() == right_args[0].dumps() and

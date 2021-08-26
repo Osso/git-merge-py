@@ -102,6 +102,23 @@ def id_from_el(arg):
     return str(arg)
 
 
+def significant_args(call_node):
+    return '()'
+
+
+def id_from_decorator(decorator):
+    def call_to_id(call):
+        if call is None:
+            return ''
+
+        # If first arg is a string and it's different, probably not the same call
+        if (call.value and isinstance(call.value[0].value, nodes.StringNode)):
+            return '(%s)' % call.value[0].dumps()
+        return '()'
+
+    return ''.join(id_from_el(el) for el in decorator.value) + call_to_id(decorator.call)
+
+
 def diff_list(left, right, key_getter=id_from_el, value_getter=None):
     left = list(left)
     right = list(right)

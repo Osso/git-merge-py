@@ -1471,3 +1471,18 @@ def test_cursor():
 # line 1
 """
     _test_apply_changes(base, current)
+
+
+def test_decorator_separate():
+    base = """
+@pytest.mark.parametrize("action")
+def fun():
+    pass
+"""
+    current = """
+@pytest.mark.parametrize("action")
+@pytest.mark.parametrize("auto")
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)

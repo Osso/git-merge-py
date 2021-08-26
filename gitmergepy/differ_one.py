@@ -10,6 +10,7 @@ from .tools import (INDENT,
                     changed_in_list,
                     diff_list,
                     get_call_els,
+                    id_from_decorator,
                     id_from_el,
                     short_display_el)
 from .tree import (AddAllDecoratorArgs,
@@ -126,7 +127,8 @@ def diff_def_node(left, right, indent):
             diff += [ChangeDefArg(new_arg, changes=diff_arg)]
 
     # Decorators
-    to_add, to_remove = diff_list(left.decorators, right.decorators)
+    to_add, to_remove = diff_list(left.decorators, right.decorators,
+                                  key_getter=id_from_decorator)
     for decorator in to_add:
         diff += [AddDecorator(decorator,
                               context=gather_context(decorator))]
@@ -136,7 +138,8 @@ def diff_def_node(left, right, indent):
         logging.debug('%s fun new decorator %r', indent, short_display_el(arg))
     for arg in to_remove:
         logging.debug('%s fun old decorator %r', indent, short_display_el(arg))
-    changed = changed_in_list(left.decorators, right.decorators)
+    changed = changed_in_list(left.decorators, right.decorators,
+                              key_getter=id_from_decorator)
     for left_el, right_el in changed:
         logging.debug('%s fun changed decorator %r ', indent, right_el)
         diff_decorator = []

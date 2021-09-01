@@ -45,7 +45,7 @@ if cond:
     expected = """
 # <<<<<<<<<<
 # Reason context not found
-# <AddEls to_add="    # text" context='    # context'>
+# <AddEls to_add="    # text" context='None|    # context'>
 #     # text
 # >>>>>>>>>>
 if cond:

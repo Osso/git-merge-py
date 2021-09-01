@@ -4,7 +4,8 @@ from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
-from gitmergepy.tree import (ChangeImport,
+from gitmergepy.tree import (AddEls,
+                             ChangeImport,
                              MoveImport,
                              SameEl)
 
@@ -147,6 +148,23 @@ def fun1():
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
     assert len([c for c in changes if not isinstance(c, SameEl)]) == 1
+
+
+def test_move_function_with_empty_lines_at_the_end():
+    base = """def fun1():
+    call('fun1')
+
+def fun2():
+    call('fun2')
+"""
+    current = """def fun2():
+    call('fun2')
+
+def fun1():
+    call('fun1')
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
 
 
 def test_add_import():
@@ -1464,13 +1482,26 @@ def test_cursor():
 # line 1
 # line 1
 # line 1
+# line 1
+# line 1
 """
     current = """
 # line 1
-# line 1  # changed
+# line 1
+# line 1
+# line 1
+# new el
 # line 1
 """
     _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], SameEl)
+    assert isinstance(changes[1], SameEl)
+    assert isinstance(changes[2], SameEl)
+    assert isinstance(changes[3], SameEl)
+    assert isinstance(changes[4], AddEls)
+    assert isinstance(changes[5], SameEl)
+    assert len(changes) == 6
 
 
 def test_decorator_separate():

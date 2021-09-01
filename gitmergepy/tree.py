@@ -38,6 +38,21 @@ BaseNode.new = False
 BaseNode.already_processed = False
 
 
+def cursor_index(tree):
+    try:
+        tree.cursor
+    except AttributeError:
+        cursor_index_ = -1
+    else:
+        cursor_index_ = tree.cursor.index_on_parent
+
+    return cursor_index_
+
+
+def tree_after_cursor(tree):
+    return tree[cursor_index(tree)+1:]
+
+
 def set_cursor(tree, el):
     logging.debug('setting cursor to %s', short_display_el(el))
     tree.cursor = el
@@ -46,10 +61,10 @@ def set_cursor(tree, el):
 def first_index_after_cursor(tree, indexes):
     assert indexes
 
-    cursor_index = tree.index(tree.cursor)
+    cursor_index_ = cursor_index(tree)
     index = None
     for index in indexes:
-        if index > cursor_index:
+        if index > cursor_index_:
             break
 
     return index
@@ -116,7 +131,6 @@ class RemoveEls:
         return anchor_el, to_remove
 
     def apply(self, tree):
-        import pdb; pdb.set_trace()
         logging.debug("removing els %s", short_display_list(self.to_remove))
         logging.debug(". context %r", short_context(self.context))
 
@@ -680,6 +694,11 @@ class MoveFunction(ChangeEl):
                     tree.hide(line)
                     line = line.next
 
+                try:
+                    while isinstance(tree[index], nodes.EmptyLineNode):
+                        index += 1
+                except IndexError:
+                    pass
                 new_fun = fun.copy()
                 new_fun.new = True
                 tree.insert(index, new_fun)
@@ -1137,8 +1156,7 @@ class SameEl(BaseEl):
         from .differ import look_ahead
 
         if isinstance(tree, CodeBlockMixin):
-            cursor_index = tree.cursor.index_on_parent
-            el = look_ahead(tree[cursor_index:], self.el, max_ahead=10)
+            el = look_ahead(tree_after_cursor(tree), self.el, max_ahead=10)
             if el:
                 set_cursor(tree, el)
 

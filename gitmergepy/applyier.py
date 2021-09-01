@@ -1,6 +1,5 @@
 from redbaron import (RedBaron,
                       nodes)
-from redbaron.base_nodes import NodeList
 from redbaron.node_mixin import CodeBlockMixin
 from redbaron.proxy_list import ProxyList
 
@@ -15,11 +14,6 @@ PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
 
 def apply_changes(tree, changes):
-    if isinstance(tree, (NodeList, CodeBlockMixin)):
-        try:
-            tree.cursor = tree[0]
-        except IndexError:
-            tree.cursor = None
     conflicts = []
     for change in changes:
         conflicts += change.apply(tree)

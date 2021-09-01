@@ -142,10 +142,10 @@ def find_context(tree, context):
     return indexes
 
 
-def gather_context(el):
+def gather_context(el, limit=3):
     el = el.previous
     context = BeforeContext([])
-    for _ in range(2):
+    for _ in range(limit):
         while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
             context.append(el)
             el = el.previous

@@ -104,7 +104,7 @@ def diff_def_node(left, right, indent):
     to_add, to_remove = diff_list(left.arguments, right.arguments)
     for arg in to_add:
         logging.debug('%s fun new arg %r', indent, short_display_el(arg))
-        diff += [AddFunArg(arg, context=gather_context(arg),
+        diff += [AddFunArg(arg, context=gather_context(arg, limit=1),
                            on_new_line=arg.on_new_line)]
     if to_remove:
         for arg in to_remove:
@@ -217,7 +217,7 @@ def diff_call_node(left, right, indent):
     for arg in to_remove:
         logging.debug('%s call old arg %r', indent, short_display_el(arg))
     for arg in to_add:
-        diff += [AddCallArg(arg, context=gather_context(arg),
+        diff += [AddCallArg(arg, context=gather_context(arg, limit=1),
                             on_new_line=arg.on_new_line)]
     if to_remove:
         diff += [RemoveCallArgs(to_remove)]

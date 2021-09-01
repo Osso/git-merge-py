@@ -21,6 +21,7 @@ def insert_coma_list(target_list, position, to_add, on_new_line=False):
 
 def sort_imports(targets):
     targets.sort(key=lambda el: el.value)
+    targets.reformat(force_separator=True)
 
 
 def short_display_el(el):
@@ -116,7 +117,11 @@ def id_from_decorator(decorator):
             return '(%s)' % call.value[0].dumps()
         return '()'
 
-    return ''.join(id_from_el(el) for el in decorator.value) + call_to_id(decorator.call)
+    if isinstance(decorator, nodes.DecoratorNode):
+        return ''.join(id_from_el(el) for el in decorator.value) + call_to_id(decorator.call)
+
+    assert isinstance(decorator, nodes.CommentNode)
+    return decorator.dumps()
 
 
 def diff_list(left, right, key_getter=id_from_el, value_getter=None):

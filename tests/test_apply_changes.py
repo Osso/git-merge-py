@@ -1486,3 +1486,18 @@ def fun():
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_decorator_inline_comment():
+    base = """
+@decorator("action")  # comment
+def fun():
+    pass
+"""
+    current = """
+@decorator("action")  # comment
+@decorator("auto")
+def fun():
+    pass
+"""
+    _test_apply_changes(base, current)

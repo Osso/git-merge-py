@@ -116,6 +116,7 @@ class RemoveEls:
         return anchor_el, to_remove
 
     def apply(self, tree):
+        import pdb; pdb.set_trace()
         logging.debug("removing els %s", short_display_list(self.to_remove))
         logging.debug(". context %r", short_context(self.context))
 

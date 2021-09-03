@@ -1532,3 +1532,19 @@ def fun():
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_move_class():
+    base = """class C1():
+    call('C1')
+
+class C2():
+    call('C2')
+"""
+    current = """class C2():
+    call('C2')
+
+class C1():
+    call('C1')
+"""
+    _test_apply_changes(base, current)

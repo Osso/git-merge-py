@@ -668,7 +668,7 @@ class ChangeClass(ChangeEl):
         return []
 
 
-class MoveFunction(ChangeEl):
+class MoveElWithId(ChangeEl):
     def __init__(self, el, changes, context=None, empty_lines=None):
         super().__init__(el, changes=changes, context=context)
         self.empty_lines = empty_lines or []
@@ -679,7 +679,7 @@ class MoveFunction(ChangeEl):
             short_context(self.context), self.empty_lines)
 
     def apply(self, tree):
-        fun = find_func(tree, self.el)
+        fun = self.finder(tree, self.el)
         # If function still exists, move it then apply changes
         if fun:
             logging.debug("moving fun %r", short_display_el(fun))
@@ -712,6 +712,18 @@ class MoveFunction(ChangeEl):
             conflicts = apply_changes(fun, self.changes)
             add_conflicts(tree, conflicts)
         return []
+
+
+class MoveFunction(MoveElWithId):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.finder = find_func
+
+
+class MoveClass(MoveElWithId):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.finder = find_class
 
 
 class ChangeAssignmentNode(ChangeEl):

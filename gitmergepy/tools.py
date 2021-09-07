@@ -69,6 +69,8 @@ def short_context(context):
 
 
 def id_from_el(arg):
+    if isinstance(arg, (nodes.DefNode, nodes.ClassNode)):
+        return arg.name
     if isinstance(arg, nodes.FromImportNode):
         return id_from_el(arg.value)
     if isinstance(arg, nodes.CallArgumentNode):
@@ -79,15 +81,11 @@ def id_from_el(arg):
         return '*' + id_from_el(arg.value)
     if isinstance(arg, nodes.DictArgumentNode):
         return '**' + id_from_el(arg.value)
-    if isinstance(arg, nodes.NameNode):
-        return arg.value
     if isinstance(arg, nodes.DefArgumentNode):
         return arg.target.value
     if isinstance(arg, nodes.DecoratorNode):
         return id_from_el(arg.value)
-    if isinstance(arg, nodes.StringNode):
-        return arg.value
-    if isinstance(arg, nodes.IntNode):
+    if isinstance(arg, (nodes.StringNode, nodes.IntNode, nodes.NameNode)):
         return arg.value
     if isinstance(arg, nodes.DotNode):
         return '.'

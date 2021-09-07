@@ -84,6 +84,23 @@ def fun(arg=2):
     _test_apply_changes(base, current)
 
 
+def test_change_fun_add_white_line():
+    base = """
+def fun(arg=1):
+    pass
+
+# more
+"""
+    current = """
+def fun(arg=2):
+    pass
+
+
+# more
+"""
+    _test_apply_changes(base, current)
+
+
 def test_change_line_with_context():
     base = """
 def fun():

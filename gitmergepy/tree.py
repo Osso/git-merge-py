@@ -714,7 +714,7 @@ class MoveElWithId(ChangeEl):
         return []
 
 
-class MoveFunction(MoveElWithId):
+class MoveFun(MoveElWithId):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.finder = find_func

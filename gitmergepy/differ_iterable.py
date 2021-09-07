@@ -22,7 +22,7 @@ from .tree import (AddImports,
                    ChangeFun,
                    ChangeImport,
                    MoveClass,
-                   MoveFunction,
+                   MoveFun,
                    MoveImport,
                    RemoveEls)
 
@@ -47,32 +47,41 @@ def _process_empty_lines(el, el_right):
     return empty_lines
 
 
-def diff_def_node(stack_left, el_right, indent, global_diff):
-    logging.debug("%s changed fun %r", indent, short_display_el(el_right))
+def diff_node_with_id(stack_left, el_right, indent, global_diff,
+                      el_type=nodes.DefNode, finder=find_func,
+                      change_class=ChangeFun, move_class=MoveFun,
+                      process_empty_lines=True):
+    logging.debug("%s changed %r", indent, short_display_el(el_right))
     diff = []
 
-    # We have encountered a function
-    if stack_left and isinstance(stack_left[0], nodes.DefNode) and stack_left[0].name == el_right.name:
-        # Function has not been moved
+    # el has not been moved and stack is the same
+    if (stack_left and
+            isinstance(stack_left[0], el_type) and
+            id_from_el(stack_left[0]) == id_from_el(el_right)):
         logging.debug("%s not moved", indent+INDENT)
-        # empty_lines = _process_empty_lines(stack_left[0], el_right)
         diff += changed_el(el_right, stack_left, indent=indent,
-                            change_class=ChangeFun)
+                            change_class=change_class)
     else:
-        if hasattr(el_right, 'matched_el'):  # Already matched earlier
-            logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
+        if hasattr(el_right, 'matched_el'):  # already matched earlier
+            logging.debug("%s already matched & moved %r", indent+INDENT,
+                          id_from_el(el_right))
             el = el_right.matched_el
             moved = True
-        else:  # Function has not been moved, some old elements are before it
-            el = find_func(stack_left, el_right)
+        else:  # el has not been moved, some old elements are before it
+            logging.debug("%s assuming not moved, removing preceeding els %r",
+                          indent+INDENT, id_from_el(el_right))
+            el = finder(stack_left, el_right)
             moved = False
         if el:
             el.already_processed = True
             el_right.already_processed = True
-            empty_lines = _process_empty_lines(el, el_right)
+            if process_empty_lines:
+                empty_lines = _process_empty_lines(el, el_right)
+            else:
+                empty_lines = []
             if not moved and el in stack_left:
                 logging.debug("%s %r ahead, processing stack", indent+INDENT,
-                              el_right.name)
+                              id_from_el(el_right))
                 process_stack_till_el(stack_left, stop_el=el,
                                       tree=el_right.parent,
                                       diff=diff,
@@ -83,82 +92,57 @@ def diff_def_node(stack_left, el_right, indent, global_diff):
             el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
             context = gather_context(el_right)
             if moved:
-                diff += [MoveFunction(el, changes=el_diff, context=context,
-                                      empty_lines=empty_lines)]
+                diff += [move_class(el, changes=el_diff, context=context,
+                                    empty_lines=empty_lines)]
             elif el_diff:
-                diff += [ChangeFun(el, changes=el_diff, context=context)]
-                #  empty_lines=empty_lines
+                diff += [change_class(el, changes=el_diff, context=context)]
         else:
             if isinstance(stack_left[0], nodes.DefNode) and el_right.parent:
-                el = find_func(el_right.parent, stack_left[0])
+                el = finder(el_right.parent, stack_left[0])
                 if el:
                     # stack_left[0] is defined somewhere else
                     # we are not modifying it
-                    logging.debug("%s new fun %r", indent+INDENT, el_right.name)
+                    logging.debug("%s new %r", indent+INDENT,
+                                  id_from_el(el_right))
                     add_to_diff(diff, el_right, indent=indent+2*INDENT)
                 else:
                     # stack_left[0] is nowhere else
                     # assume function is modified
-                    logging.debug("%s assumed changed fun %r", indent+INDENT, el_right.name)
-                    old_name = stack_left[0].name
+                    logging.debug("%s assumed changed %r", indent+INDENT,
+                                  id_from_el(el_right))
+                    old_name = id_from_el(stack_left[0])
                     diff_el = changed_el(el_right, stack_left, indent=indent,
-                                          change_class=ChangeFun)
+                                          change_class=change_class)
                     if diff_el:
                         diff_el[0].old_name = old_name
                         diff += diff_el
             elif code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
-                logging.debug("%s renamed def %r", indent+INDENT, el_right.name)
+                logging.debug("%s renamed %r", indent+INDENT,
+                              id_from_el(el_right))
                 el_diff = compute_diff(stack_left[0], el_right,
                                        indent=indent+INDENT)
                 assert el_diff  # at least a rename
-                diff_el[0].old_name = old_name
-                diff += [ChangeFun(stack_left[0], el_diff,
-                                   context=gather_context(el_right))]
+                el_right.old_name = id_from_el(stack_left[0])
+                diff += [change_class(stack_left[0], el_diff,
+                                      context=gather_context(el_right))]
             else:
-                logging.debug("%s new fun %r", indent+INDENT, el_right.name)
+                logging.debug("%s new %r", indent+INDENT, id_from_el(el_right))
                 add_to_diff(diff, el_right, indent=indent+2*INDENT)
     return diff
 
 
-def diff_class_node(stack_left, el_right, indent, global_diff):
-    logging.debug("%s changed class %r", indent,
-                  short_display_el(el_right))
-    diff = []
-    if (stack_left and isinstance(stack_left[0], nodes.ClassNode) and
-            stack_left[0].name == el_right.name):
-        # Class has not been moved
-        logging.debug("%s not moved", indent+INDENT)
-        diff += changed_el(el_right, stack_left, indent=indent,
-                            change_class=ChangeClass)
-    elif (stack_left and
-            code_block_similarity(el_right,
-                                  stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD):
-        logging.debug("%s renamed class %r to %r", indent+INDENT,
-                      stack_left[0].name, el_right.name)
-        el_diff = compute_diff(stack_left[0], el_right, indent=indent+INDENT)
-        assert el_diff  # at least a rename
-        diff += [ChangeClass(stack_left[0], el_diff,
-                             context=gather_context(el_right))]
-        stack_left.pop(0)
-    else:
-        if hasattr(el_right, 'matched_el'):  # Already matched earlier
-            el = el_right.matched_el
-        else:  # Function has been moved, look for it
-            el = find_class(stack_left, el_right)
-        if el:
-            el.already_processed = True
-            el_right.already_processed = True
-            empty_lines = _process_empty_lines(el, el_right)
-            logging.debug("%s moved class %r", indent+INDENT, el_right.name)
-            el_diff = compute_diff(el, el_right, indent=indent+2*INDENT)
-            diff += [MoveClass(el, changes=el_diff,
-                               context=gather_context(el_right),
-                               empty_lines=empty_lines)]
-        else:
-            logging.debug("%s new class %r", indent+INDENT, el_right.name)
-            add_to_diff(diff, el_right, indent=indent+2*INDENT)
+def diff_def_node(stack_left, el_right, indent, global_diff):
+    return diff_node_with_id(stack_left, el_right, indent, global_diff,
+                             el_type=nodes.DefNode, finder=find_func,
+                             change_class=ChangeFun, move_class=MoveFun,
+                             process_empty_lines=True)
 
-    return diff
+
+def diff_class_node(stack_left, el_right, indent, global_diff):
+    return diff_node_with_id(stack_left, el_right, indent, global_diff,
+                             el_type=nodes.ClassNode, finder=find_class,
+                             change_class=ChangeClass, move_class=MoveClass,
+                             process_empty_lines=True)
 
 
 def diff_atom_trailer_node(stack_left, el_right, indent, global_diff):

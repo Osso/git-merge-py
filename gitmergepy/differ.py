@@ -69,16 +69,13 @@ def compute_diff(left, right, indent=""):
     return diff
 
 
-def _changed_el(el, stack_left, indent, context_class):
+def changed_el(el, stack_left, indent, change_class):
     diff = []
     el_diff = compute_diff(stack_left[0], el, indent=indent+INDENT)
-    el_left = stack_left.pop(0)
+    stack_el = stack_left.pop(0)
 
     if el_diff:
-        context = gather_context(el)
-        logging.debug("%s context %r", indent,
-                      short_context(context))
-        diff += [context_class(el_left, el_diff, context=context)]
+        diff += [change_class(stack_el, el_diff, context=gather_context(el))]
 
     return diff
 
@@ -172,8 +169,8 @@ def process_same_el(el_right, stack_left, indent):
                   short_display_el(el_right))
 
     if stack_left[0].indentation != el_right.indentation:
-        return _changed_el(el_right, stack_left, indent=indent,
-                           context_class=ChangeEl)
+        return changed_el(el_right, stack_left, indent=indent,
+                           change_class=ChangeEl)
 
     return [SameEl(stack_left.pop(0))]
 
@@ -185,8 +182,8 @@ def process_matched_el_from_look_ahead(el_right, stack_left, indent):
     if same_el(stack_left[0], el_right):
         return process_same_el(el_right, stack_left, indent=indent)
 
-    return _changed_el(el_right, stack_left, indent=indent+INDENT,
-                       context_class=ChangeEl)
+    return changed_el(el_right, stack_left, indent=indent+INDENT,
+                       change_class=ChangeEl)
 
 
 def check_removed_withs(stack_left, el_right, indent):
@@ -337,8 +334,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         elif guess_if_same_el_for_diff_iterable(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,
                           short_display_el(el_right))
-            diff += _changed_el(el_right, stack_left, indent+INDENT,
-                                context_class=context_class)
+            diff += changed_el(el_right, stack_left, indent+INDENT,
+                                change_class=context_class)
             last_added = False
         else:
             logging.debug("%s new el %r", indent+INDENT,

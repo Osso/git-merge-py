@@ -4,6 +4,7 @@ from redbaron import nodes
 
 from .context import gather_context
 from .differ import (add_to_diff,
+                     changed_el,
                      compute_diff,
                      process_stack_till_el,
                      simplify_white_lines)
@@ -24,17 +25,6 @@ from .tree import (AddImports,
                    MoveFunction,
                    MoveImport,
                    RemoveEls)
-
-
-def _changed_el(el, stack_left, indent, context_class):
-    diff = []
-    el_diff = compute_diff(stack_left[0], el, indent=indent+INDENT)
-    stack_left.pop(0)
-
-    if el_diff:
-        diff += [context_class(el, el_diff, context=gather_context(el))]
-
-    return diff
 
 
 def _process_empty_lines(el, el_right):
@@ -66,8 +56,8 @@ def diff_def_node(stack_left, el_right, indent, global_diff):
         # Function has not been moved
         logging.debug("%s not moved", indent+INDENT)
         # empty_lines = _process_empty_lines(stack_left[0], el_right)
-        diff += _changed_el(el_right, stack_left, indent=indent,
-                            context_class=ChangeFun)
+        diff += changed_el(el_right, stack_left, indent=indent,
+                            change_class=ChangeFun)
     else:
         if hasattr(el_right, 'matched_el'):  # Already matched earlier
             logging.debug("%s moved fun %r", indent+INDENT, el_right.name)
@@ -111,8 +101,8 @@ def diff_def_node(stack_left, el_right, indent, global_diff):
                     # assume function is modified
                     logging.debug("%s assumed changed fun %r", indent+INDENT, el_right.name)
                     old_name = stack_left[0].name
-                    diff_el = _changed_el(el_right, stack_left, indent=indent,
-                                          context_class=ChangeFun)
+                    diff_el = changed_el(el_right, stack_left, indent=indent,
+                                          change_class=ChangeFun)
                     if diff_el:
                         diff_el[0].old_name = old_name
                         diff += diff_el
@@ -138,8 +128,8 @@ def diff_class_node(stack_left, el_right, indent, global_diff):
             stack_left[0].name == el_right.name):
         # Class has not been moved
         logging.debug("%s not moved", indent+INDENT)
-        diff += _changed_el(el_right, stack_left, indent=indent,
-                            context_class=ChangeClass)
+        diff += changed_el(el_right, stack_left, indent=indent,
+                            change_class=ChangeClass)
     elif (stack_left and
             code_block_similarity(el_right,
                                   stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD):

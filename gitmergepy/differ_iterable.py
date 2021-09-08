@@ -97,7 +97,17 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
             elif el_diff:
                 diff += [change_class(el, changes=el_diff, context=context)]
         else:
-            if isinstance(stack_left[0], nodes.DefNode) and el_right.parent:
+            if code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
+                logging.debug("%s renamed %r", indent+INDENT,
+                              id_from_el(el_right))
+                el_diff = compute_diff(stack_left[0], el_right,
+                                       indent=indent+INDENT)
+                assert el_diff  # at least a rename
+                el_right.old_name = id_from_el(stack_left[0])
+                diff += [change_class(stack_left[0], el_diff,
+                                      context=gather_context(el_right))]
+                stack_left.pop(0)
+            elif isinstance(stack_left[0], nodes.DefNode) and el_right.parent:
                 el = finder(el_right.parent, stack_left[0])
                 if el:
                     # stack_left[0] is defined somewhere else
@@ -116,15 +126,6 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
                     if diff_el:
                         diff_el[0].old_name = old_name
                         diff += diff_el
-            elif code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD:
-                logging.debug("%s renamed %r", indent+INDENT,
-                              id_from_el(el_right))
-                el_diff = compute_diff(stack_left[0], el_right,
-                                       indent=indent+INDENT)
-                assert el_diff  # at least a rename
-                el_right.old_name = id_from_el(stack_left[0])
-                diff += [change_class(stack_left[0], el_diff,
-                                      context=gather_context(el_right))]
             else:
                 logging.debug("%s new %r", indent+INDENT, id_from_el(el_right))
                 add_to_diff(diff, el_right, indent=indent+2*INDENT)

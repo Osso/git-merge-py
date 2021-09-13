@@ -1569,7 +1569,7 @@ class C1():
 
 def test_while_content():
     base = """
-with i > 1:
+while i > 1:
     pass
 """
     current = """
@@ -1581,7 +1581,7 @@ while i > 1:
 
 def test_while_condition():
     base = """
-with i > 1:
+while i > 1:
     pass
 """
     current = """
@@ -1607,6 +1607,62 @@ def test_for_condition():
     base = """
 for i in l:
     pass
+"""
+    current = """
+for i in ll:
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_while_adding_else():
+    base = """
+while i > 1:
+    pass
+"""
+    current = """
+while i > 2:
+    pass
+else:
+    hello
+"""
+    _test_apply_changes(base, current)
+
+
+def test_for_adding_else():
+    base = """
+for i in l:
+    pass
+"""
+    current = """
+for i in ll:
+    pass
+else:
+    hello
+"""
+    _test_apply_changes(base, current)
+
+
+def test_while_removing_else():
+    base = """
+while i > 1:
+    pass
+else:
+    hello
+"""
+    current = """
+while i > 2:
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_for_removing_else():
+    base = """
+for i in l:
+    pass
+else:
+    hello
 """
     current = """
 for i in ll:

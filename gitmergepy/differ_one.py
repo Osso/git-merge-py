@@ -18,6 +18,7 @@ from .tree import (AddAllDecoratorArgs,
                    AddCallArg,
                    AddDecorator,
                    AddDictItem,
+                   AddElseNode,
                    AddFunArg,
                    AddImports,
                    ArgOnNewLine,
@@ -31,6 +32,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDecoratorArgs,
                    ChangeDefArg,
                    ChangeDictItem,
+                   ChangeElseNode,
                    ChangeReturn,
                    ChangeValue,
                    MakeInline,
@@ -41,6 +43,7 @@ from .tree import (AddAllDecoratorArgs,
                    RemoveCallArgs,
                    RemoveDecorators,
                    RemoveDictItem,
+                   RemoveElseNode,
                    RemoveFunArgs,
                    RemoveImports,
                    RenameClass,
@@ -413,21 +416,35 @@ def diff_for_node(left, right, indent):
         diff += [ReplaceAttr('iterator', right.iterator.copy())]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    diff += diff_else_node_for_loops(left, right, indent)
     return diff
 
 
 def diff_while_node(left, right, indent):
     diff = []
-    if left.value.dumps() != right.value.dumps():
-        diff += [ReplaceAttr('value', right.value.copy())]
 
     if left.test.dumps() != right.test.dumps():
         diff += [ReplaceAttr('test', right.test.copy())]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    diff += diff_else_node_for_loops(left, right, indent)
+    return diff
 
-    diff += compute_diff_iterables(left.else_ or [],
-                                   right.else_ or [], indent=indent+INDENT)
+
+def diff_else_node_for_loops(left, right, indent):
+    diff = []
+
+    if left.else_ and right.else_:
+        diff_else = compute_diff_iterables(left.else_ or [],
+                                           right.else_ or [],
+                                           indent=indent+INDENT)
+        if diff_else:
+            diff += [ChangeElseNode(diff_else)]
+    elif left.else_:
+        diff += [RemoveElseNode()]
+    elif right.else_:
+        diff += [AddElseNode(right.else_)]
+
     return diff
 
 

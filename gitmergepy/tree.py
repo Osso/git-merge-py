@@ -1173,3 +1173,44 @@ class SameEl(BaseEl):
                 set_cursor(tree, el)
 
         return []
+
+
+class ChangeElseNode:
+    def __init__(self, changes):
+        self.changes = changes
+
+    def apply(self, tree):
+        logging.debug(". changing else")
+
+        if not tree.else_:
+            logging.debug(".. else has been removed, ignoring changes")
+            return []
+
+        return apply_changes(tree.else_, self.changes)
+
+
+class AddElseNode:
+    def __init__(self, new_else):
+        self.new_else = new_else
+
+    def apply(self, tree):
+        logging.debug(". adding else")
+
+        if tree.else_:
+            logging.debug(".. else already added")
+            return [Conflict(self.new_else, self,
+                             reason="else already added")]
+
+        tree.else_ = self.new_else
+        return []
+
+
+class RemoveElseNode:
+    def apply(self, tree):
+        logging.debug(". removing else")
+
+        if not tree.else_:
+            logging.debug(".. else already removed")
+
+        tree.else_ = None
+        return []

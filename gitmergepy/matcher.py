@@ -21,7 +21,7 @@ def guess_if_same_el_for_diff_iterable(left, right):
 
     if isinstance(left, (nodes.WithNode, nodes.IfelseblockNode,
                          nodes.IfNode, nodes.ElseNode, nodes.EndlNode,
-                         nodes.ReturnNode)):
+                         nodes.ReturnNode, nodes.WhileNode)):
         return True
 
     if same_el_guess(left, right, None):

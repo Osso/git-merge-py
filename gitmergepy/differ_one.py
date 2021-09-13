@@ -421,10 +421,13 @@ def diff_while_node(left, right, indent):
     if left.value.dumps() != right.value.dumps():
         diff += [ReplaceAttr('value', right.value.copy())]
 
-    if left.as_.dumps() != right.as_.dumps():
-        diff += [ReplaceAttr('as_', right.as_.copy())]
+    if left.test.dumps() != right.test.dumps():
+        diff += [ReplaceAttr('test', right.test.copy())]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+
+    diff += compute_diff_iterables(left.else_ or [],
+                                   right.else_ or [], indent=indent+INDENT)
     return diff
 
 

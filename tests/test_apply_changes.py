@@ -1565,3 +1565,51 @@ class C1():
     call('C1')
 """
     _test_apply_changes(base, current)
+
+
+def test_while_content():
+    base = """
+with i > 1:
+    pass
+"""
+    current = """
+while i > 1:
+    call()
+"""
+    _test_apply_changes(base, current)
+
+
+def test_while_condition():
+    base = """
+with i > 1:
+    pass
+"""
+    current = """
+while i > 2:
+    pass
+"""
+    _test_apply_changes(base, current)
+
+
+def test_for_content():
+    base = """
+for i in l:
+    pass
+"""
+    current = """
+for i in l:
+    call()
+"""
+    _test_apply_changes(base, current)
+
+
+def test_for_condition():
+    base = """
+for i in l:
+    pass
+"""
+    current = """
+for i in ll:
+    pass
+"""
+    _test_apply_changes(base, current)

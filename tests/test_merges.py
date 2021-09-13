@@ -832,6 +832,38 @@ else:
     _test_merge_changes(base, current, other, expected)
 
 
+def test_if_elif():
+    base = """
+if cond:
+    pass
+elif a == 2:
+    original
+    # more stuff
+"""
+    current = """
+if cond:
+    pass
+elif a == 2:
+    changed
+    # more stuff
+"""
+    other = """
+if cond:
+    pass
+elif a == 2:
+    original
+    # more stuff changed
+"""
+    expected = """
+if cond:
+    pass
+elif a == 2:
+    changed
+    # more stuff changed
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_change_with_3():
     base = """# stuff
 with fun() as out:

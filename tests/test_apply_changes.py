@@ -1669,3 +1669,34 @@ for i in ll:
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_if_change_elif():
+    base = """
+if cond:
+    pass
+elif a == 2:
+    original
+"""
+    current = """
+if cond:
+    pass
+elif a == 2:
+    changed
+"""
+    _test_apply_changes(base, current)
+
+
+def test_if_add_arg_to_test():
+    base = """
+if cond(arg1):
+    pass
+"""
+    current = """
+if cond(arg1, arg2):
+    pass
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert len(changes) == 1
+    import pdb; pdb.set_trace()

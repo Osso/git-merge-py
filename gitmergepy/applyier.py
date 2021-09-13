@@ -28,7 +28,8 @@ def apply_changes(tree, changes):
 
     # Sanity check
     if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
-                         nodes.WithNode, nodes.CallArgumentNode)):
+                         nodes.WithNode, nodes.CallArgumentNode,
+                         nodes.ElifNode)):
         tree = tree.parent.parent
     if isinstance(tree, nodes.CallNode):
         tree = tree.parent.parent

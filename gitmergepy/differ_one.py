@@ -27,6 +27,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeArg,
                    ChangeAssignmentNode,
                    ChangeAtomtrailersCall,
+                   ChangeAttr,
                    ChangeCallArg,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
@@ -341,7 +342,16 @@ def diff_if_else_block_node(left, right, indent):
 def diff_if_node(left, right, indent):
     diff = []
     if left.test.dumps() != right.test.dumps():
-        diff += [ReplaceAttr('test', right.test.copy())]
+        diff += [ChangeAttr('test', compute_diff(left.test, right.test))]
+
+    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    return diff
+
+
+def diff_elif_node(left, right, indent):
+    diff = []
+    if left.test.dumps() != right.test.dumps():
+        diff += [ChangeAttr('test', compute_diff(left.test, right.test))]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
     return diff
@@ -476,6 +486,7 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.ClassNode: diff_class_node,
     nodes.IfelseblockNode: diff_if_else_block_node,
     nodes.IfNode: diff_if_node,
+    nodes.ElifNode: diff_elif_node,
     nodes.EndlNode: diff_endl_node,
     nodes.ElseNode: diff_else_node,
     nodes.ReturnNode: diff_return_node,

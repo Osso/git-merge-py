@@ -479,6 +479,15 @@ class ChangeEl(BaseEl):
         return []
 
 
+class ChangeAttr:
+    def __init__(self, attr_name, changes):
+        self.attr_name = attr_name
+
+    def apply(self, tree):
+        attr = getattr(tree, self.attr_name)
+        return apply_changes(attr, self.changes)
+
+
 class ChangeValue(ChangeEl):
     write_conflicts = False
 

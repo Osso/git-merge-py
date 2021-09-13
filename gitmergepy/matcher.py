@@ -151,6 +151,10 @@ def same_el_guess(left, right, context=None):
     if isinstance(left, (nodes.IfNode, nodes.ElseNode, nodes.WithNode,
                          nodes.ForNode, nodes.WhileNode)):
         return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
+    if isinstance(left, nodes.ElifNode):
+        if left.test.dumps() == right.test.dumps():
+            return True
+        return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
 

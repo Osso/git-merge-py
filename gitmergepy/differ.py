@@ -40,10 +40,6 @@ def compare_formatting(left, right):
 
 
 def compute_diff(left, right, indent=""):
-    # type: (NodeType, NodeType, Optional[Dict[str, int]]) -> None
-    """Compare two abstract syntax trees.
-    Return `None` if they are equal, and raise an exception otherwise.
-    """
     from .differ_one import COMPUTE_DIFF_ONE_CALLS
 
     if left.dumps() == right.dumps():
@@ -56,7 +52,7 @@ def compute_diff(left, right, indent=""):
 
     diff = diff_indent(left, right)
 
-    if type(left) != type(right) or type(left) not in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
+    if isinstance(right, type(left)) or type(left) not in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
         diff = [Replace(new_value=right, old_value=left)]
     else:
         diff += COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)

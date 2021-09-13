@@ -15,21 +15,6 @@ DICT_SIMILARITY_THRESHOLD = 0.5
 ARGS_SIMILARITY_THRESHOLD = 0.6
 
 
-def guess_if_same_el_for_diff_iterable(left, right):
-    if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
-        return False
-
-    if isinstance(left, (nodes.WithNode, nodes.IfelseblockNode,
-                         nodes.IfNode, nodes.ElseNode, nodes.EndlNode,
-                         nodes.ReturnNode, nodes.WhileNode)):
-        return True
-
-    if same_el_guess(left, right, None):
-        return True
-
-    return False
-
-
 def find_code_block_with_id(tree, node):
     node_type = type(node)
     functions = [f for f in tree if isinstance(f, node_type)]
@@ -140,6 +125,9 @@ def same_el_guess(left, right, context=None):
     if type(left) != type(right):  # pylint: disable=unidiomatic-typecheck
         return False
 
+    if isinstance(left, (nodes.IfNode, nodes.ElseNode,
+                         nodes.EndlNode, nodes.ReturnNode)):
+        return True
     if isinstance(left, nodes.DefNode):
         return left.name == right.name
     if isinstance(left, nodes.AtomtrailersNode):
@@ -148,8 +136,9 @@ def same_el_guess(left, right, context=None):
         return set(m.dumps() for m in left.value) == set(m.dumps() for m in right.value)
     if isinstance(left, nodes.AssignmentNode):
         return levenshtein(left.target.dumps(), right.target.dumps()) < MAX_LEVENSHTEIN_DISTANCE
-    if isinstance(left, (nodes.IfNode, nodes.ElseNode, nodes.WithNode,
-                         nodes.ForNode, nodes.WhileNode)):
+    if isinstance(left, nodes.IfelseblockNode):
+        return same_el_guess(left[0], right[0])
+    if isinstance(left, (nodes.WithNode, nodes.ForNode, nodes.WhileNode)):
         return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.ElifNode):
         if left.test.dumps() == right.test.dumps():

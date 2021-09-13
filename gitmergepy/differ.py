@@ -7,7 +7,6 @@ from .context import (gather_after_context,
 from .matcher import (CODE_BLOCK_SAME_THRESHOLD,
                       code_block_similarity,
                       find_el_strong,
-                      guess_if_same_el_for_diff_iterable,
                       same_el_guess)
 from .tools import (INDENT,
                     empty_lines,
@@ -52,7 +51,7 @@ def compute_diff(left, right, indent=""):
 
     diff = diff_indent(left, right)
 
-    if isinstance(right, type(left)) or type(left) not in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
+    if not isinstance(right, type(left)) or type(left) not in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
         diff = [Replace(new_value=right, old_value=left)]
     else:
         diff += COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
@@ -327,7 +326,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                                        stack_left=stack_left,
                                                        indent=indent+INDENT)
             last_added = False
-        elif guess_if_same_el_for_diff_iterable(stack_left[0], el_right):
+        elif same_el_guess(stack_left[0], el_right):
             logging.debug("%s changed el %r", indent+INDENT,
                           short_display_el(el_right))
             diff += changed_el(el_right, stack_left, indent+INDENT,

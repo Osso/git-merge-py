@@ -482,6 +482,7 @@ class ChangeEl(BaseEl):
 class ChangeAttr:
     def __init__(self, attr_name, changes):
         self.attr_name = attr_name
+        self.changes = changes
 
     def apply(self, tree):
         attr = getattr(tree, self.attr_name)

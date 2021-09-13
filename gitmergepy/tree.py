@@ -484,6 +484,10 @@ class ChangeAttr:
         self.attr_name = attr_name
         self.changes = changes
 
+    def __repr__(self):
+        return "<%s el=\"%s\" changes=%r>" % (
+            self.__class__.__name__, self.attr_name, self.changes)
+
     def apply(self, tree):
         attr = getattr(tree, self.attr_name)
         return apply_changes(attr, self.changes)

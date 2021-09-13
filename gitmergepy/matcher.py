@@ -138,12 +138,22 @@ def same_el_guess(left, right, context=None):
         return levenshtein(left.target.dumps(), right.target.dumps()) < MAX_LEVENSHTEIN_DISTANCE
     if isinstance(left, nodes.IfelseblockNode):
         return same_el_guess(left[0], right[0])
-    if isinstance(left, (nodes.WithNode, nodes.ForNode, nodes.WhileNode)):
-        return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
-    if isinstance(left, nodes.ElifNode):
+    if isinstance(left, nodes.WithNode):
+        if left.contexts.dumps() == right.contexts.dumps():
+            return True
+        return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
+    if isinstance(left, nodes.WhileNode):
         if left.test.dumps() == right.test.dumps():
             return True
-        return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
+        return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
+    if isinstance(left, nodes.ForNode):
+        if left.target.dumps() == right.target.dumps() and left.iterator.dumps() == right.iterator.dumps():
+            return True
+        return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
+    if isinstance(left, (nodes.WhileNode, nodes.ElifNode)):
+        if left.test.dumps() == right.test.dumps():
+            return True
+        return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
 

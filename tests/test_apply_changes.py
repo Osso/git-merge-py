@@ -4,7 +4,8 @@ from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
-from gitmergepy.tree import (AddEls,
+from gitmergepy.tree import (AddCallArg,
+                             AddEls,
                              ChangeImport,
                              MoveImport,
                              SameEl)
@@ -1097,7 +1098,7 @@ def test_with_remove_arg():
     base = """
 # context
 with f(arg):
-    pass
+    call()
 
 with another_one:
     pass
@@ -1698,5 +1699,5 @@ if cond(arg1, arg2):
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    assert len(changes) == 1
-    import pdb; pdb.set_trace()
+    add_arg = changes[0].changes[0].changes[0].changes[0].changes[0].changes[0]
+    assert isinstance(add_arg, AddCallArg)

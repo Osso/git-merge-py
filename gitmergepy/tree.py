@@ -54,7 +54,7 @@ def tree_after_cursor(tree):
 
 
 def set_cursor(tree, el):
-    logging.debug('setting cursor to %s', short_display_el(el))
+    # logging.debug('setting cursor to %s', short_display_el(el))
     tree.cursor = el
 
 

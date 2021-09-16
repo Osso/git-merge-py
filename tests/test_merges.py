@@ -918,3 +918,19 @@ stuff()
 more_stuff()
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_call_with_integer_arg():
+    base = """
+call(1)
+"""
+    current = """
+call(2)
+"""
+    other = """
+call(3)
+"""
+    expected = """
+call(2)
+"""
+    _test_merge_changes(base, current, other, expected)

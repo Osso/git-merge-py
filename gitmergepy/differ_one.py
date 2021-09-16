@@ -10,6 +10,7 @@ from .tools import (INDENT,
                     changed_in_list,
                     diff_list,
                     get_call_els,
+                    id_from_arg,
                     id_from_decorator,
                     id_from_el,
                     short_display_el)
@@ -34,6 +35,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDefArg,
                    ChangeDictItem,
                    ChangeElseNode,
+                   ChangeIntValue,
                    ChangeReturn,
                    ChangeValue,
                    MakeInline,
@@ -69,6 +71,13 @@ def diff_redbaron(left, right, indent):
 
 def diff_replace(left, right, indent):
     return [Replace(new_value=right, old_value=left)]
+
+
+def diff_int_node(left, right, indent):
+    if left.value == right.value:
+        return []
+
+    return [ChangeIntValue(right.value)]
 
 
 def diff_arg_node(left, right, indent):
@@ -215,7 +224,7 @@ def _check_for_arg_changes(arg):
 
 def diff_call_node(left, right, indent):
     diff = []
-    to_add, to_remove = diff_list(left, right)
+    to_add, to_remove = diff_list(left, right, key_getter=id_from_arg)
     for arg in to_add:
         logging.debug('%s call new arg %r', indent, short_display_el(arg))
     for arg in to_remove:
@@ -226,7 +235,8 @@ def diff_call_node(left, right, indent):
     if to_remove:
         diff += [RemoveCallArgs(to_remove)]
 
-    changed = changed_in_list(left, right, value_getter=_check_for_arg_changes)
+    changed = changed_in_list(left, right, key_getter=id_from_arg,
+                              value_getter=_check_for_arg_changes)
 
     for old_arg, new_arg in changed:
         logging.debug('%s call changed args %r', indent,
@@ -474,7 +484,7 @@ COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
     nodes.AssociativeParenthesisNode: diff_replace,
-    nodes.IntNode: diff_replace,
+    nodes.IntNode: diff_int_node,
     nodes.CallArgumentNode: diff_arg_node,
     nodes.DefArgumentNode: diff_arg_node,
     nodes.DefNode: diff_def_node,

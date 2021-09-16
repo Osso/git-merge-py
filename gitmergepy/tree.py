@@ -26,6 +26,7 @@ from .tools import (apply_diff_to_list,
                     as_from_contexts,
                     empty_lines,
                     get_call_els,
+                    id_from_arg,
                     id_from_el,
                     same_el,
                     short_context,
@@ -539,7 +540,7 @@ class ChangeDefArg(ChangeEl):
     def apply(self, tree):
         logging.debug(". changing arg %s", short_display_el(self.el))
         for arg in self.get_args(tree):
-            if id_from_el(arg) == id_from_el(self.el):
+            if id_from_arg(arg) == id_from_arg(self.el):
                 logging.debug(".. found")
                 return apply_changes(arg, self.changes)
         logging.debug(".. not found")
@@ -1228,3 +1229,15 @@ class RemoveElseNode:
 
         tree.else_ = None
         return []
+
+
+class ChangeIntValue:
+    def __init__(self, new_value):
+        self.new_value = new_value
+
+    def apply(self, tree):
+        tree.value = self.new_value
+        return []
+
+    def __repr__(self):
+        return "<%s new_value=%r>" % (self.__class__.__name__, self.new_value)

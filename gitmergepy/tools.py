@@ -69,6 +69,8 @@ def short_context(context):
 
 
 def id_from_el(arg):
+    if arg is None:
+        return ""
     if isinstance(arg, (nodes.DefNode, nodes.ClassNode)):
         return arg.name
     if isinstance(arg, nodes.FromImportNode):
@@ -98,7 +100,15 @@ def id_from_el(arg):
                         for el in arg)
     if isinstance(arg, nodes.DictitemNode):
         return id_from_el(arg.key)
-    return str(arg)
+    return arg.dumps()
+
+
+def id_from_arg(arg):
+    if isinstance(arg, (nodes.ListArgumentNode, nodes.DictArgumentNode)):
+        return id_from_el(arg)
+    if not arg.target and isinstance(arg.value, nodes.IntNode):
+        return "0_%d" % arg.index_on_parent
+    return id_from_el(arg)
 
 
 def significant_args(call_node):

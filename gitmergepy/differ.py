@@ -278,7 +278,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             # Double renaming case
             if (
                     # looks the same as element on same line
-                    code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD and
+                    code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD and  # pylint: disable=chained-comparison
                     # looks different than element with same name
                     code_block_similarity(el_right, matching_el_by_name) < CODE_BLOCK_SAME_THRESHOLD):
                 break

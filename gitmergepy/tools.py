@@ -87,7 +87,7 @@ def id_from_el(arg):
         return arg.target.value
     if isinstance(arg, nodes.DecoratorNode):
         return id_from_el(arg.value)
-    if isinstance(arg, (nodes.StringNode, nodes.IntNode, nodes.NameNode)):
+    if isinstance(arg, (nodes.StringNode, nodes.NumberNode, nodes.NameNode)):
         return arg.value
     if isinstance(arg, nodes.DotNode):
         return '.'
@@ -106,7 +106,7 @@ def id_from_el(arg):
 def id_from_arg(arg):
     if isinstance(arg, (nodes.ListArgumentNode, nodes.DictArgumentNode)):
         return id_from_el(arg)
-    if not arg.target and isinstance(arg.value, nodes.IntNode):
+    if not arg.target and isinstance(arg.value, nodes.NumberNode):
         return "0_%d" % arg.index_on_parent
     return id_from_el(arg)
 

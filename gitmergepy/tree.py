@@ -1231,7 +1231,7 @@ class RemoveElseNode:
         return []
 
 
-class ChangeIntValue:
+class ChangeNumberValue:
     def __init__(self, new_value):
         self.new_value = new_value
 

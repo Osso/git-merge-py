@@ -20,8 +20,10 @@ def find_code_block_with_id(tree, node):
     functions = [f for f in tree if isinstance(f, node_type)]
     matching = [f for f in functions if f.name == node.name]
     if len(matching) > 1:
-        matching = [f for f in matching
-                    if code_block_similarity(f, node) > CODE_BLOCK_SAME_THRESHOLD]
+        matching = [
+            f for f in matching
+            if code_block_similarity(f, node) > CODE_BLOCK_SAME_THRESHOLD
+        ]
 
     return matching[0] if matching else None
 
@@ -142,7 +144,7 @@ def same_el_guess(left, right, context=None):
         if left.contexts.dumps() == right.contexts.dumps():
             return True
         return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
-    if isinstance(left, nodes.WhileNode):
+    if isinstance(left, (nodes.WhileNode, nodes.ElifNode, nodes.WhileNode)):
         if left.test.dumps() == right.test.dumps():
             return True
         return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
@@ -150,12 +152,10 @@ def same_el_guess(left, right, context=None):
         if left.target.dumps() == right.target.dumps() and left.iterator.dumps() == right.iterator.dumps():
             return True
         return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
-    if isinstance(left, (nodes.WhileNode, nodes.ElifNode)):
-        if left.test.dumps() == right.test.dumps():
-            return True
-        return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
+    if isinstance(left, nodes.NumberNode):
+        return True
 
     return same_el(left, right)
 

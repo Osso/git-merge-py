@@ -35,7 +35,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDefArg,
                    ChangeDictItem,
                    ChangeElseNode,
-                   ChangeIntValue,
+                   ChangeNumberValue,
                    ChangeReturn,
                    ChangeValue,
                    MakeInline,
@@ -73,11 +73,11 @@ def diff_replace(left, right, indent):
     return [Replace(new_value=right, old_value=left)]
 
 
-def diff_int_node(left, right, indent):
+def diff_number_node(left, right, indent):
     if left.value == right.value:
         return []
 
-    return [ChangeIntValue(right.value)]
+    return [ChangeNumberValue(right.value)]
 
 
 def diff_arg_node(left, right, indent):
@@ -484,7 +484,7 @@ COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
     nodes.AssociativeParenthesisNode: diff_replace,
-    nodes.IntNode: diff_int_node,
+    nodes.NumberNode: diff_number_node,
     nodes.CallArgumentNode: diff_arg_node,
     nodes.DefArgumentNode: diff_arg_node,
     nodes.DefNode: diff_def_node,

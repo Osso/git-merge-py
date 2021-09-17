@@ -934,3 +934,19 @@ call(3)
 call(2)
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_call_with_float_arg():
+    base = """
+call(1)
+"""
+    current = """
+call(0.5)
+"""
+    other = """
+call(3)
+"""
+    expected = """
+call(0.5)
+"""
+    _test_merge_changes(base, current, other, expected)

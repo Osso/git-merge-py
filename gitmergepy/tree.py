@@ -504,11 +504,6 @@ class ChangeValue(ChangeEl):
 class ChangeReturn(ChangeEl):
     def apply(self, tree):
         logging.debug(". changing %s", short_display_el(tree))
-        # Most of the time we don't need a conflict but it is safer to have one
-        if not isinstance(tree.value, type(self.el.value)):
-            logging.debug(". skipping types differ")
-            return []
-
         conflicts = apply_changes(tree.value, self.changes)
         add_conflicts(tree, conflicts)
         return []

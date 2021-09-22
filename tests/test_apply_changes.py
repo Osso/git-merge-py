@@ -8,6 +8,7 @@ from gitmergepy.tree import (AddCallArg,
                              AddEls,
                              ChangeImport,
                              MoveImport,
+                             RemoveWith,
                              SameEl)
 
 
@@ -348,6 +349,90 @@ get() \\
 more()
 """
     _test_apply_changes(base, current)
+
+
+def test_remove_with_and_add_els():
+    base = """
+with fun():
+    call('hello')
+"""
+    current = """
+# added before with
+call('hello')
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[1], RemoveWith)
+
+
+def test_remove_with_and_add_els_modified_with():
+    base = """
+with fun():
+    # before 1
+    # before 2
+    call('hello')
+    # after
+"""
+    current = """
+# added before with
+# before 1
+# before 2 modified
+call('hello')
+# after
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[1], RemoveWith)
+
+
+def test_remove_with_and_add_els_modified_with_at_the_end():
+    base = """
+with fun():
+    # before 1
+    # before 2
+    call('hello')
+    # after
+"""
+    current = """
+# added before with
+# before 1
+# before 2
+call('hello')
+# after modified
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], RemoveWith)
+
+
+def test_remove_with_and_add_els_with_tail():
+    base = """
+with fun():
+    call('hello')
+# tail
+"""
+    current = """
+# added before with
+call('hello')
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[1], RemoveWith)
+
+
+def test_remove_with_and_add_els_add_tail():
+    base = """
+with fun():
+    call('hello')
+"""
+    current = """
+# added before with
+call('hello')
+# tail
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[1], RemoveWith)
 
 
 def test_change_with():

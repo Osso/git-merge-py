@@ -75,11 +75,15 @@ def changed_el(el, stack_left, indent, change_class):
     return diff
 
 
-def __remove_or_replace(diff, els, context, indent, force_separate):
-    if any(isinstance(el, nodes.WithNode) for el in els):
-        force_separate = True
+def __remove_or_replace(diff, els, indent):
+    assert els
+    context = gather_context(els[0])
 
-    if not force_separate and diff and isinstance(diff[-1], AddEls) and \
+    for el in els:
+        if el.already_processed:
+            assert False, "checking that this never happens"
+
+    if diff and isinstance(diff[-1], AddEls) and \
             same_el(diff[-1].context[0], context[0]):
         # Transform add+remove into a ReplaceEls
         logging.debug("%s transforming into replace", indent+INDENT)
@@ -91,38 +95,23 @@ def __remove_or_replace(diff, els, context, indent, force_separate):
         logging.debug("%s remove els %r, context ~%r", indent+INDENT,
                       ", ".join(short_display_el(el) for el in els),
                       short_context(context))
-        diff += make_remove_els(els, diff)
+        diff += [RemoveEls(els, context=context)]
 
 
-def _remove_or_replace(diff, els, context, indent, force_separate):
-    _els = []
-
-    for el in els:
-        if el.already_processed:
-            assert False, "checking that this never happens"
-            if _els:
-                __remove_or_replace(diff, _els, context, indent, force_separate)
-                force_separate = True
-                _els = []
-        else:
-            _els.append(el)
-
-    if _els:
-        __remove_or_replace(diff, _els, context, indent, force_separate)
+def _remove_or_replace(diff, els, indent):
+    __remove_or_replace(diff, els, indent)
+    split_diff_if_matching_with(diff, indent)
 
 
-def _flush_remove(els, diff, force_separate, indent):
+def _flush_remove(els, diff, indent):
     if not els:
         return
+    _remove_or_replace(diff, list(els), indent=indent)
 
-    _remove_or_replace(diff, els, indent=indent,
-                       context=gather_context(els[0]),
-                       force_separate=force_separate)
     del els[:]
 
 
-def process_stack_till_el(stack_left, stop_el, tree, diff,
-                          indent, force_separate=False):
+def process_stack_till_el(stack_left, stop_el, tree, diff, indent):
     """stop_el is None means continue till the end of the stack"""
     els = []
     while stack_left and not (stop_el and same_el(stack_left[0], stop_el)):
@@ -130,15 +119,13 @@ def process_stack_till_el(stack_left, stop_el, tree, diff,
         if el.already_processed:
             logging.debug("%s el aready processed %r, flushing", indent+INDENT,
                           short_display_el(el))
-            _flush_remove(els, diff=diff, force_separate=force_separate,
-                          indent=indent)
-            force_separate = True
+            _flush_remove(els, diff=diff, indent=indent)
             continue
 
         process_stack_el(stack_left=stack_left, el_to_delete=el, tree=tree,
                          els=els, diff=diff, indent=indent)
 
-    _flush_remove(els, diff=diff, force_separate=force_separate, indent=indent)
+    _flush_remove(els, diff=diff, indent=indent)
 
 
 def process_stack_el(stack_left, el_to_delete, tree, els, diff,
@@ -148,8 +135,7 @@ def process_stack_el(stack_left, el_to_delete, tree, els, diff,
     if matching_el_by_id:
         logging.debug("%s marking as found %r", indent+2*INDENT,
                       short_display_el(el_to_delete))
-        _flush_remove(els, diff=diff, force_separate=force_separate,
-                      indent=indent)
+        _flush_remove(els, diff=diff, indent=indent)
         matching_el_by_id.matched_el = el_to_delete
         matching_el_by_id.already_processed = True
         diff.extend(call_diff_iterable(matching_el_by_id,
@@ -193,8 +179,7 @@ def check_removed_withs(stack_left, el_right, indent):
         with_node = orig_with_node.copy()
         with_node.decrease_indentation()
 
-        if match_with(orig_with_node, code_block=el_right.parent,
-                               start_el=el_right) > 0.6:
+        if compare_with_code(orig_with_node, start_el=el_right) > 0.6:
             logging.debug("%s with node removal %r", indent+INDENT,
                           short_display_el(stack_left[0]))
             del stack_left[0]
@@ -243,23 +228,21 @@ def call_diff_iterable(el, stack_left, indent, diff):
                                                  global_diff=diff)
 
 
-def match_with(with_node, code_block, start_el):
+def compare_with_code(with_node, start_el):
     code_block = start_el.parent
     code_block_to_compare = code_block.make_code_block(start=start_el,
                                                        length=len(with_node))
     return code_block_similarity(with_node.value, code_block_to_compare)
 
 
-def look_for_with(with_node, diff):
-    if not diff:
-        return None
-    if not isinstance(diff[-1], AddEls):
-        return None
+def look_for_with(with_node, code_block):
+    with_node_copy = with_node.copy()
+    with_node_copy.decrease_indentation()
+
     best_score = 0
     best_score_el = None
-    for el in diff[0].to_add:
-        el_score = match_with(with_node, code_block=diff[0].to_add,
-                              start_el=el)
+    for el in code_block:
+        el_score = compare_with_code(with_node_copy, start_el=el)
         if el_score > best_score:
             best_score = el_score
             best_score_el = el
@@ -268,60 +251,65 @@ def look_for_with(with_node, diff):
     return None
 
 
-def _reprocess_add_els(old_els, global_diff, start_el):
-    diff_el = global_diff[-2]
+def look_for_with_in_diff(with_node, diff):
+    if not diff:
+        return None
+    if not isinstance(diff[-1], (AddEls, ReplaceEls)):
+        return None
+    return look_for_with(with_node, code_block=diff[-1].to_add)
+
+
+def _split_diff_on_with(with_node, to_remove, diff, start_el, indent):
+    with_node_copy = with_node.copy()
+    with_node_copy.decrease_indentation()
+    with_els = with_node_copy.value
+    diff_el = diff[-1]
+    is_replace = isinstance(diff_el, ReplaceEls)
+    # Trim the to_add
     start_el_index = diff_el.to_add.index(start_el)
     head_els = diff_el.to_add[:start_el_index]
-    new_els = diff_el.to_add[start_el_index:start_el_index+len(old_els)]
-    tail_els = diff_el.to_add[start_el_index+len(old_els):]
+    new_els = diff_el.to_add[start_el_index:start_el_index+len(with_els)]
+    tail_els = diff_el.to_add[start_el_index+len(with_els):]
     diff_el.to_add[:] = head_els
+    # Remove AddEls/ReplaceEls if empty
     if not diff_el.to_add:
-        del global_diff[-2]
-    diff = compute_diff_iterables(old_els, new_els)
+        del diff[-1]
+        is_replace = False
+    # Trim or add the to_remove
+    if to_remove:
+        if is_replace:
+            diff[-1].to_remove = list(to_remove)
+        else:
+            __remove_or_replace(diff, to_remove, indent)
+
+    diff += [RemoveWith(with_node, gather_context(with_node))]
+    diff += compute_diff_iterables(with_els, new_els)
     if tail_els:
         diff += [AddEls(tail_els, context=gather_context(tail_els[0]))]
-    return diff
 
 
-def make_remove_els(els, global_diff):
-    """
-    Create a RemoveEls(els) but also check for removed withs in els and
-    transform the global_diff as appropriate
-    """
-    assert els
+def split_diff_if_matching_with(diff, indent):
+    if not diff:
+        return
+    if not isinstance(diff[-1], ReplaceEls):
+        return
 
-    if not global_diff:
-        return [RemoveEls(els, context=gather_context(els[0]))]
-
-    context = None
-    diff = [global_diff.pop()]
-    head = []
-    tail = list(els)
-    for el in els:
-        if context is None:
-            context = gather_context(el)
-
+    replace_el = diff[-1]
+    els = []
+    for el in replace_el.to_remove:
         if isinstance(el, nodes.WithNode):
-            with_node = el.copy()
-            with_node.decrease_indentation()
-            start_el = look_for_with(with_node, diff)
-            if start_el:
-                if head:
-                    diff += [RemoveEls(head, context=context)]
-                diff += [RemoveWith(el, gather_context(el))]
-                diff += _reprocess_add_els(old_els=with_node.value,
-                                           global_diff=diff,
-                                           start_el=start_el)
-                head = []
-                context = None
-                del tail[0]
+            with_node = el
+            with_start_el = look_for_with_in_diff(with_node, diff)
+            if with_start_el:
+                _split_diff_on_with(with_node=with_node, to_remove=els,
+                                    diff=diff, start_el=with_start_el,
+                                    indent=indent)
+                els = []
                 continue
-        head.append(el)
-        del tail[0]
-    assert not tail
-    if head:
-        diff += [RemoveEls(head, context=context)]
-    return diff
+        els.append(el)
+
+    if els:
+        __remove_or_replace(diff, els, indent)
 
 
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
@@ -346,7 +334,10 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             stack_left.pop(0)
 
         # Pre-processing
+
+        # Handle removed withs
         diff += check_removed_withs(stack_left, el_right, indent=indent)
+
         # Handle the case of an element we can know it is deleted thanks to
         # to find_el_strong
         while stack_left and isinstance(stack_left[0], NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
@@ -370,10 +361,13 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             to_remove = [stack_left.pop(0)]
             while stack_left and isinstance(stack_left[0], (nodes.EmptyLineNode, nodes.SpaceNode)):
                 to_remove.append(stack_left.pop(0))
-            diff += make_remove_els(to_remove, diff)
+            diff.append(RemoveEls(to_remove,
+                                  context=gather_context(to_remove[0])))
             last_added = False
 
-        if not stack_left and not hasattr(el_right, 'matched_el'):
+        # Handle new els at the end
+        if not stack_left:
+            assert not hasattr(el_right, 'matched_el')
             logging.debug("%s stack left empty, new el %r", indent+INDENT,
                           short_display_el(el_right))
             add_to_diff(diff, el_right, last_added=last_added, indent=indent)
@@ -400,8 +394,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
             stop_el = look_ahead(stack_left, el_right)
             process_stack_till_el(stack_left=stack_left, stop_el=stop_el,
                                   tree=right, diff=diff,
-                                  indent=indent+INDENT,
-                                  force_separate=not last_added)
+                                  indent=indent+INDENT)
             diff += process_matched_el_from_look_ahead(el_right=el_right,
                                                        stack_left=stack_left,
                                                        indent=indent+INDENT)

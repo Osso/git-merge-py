@@ -99,8 +99,9 @@ def __remove_or_replace(diff, els, indent):
 
 
 def _remove_or_replace(diff, els, indent):
-    __remove_or_replace(diff, els, indent)
-    split_diff_if_matching_with(diff, indent)
+    els = split_diff_if_matching_with(diff, els, indent)
+    if els:
+        __remove_or_replace(diff, els, indent)
 
 
 def _flush_remove(els, diff, indent):
@@ -288,15 +289,12 @@ def _split_diff_on_with(with_node, to_remove, diff, start_el, indent):
         diff += [AddEls(tail_els, context=gather_context(tail_els[0]))]
 
 
-def split_diff_if_matching_with(diff, indent):
-    if not diff:
-        return
-    if not isinstance(diff[-1], ReplaceEls):
-        return
+def split_diff_if_matching_with(diff, to_remove, indent):
+    if not diff or not isinstance(diff[-1], AddEls):
+        return to_remove
 
-    replace_el = diff[-1]
     els = []
-    for el in replace_el.to_remove:
+    for el in to_remove:
         if isinstance(el, nodes.WithNode):
             with_node = el
             with_start_el = look_for_with_in_diff(with_node, diff)
@@ -308,8 +306,7 @@ def split_diff_if_matching_with(diff, indent):
                 continue
         els.append(el)
 
-    if els:
-        __remove_or_replace(diff, els, indent)
+    return els
 
 
 def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):

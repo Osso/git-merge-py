@@ -75,7 +75,7 @@ def changed_el(el, stack_left, indent, change_class):
     return diff
 
 
-def __remove_or_replace(diff, els, indent):
+def __remove_or_replace(diff, els, indent, ignore_context=False):
     assert els
     context = gather_context(els[0])
 
@@ -83,8 +83,7 @@ def __remove_or_replace(diff, els, indent):
         if el.already_processed:
             assert False, "checking that this never happens"
 
-    if diff and isinstance(diff[-1], AddEls) and \
-            same_el(diff[-1].context[0], context[0]):
+    if diff and isinstance(diff[-1], AddEls):
         # Transform add+remove into a ReplaceEls
         logging.debug("%s transforming into replace", indent+INDENT)
         replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
@@ -261,6 +260,7 @@ def look_for_with_in_diff(with_node, diff):
 
 
 def _split_diff_on_with(with_node, to_remove, diff, start_el, indent):
+    logging.debug("%s transforming into RemoveWith", indent+INDENT)
     with_node_copy = with_node.copy()
     with_node_copy.decrease_indentation()
     with_els = with_node_copy.value
@@ -301,7 +301,7 @@ def split_diff_if_matching_with(diff, to_remove, indent):
             if with_start_el:
                 _split_diff_on_with(with_node=with_node, to_remove=els,
                                     diff=diff, start_el=with_start_el,
-                                    indent=indent)
+                                    indent=indent+INDENT)
                 els = []
                 continue
         els.append(el)

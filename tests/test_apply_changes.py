@@ -1801,3 +1801,18 @@ if cond(arg1, arg2):
     changes = compute_diff(RedBaron(base), RedBaron(current))
     add_arg = changes[0].changes[0].changes[0].changes[0].changes[0].changes[0]
     assert isinstance(add_arg, AddCallArg)
+
+
+def test_remove_with_blank_line():
+    base = """
+
+with a():
+    pass
+
+"""
+    current = """
+
+pass
+
+"""
+    _test_apply_changes(base, current)

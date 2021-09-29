@@ -148,7 +148,7 @@ class RemoveEls:
                 # are already removed
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
-            if same_el(el, el_to_remove):
+            if same_el_guess(el, el_to_remove):
                 tree.hide(el)
                 set_cursor(tree, el)
                 index += 1

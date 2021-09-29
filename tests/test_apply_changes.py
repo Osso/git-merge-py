@@ -1816,3 +1816,23 @@ pass
 
 """
     _test_apply_changes(base, current)
+
+
+def test_simplify_add_remove():
+    base = """
+
+with a():
+    pass
+
+"""
+    current = """
+
+pass
+
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], SameEl)
+    assert isinstance(changes[1], RemoveWith)
+    assert isinstance(changes[2], SameEl)
+    assert len(changes) == 3

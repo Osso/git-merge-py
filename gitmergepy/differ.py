@@ -75,6 +75,32 @@ def changed_el(el, stack_left, indent, change_class):
     return diff
 
 
+def simplify_to_add_to_remove(to_add, to_remove):
+    # Simplify if possible
+    while to_add and to_remove and same_el(to_add[0], to_remove[0]):
+        del to_add[0]
+        del to_remove[0]
+
+
+def append_replace(diff, to_add, to_remove, indent):
+    if to_remove and to_add:
+        # Transform add+remove into a ReplaceEls
+        logging.debug("%s transforming into replace", indent)
+        replace = ReplaceEls(to_add=to_add, to_remove=to_remove,
+                             context=diff[-1].context)
+        diff.pop()
+        diff.append(replace)
+    elif to_remove:
+        logging.debug("%s removing empty AddEls", indent)
+        remove = RemoveEls(to_remove=to_remove, context=diff[-1].context)
+        diff.pop()
+        diff.append(remove)
+    elif not to_add:
+        # Transform add+remove into a ReplaceEls
+        logging.debug("%s removing empty AddEls", indent)
+        diff.pop()
+
+
 def __remove_or_replace(diff, els, indent, ignore_context=False):
     assert els
     context = gather_context(els[0])
@@ -84,12 +110,11 @@ def __remove_or_replace(diff, els, indent, ignore_context=False):
             assert False, "checking that this never happens"
 
     if diff and isinstance(diff[-1], AddEls):
-        # Transform add+remove into a ReplaceEls
-        logging.debug("%s transforming into replace", indent+INDENT)
-        replace = ReplaceEls(to_add=diff[-1].to_add, to_remove=els,
-                             context=diff[-1].context)
-        diff.pop()
-        diff.append(replace)
+        to_add = diff[-1].to_add
+        to_remove = els
+        simplify_to_add_to_remove(to_add, to_remove)
+        append_replace(diff, to_add, to_remove, indent=indent+INDENT)
+
     else:
         logging.debug("%s remove els %r, context ~%r", indent+INDENT,
                       ", ".join(short_display_el(el) for el in els),
@@ -106,6 +131,7 @@ def _remove_or_replace(diff, els, indent):
 def _flush_remove(els, diff, indent):
     if not els:
         return
+
     _remove_or_replace(diff, list(els), indent=indent)
 
     del els[:]

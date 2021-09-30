@@ -140,6 +140,8 @@ def same_el_guess(left, right, context=None):
         return levenshtein(left.target.dumps(), right.target.dumps()) < MAX_LEVENSHTEIN_DISTANCE
     if isinstance(left, nodes.IfelseblockNode):
         return same_el_guess(left[0], right[0])
+    if isinstance(left, nodes.TryNode):
+        return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.WithNode):
         if left.contexts.dumps() == right.contexts.dumps():
             return True

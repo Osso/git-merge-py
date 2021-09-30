@@ -6,6 +6,8 @@ from gitmergepy.applyier import apply_changes
 from gitmergepy.differ import compute_diff
 from gitmergepy.tree import (AddCallArg,
                              AddEls,
+                             ChangeEl,
+                             ChangeExceptsNode,
                              ChangeImport,
                              MoveImport,
                              RemoveWith,
@@ -1836,3 +1838,44 @@ pass
     assert isinstance(changes[1], RemoveWith)
     assert isinstance(changes[2], SameEl)
     assert len(changes) == 3
+
+
+def test_try_except_1():
+    base = """
+try:
+    # anchor 1
+    # anchor 2
+    pass
+except:
+    pass
+"""
+    current = """
+try:
+    # anchor 1
+    # anchor 2
+    call()
+except:
+    pass
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], ChangeEl)
+
+
+def test_try_except_2():
+    base = """
+try:
+    pass
+except:
+    pass
+"""
+    current = """
+try:
+    pass
+except:
+    call()
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], ChangeEl)
+    assert isinstance(changes[0].changes[1], ChangeExceptsNode)

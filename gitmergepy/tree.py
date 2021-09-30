@@ -1236,3 +1236,23 @@ class ChangeNumberValue:
 
     def __repr__(self):
         return "<%s new_value=%r>" % (self.__class__.__name__, self.new_value)
+
+
+class ChangeExceptsNode:
+    def __init__(self, index, changes):
+        self.index = index
+        self.changes = changes
+
+    def apply(self, tree):
+        logging.debug(". changing excepts")
+        try:
+            except_node = tree.excepts[self.index]
+        except IndexError:
+            logging.debug(". number of excepts has changed, ignoring changes")
+            return []
+
+        return apply_changes(except_node, self.changes)
+
+    def __repr__(self):
+        return "<%s index=%r changes=%r>" % (self.__class__.__name__,
+                                             self.index, self.changes)

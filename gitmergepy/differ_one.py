@@ -35,6 +35,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDefArg,
                    ChangeDictItem,
                    ChangeElseNode,
+                   ChangeExceptsNode,
                    ChangeNumberValue,
                    ChangeReturn,
                    ChangeValue,
@@ -181,7 +182,7 @@ def diff_import_node(left, right, indent):
                                   key_getter=lambda t: t.value)
     diff = []
     if to_add:
-        diff += [AddImports([el for el in to_add],
+        diff += [AddImports(list(to_add),
                             one_per_line=right.targets.detect_one_per_line(),
                             add_brackets=right.targets.has_brackets())]
     if to_remove:
@@ -480,6 +481,28 @@ def diff_inline_vs_multiline(left, right, indent):
     return []
 
 
+def diff_try_node(left, right, indent):
+    diff = []
+
+    diff += compute_diff_iterables(left, right, indent=indent+INDENT)
+    diff += diff_excepts_node(left, right, indent)
+    diff += diff_else_node_for_loops(left, right, indent)
+    return diff
+
+
+def diff_excepts_node(left, right, indent):
+    diff = []
+
+    for index, (left_except, right_except) in enumerate(zip(left.excepts, right.excepts)):
+        diff_except = compute_diff_iterables(left_except.value,
+                                             right_except.value,
+                                             indent=indent+INDENT)
+        if diff_except:
+            diff += [ChangeExceptsNode(index, diff_except)]
+
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -508,4 +531,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.ForNode: diff_for_node,
     nodes.WhileNode: diff_while_node,
     nodes.PassNode: diff_pass_node,
+    nodes.TryNode: diff_try_node,
 }

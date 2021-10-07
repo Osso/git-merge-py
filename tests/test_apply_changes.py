@@ -1893,3 +1893,26 @@ a = "bacon\neggs\ncheese"
     changes = compute_diff(RedBaron(base), RedBaron(current))
     assert isinstance(changes[0], ChangeEl)
     assert isinstance(changes[0].changes[0].changes[0], ChangeString)
+
+
+def test_atom_trailer():
+    base = """
+fun()
+"""
+    current = """
+fun2()
+"""
+    _test_apply_changes(base, current)
+
+
+def test_atom_trailer_string():
+    base = """
+"bacon\neggs\nham".split()
+"""
+    current = """
+"bacon\neggs\ncheese".split()
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], ChangeEl)
+    assert isinstance(changes[0].changes[0].changes[0], ChangeString)

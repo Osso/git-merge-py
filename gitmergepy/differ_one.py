@@ -30,6 +30,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeArg,
                    ChangeAssignmentNode,
                    ChangeAtomtrailersCall,
+                   ChangeAtomtrailersEl,
                    ChangeAttr,
                    ChangeCallArg,
                    ChangeDecorator,
@@ -206,18 +207,21 @@ def diff_with_node(left, right, indent):
 
 def diff_atom_trailer_node(left, right, indent):
     diff = []
-    if id_from_el(left) != id_from_el(right):
+
+    if len(left) != len(right):
         diff += [Replace(new_value=right, old_value=left)]
-    else:
-        calls_diff = []
-        calls_els_left = get_call_els(left)
-        calls_els_right = get_call_els(right)
-        for index, (el_left, el_right) in enumerate(zip(calls_els_left,
-                                                        calls_els_right)):
-            calls_diff = compute_diff(el_left, el_right, indent=indent)
-            if calls_diff:
-                diff += [ChangeAtomtrailersCall(el_left, index=index,
-                                                changes=calls_diff)]
+
+    for index, (el_left, el_right) in enumerate(zip(left, right)):
+        if not isinstance(el_left, type(el_right)):
+            diff += [ChangeAtomtrailersEl(el_left, index=index,
+                                            changes=[Replace(new_value=right,
+                                                             old_value=left)])]
+        else:
+            el_diff = compute_diff(el_left, el_right)
+            if el_diff:
+                diff += [ChangeAtomtrailersEl(el_left, index=index,
+                                                changes=el_diff)]
+
     return diff
 
 
@@ -512,6 +516,10 @@ def diff_string_node(left, right, indent):
     return [ChangeString(left, changes=patches)]
 
 
+def diff_name_node(left, right, indent):
+    return [Replace(new_value=right, old_value=left)]
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -542,4 +550,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.PassNode: diff_pass_node,
     nodes.TryNode: diff_try_node,
     nodes.StringNode: diff_string_node,
+    nodes.NameNode: diff_name_node,
 }

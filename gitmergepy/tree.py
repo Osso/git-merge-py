@@ -743,6 +743,20 @@ class ChangeAssignmentNode(ChangeEl):
         return apply_changes(tree.value, self.changes)
 
 
+class ChangeAtomtrailersEl(ChangeEl):
+    def __init__(self, el, changes, index):
+        super().__init__(el, changes=changes)
+        self.index = index
+
+    def apply(self, tree):
+        try:
+            el = tree[self.index]
+        except IndexError:
+            return [Conflict([self.el], self, 'calls elements not matching')]
+
+        return apply_changes(el, self.changes)
+
+
 class ChangeAtomtrailersCall(ChangeEl):
     def __init__(self, el, changes, index):
         super().__init__(el, changes=changes)

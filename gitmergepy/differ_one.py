@@ -3,6 +3,8 @@ import logging
 from redbaron import (RedBaron,
                       nodes)
 
+from diff_match_patch import diff_match_patch
+
 from .context import gather_context
 from .differ import (compute_diff,
                      compute_diff_iterables)
@@ -38,6 +40,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeExceptsNode,
                    ChangeNumberValue,
                    ChangeReturn,
+                   ChangeString,
                    ChangeValue,
                    MakeInline,
                    MakeMultiline,
@@ -503,6 +506,12 @@ def diff_excepts_node(left, right, indent):
     return diff
 
 
+def diff_string_node(left, right, indent):
+    dmp = diff_match_patch()
+    patches = dmp.patch_make(left.value, right.value)
+    return [ChangeString(left, changes=patches)]
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -532,4 +541,5 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.WhileNode: diff_while_node,
     nodes.PassNode: diff_pass_node,
     nodes.TryNode: diff_try_node,
+    nodes.StringNode: diff_string_node,
 }

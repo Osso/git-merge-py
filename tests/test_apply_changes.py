@@ -9,6 +9,7 @@ from gitmergepy.tree import (AddCallArg,
                              ChangeEl,
                              ChangeExceptsNode,
                              ChangeImport,
+                             ChangeString,
                              MoveImport,
                              RemoveWith,
                              SameEl)
@@ -1879,3 +1880,16 @@ except:
     changes = compute_diff(RedBaron(base), RedBaron(current))
     assert isinstance(changes[0], ChangeEl)
     assert isinstance(changes[0].changes[1], ChangeExceptsNode)
+
+
+def test_diff_string():
+    base = """
+a = "bacon\neggs\nham"
+"""
+    current = """
+a = "bacon\neggs\ncheese"
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], ChangeEl)
+    assert isinstance(changes[0].changes[0].changes[0], ChangeString)

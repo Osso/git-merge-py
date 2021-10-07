@@ -5,6 +5,8 @@ from redbaron.base_nodes import (BaseNode,
                                  NodeList)
 from redbaron.node_mixin import CodeBlockMixin
 
+from diff_match_patch import diff_match_patch
+
 from .applyier import (add_conflict,
                        add_conflicts,
                        apply_changes,
@@ -1256,3 +1258,11 @@ class ChangeExceptsNode:
     def __repr__(self):
         return "<%s index=%r changes=%r>" % (self.__class__.__name__,
                                              self.index, self.changes)
+
+
+class ChangeString(ChangeEl):
+    def apply(self, tree):
+        dmp = diff_match_patch()
+        patched, _ = dmp.patch_apply(self.changes, self.el.value)
+        tree.value = patched
+        return []

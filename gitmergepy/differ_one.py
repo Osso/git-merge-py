@@ -513,7 +513,8 @@ def diff_excepts_node(left, right, indent):
 def diff_string_node(left, right, indent):
     dmp = diff_match_patch()
     patches = dmp.patch_make(left.value, right.value)
-    return [ChangeString(left, changes=patches)]
+    diff = dmp.patch_toText(patches)
+    return [ChangeString(left, changes=diff)]
 
 
 def diff_name_node(left, right, indent):

@@ -1277,6 +1277,7 @@ class ChangeExceptsNode:
 class ChangeString(ChangeEl):
     def apply(self, tree):
         dmp = diff_match_patch()
-        patched, _ = dmp.patch_apply(self.changes, self.el.value)
+        patches = dmp.patch_fromText(self.changes)
+        patched, _ = dmp.patch_apply(patches, tree.value)
         tree.value = patched
         return []

@@ -1050,15 +1050,7 @@ class RemoveDictItem(BaseEl):
         return []
 
 
-class ChangeDictItem(BaseEl):
-    def __init__(self, key, changes):
-        super().__init__(key)
-        self.changes = changes
-
-    def __repr__(self):
-        return "<%s el=\"%s\" changes=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes)
-
+class ChangeDictItem(ChangeEl):
     def apply(self, tree):
         logging.debug("changing key %s", short_display_el(self.el.key))
 
@@ -1066,6 +1058,36 @@ class ChangeDictItem(BaseEl):
         if not item:
             return []
         return apply_changes(item.value, self.changes)
+
+
+class ChangeDictComment(ChangeEl):
+    def apply(self, tree):
+        logging.debug("changing dict comment %s", short_display_el(self.el))
+
+        item = find_key(self.el.key, tree)
+        if not item:
+            return []
+
+        if isinstance(self.changes[0], Replace):
+            item.associated_sep = self.changes.pop(0).new_value
+
+        return apply_changes(item.associated_sep, self.changes)
+
+
+class ReplaceDictComment(BaseEl):
+    def __init__(self, el, new_value):
+        super().__init__(el)
+        self.new_value = new_value
+
+    def apply(self, tree):
+        logging.debug("changing dict comment %s", short_display_el(self.el))
+
+        item = find_key(self.el.key, tree)
+        if not item:
+            return []
+
+        item.associated_sep = self.new_value
+        return []
 
 
 class RenameClass(BaseEl):

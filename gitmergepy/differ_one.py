@@ -15,6 +15,7 @@ from .tools import (INDENT,
                     id_from_arg,
                     id_from_decorator,
                     id_from_el,
+                    same_el,
                     short_display_el)
 from .tree import (AddAllDecoratorArgs,
                    AddBase,
@@ -36,6 +37,7 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
                    ChangeDefArg,
+                   ChangeDictComment,
                    ChangeDictItem,
                    ChangeElseNode,
                    ChangeExceptsNode,
@@ -431,6 +433,19 @@ def diff_dict_node(left, right, indent):
                                 changes=compute_diff(left_el.value,
                                                      right_el.value,
                                                      indent=indent+INDENT))]
+
+    # Comments
+    def comment_getter(el):
+        sep = el.associated_sep
+        if sep is None:
+            return None
+        return sep.dumps()
+
+    changed = changed_in_list(left, right, value_getter=comment_getter)
+    for left_el, right_el in changed:
+        changes = compute_diff(left_el.associated_sep, right_el.associated_sep,
+                               indent=indent+INDENT)
+        diff += [ChangeDictComment(left_el, changes=changes)]
 
     return diff
 

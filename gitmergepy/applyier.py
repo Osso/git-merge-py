@@ -1,7 +1,8 @@
 from redbaron import (RedBaron,
                       nodes)
 from redbaron.node_mixin import CodeBlockMixin
-from redbaron.proxy_list import ProxyList
+from redbaron.proxy_list import (DictProxyList,
+                                 ProxyList)
 
 from .context import (AfterContext,
                       BeforeContext,
@@ -27,6 +28,8 @@ def apply_changes(tree, changes):
         tree.value._synchronise()
 
     # Sanity check
+    if isinstance(tree.parent, DictProxyList):
+        tree = tree.parent.parent
     if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
                          nodes.WithNode, nodes.CallArgumentNode,
                          nodes.ElifNode, nodes.ExceptNode)):

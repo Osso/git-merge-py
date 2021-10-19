@@ -1916,3 +1916,43 @@ def test_atom_trailer_string():
     changes = compute_diff(RedBaron(base), RedBaron(current))
     assert isinstance(changes[0], ChangeEl)
     assert isinstance(changes[0].changes[0].changes[0], ChangeString)
+
+
+def test_dict_remove_comment():
+    base = """
+    {'key': 'value',
+     # comment
+     'key2': 'value'}
+"""
+    current = """
+    {'key': 'value',
+     'key2': 'value'}
+"""
+    _test_apply_changes(base, current)
+
+
+def test_dict_add_comment():
+    base = """
+    {'key': 'value',
+     'key2': 'value'}
+"""
+    current = """
+    {'key': 'value',
+     # comment
+     'key2': 'value'}
+"""
+    _test_apply_changes(base, current)
+
+
+def test_dict_change_comment():
+    base = """
+    {'key': 'value',
+     # comment
+     'key2': 'value'}
+"""
+    current = """
+    {'key': 'value',
+     # comment changed
+     'key2': 'value'}
+"""
+    _test_apply_changes(base, current)

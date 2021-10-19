@@ -1071,6 +1071,9 @@ class ChangeDictComment(ChangeEl):
         if isinstance(self.changes[0], Replace):
             item.associated_sep = self.changes.pop(0).new_value
 
+        if not self.changes:
+            return []
+
         return apply_changes(item.associated_sep, self.changes)
 
 

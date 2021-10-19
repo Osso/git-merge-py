@@ -443,8 +443,11 @@ def diff_dict_node(left, right, indent):
 
     changed = changed_in_list(left, right, value_getter=comment_getter)
     for left_el, right_el in changed:
-        changes = compute_diff(left_el.associated_sep, right_el.associated_sep,
-                               indent=indent+INDENT)
+        if left_el.associated_sep and right_el.associated_sep:
+            changes = compute_diff(left_el.associated_sep, right_el.associated_sep,
+                                   indent=indent+INDENT)
+        else:
+            changes = [Replace(right_el, old_value=left_el)]
         diff += [ChangeDictComment(left_el, changes=changes)]
 
     return diff

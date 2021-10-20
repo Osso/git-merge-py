@@ -130,7 +130,7 @@ def same_el_guess(left, right, context=None):
     if isinstance(left, (nodes.IfNode, nodes.ElseNode,
                          nodes.EndlNode, nodes.ReturnNode)):
         return True
-    if isinstance(left, nodes.DefNode):
+    if isinstance(left, (nodes.DefNode, nodes.ClassNode)):
         return left.name == right.name
     if isinstance(left, nodes.AtomtrailersNode):
         return same_call_guess(left, right)

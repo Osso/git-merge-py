@@ -1956,3 +1956,31 @@ def test_dict_change_comment():
      'key2': 'value'}
 """
     _test_apply_changes(base, current)
+
+
+def test_call_brackets_multiline_add():
+    base = """
+fun(arg1,
+    arg2)
+"""
+    current = """
+fun(
+    arg1,
+    arg2
+    )
+"""
+    _test_apply_changes(base, current)
+
+
+def test_call_brackets_multiline_remove():
+    base = """
+fun(
+    arg1,
+    arg2
+   )
+"""
+    current = """
+fun(arg1,
+    arg2)
+"""
+    _test_apply_changes(base, current)

@@ -234,6 +234,8 @@ def _check_for_arg_changes(arg):
 
 def diff_call_node(left, right, indent):
     diff = []
+
+    # Added/Removed args
     to_add, to_remove = diff_list(left, right, key_getter=id_from_arg)
     for arg in to_add:
         logging.debug('%s call new arg %r', indent, short_display_el(arg))
@@ -248,6 +250,7 @@ def diff_call_node(left, right, indent):
     changed = changed_in_list(left, right, key_getter=id_from_arg,
                               value_getter=_check_for_arg_changes)
 
+    # Changed args
     for old_arg, new_arg in changed:
         logging.debug('%s call changed args %r', indent,
                       short_display_el(new_arg))
@@ -260,6 +263,12 @@ def diff_call_node(left, right, indent):
         if id_from_el(get_previous_arg(old_arg, to_remove)) != id_from_el(get_previous_arg(new_arg, to_remove)):
             diff_arg += [MoveArg(context=gather_context(new_arg))]
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]
+
+    # New lines for brackets
+    if left.third_formatting.fst() != right.third_formatting.fst():
+        diff += [ReplaceAttr("third_formatting",
+                             right.third_formatting.copy())]
+
     return diff
 
 

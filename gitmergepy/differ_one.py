@@ -51,6 +51,7 @@ from .tree import (AddAllDecoratorArgs,
                    RemoveAllDecoratorArgs,
                    RemoveBases,
                    RemoveCallArgs,
+                   RemoveCallEndl,
                    RemoveDecorators,
                    RemoveDictItem,
                    RemoveElseNode,
@@ -265,9 +266,8 @@ def diff_call_node(left, right, indent):
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]
 
     # New lines for brackets
-    if left.third_formatting.fst() != right.third_formatting.fst():
-        diff += [ReplaceAttr("third_formatting",
-                             right.third_formatting.copy())]
+    if len(left) > 0 and left[-1].endl and len(right) > 0 and not right[-1].endl:
+        diff += [RemoveCallEndl()]
 
     return diff
 

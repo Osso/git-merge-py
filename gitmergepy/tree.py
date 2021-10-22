@@ -577,6 +577,18 @@ class ArgRemoveNewLine:
         return []
 
 
+class RemoveCallEndl:
+    def __repr__(self):
+        return "<%s>" % (self.__class__.__name__)
+
+    def apply(self, tree):
+        logging.debug(". removing new line before brackets")
+        tree[-1].associated_sep = []
+        tree.value.footer = []
+        tree.value._synchronise()
+        return []
+
+
 class Conflict:
     def __init__(self, els, change, reason='', insert_before=True):
         self.els = els
@@ -869,7 +881,7 @@ class RemoveFunArgs:
     def apply(self, tree):
         to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
-        for el in args:
+        for el in list(args):
             if id_from_el(el) in to_remove_values:
                 logging.debug(". removing arg %r from %r",
                               short_display_el(el), short_display_el(args))

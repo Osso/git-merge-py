@@ -1984,3 +1984,19 @@ fun(arg1,
     arg2)
 """
     _test_apply_changes(base, current)
+
+
+def test_call_brackets_multiline_remove_2():
+    base = """
+fun(
+    arg1,
+    arg2,
+    arg3
+   )
+"""
+    current = """
+fun(
+    arg1,
+    arg2)
+"""
+    _test_apply_changes(base, current)

@@ -4,17 +4,14 @@ from redbaron.node_mixin import CodeBlockMixin
 from redbaron.proxy_list import (DictProxyList,
                                  ProxyList)
 
-from .context import (AfterContext,
-                      BeforeContext,
-                      find_context)
+from .context import find_context
 from .tools import (LAST,
-                    append_coma_list,
                     insert_coma_list)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
 
-def apply_changes(tree, changes):
+def apply_changes(tree, changes, skip_checks=False):
     conflicts = []
     for change in changes:
         conflicts += change.apply(tree)
@@ -28,17 +25,18 @@ def apply_changes(tree, changes):
         tree.value._synchronise()
 
     # Sanity check
-    if isinstance(tree.parent, DictProxyList):
-        tree = tree.parent.parent
-    if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
-                         nodes.WithNode, nodes.CallArgumentNode,
-                         nodes.ElifNode, nodes.ExceptNode)):
-        tree = tree.parent.parent
-    if isinstance(tree, nodes.CallNode):
-        tree = tree.parent.parent
-    while isinstance(tree, (nodes.ElseNode, ProxyList)):
-        tree = tree.parent
-    RedBaron(tree.dumps())
+    if not skip_checks:  # skipped for fragments that are not parseable
+        if isinstance(tree.parent, DictProxyList):
+            tree = tree.parent.parent
+        if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
+                             nodes.WithNode, nodes.CallArgumentNode,
+                             nodes.ElifNode, nodes.ExceptNode)):
+            tree = tree.parent.parent
+        if isinstance(tree, nodes.CallNode):
+            tree = tree.parent.parent
+        while isinstance(tree, (nodes.ElseNode, ProxyList)):
+            tree = tree.parent
+        RedBaron(tree.dumps())
 
     return conflicts
 

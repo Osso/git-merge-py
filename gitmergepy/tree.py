@@ -1062,7 +1062,7 @@ class RemoveDictItem(BaseEl):
         return []
 
 
-class ChangeDictItem(ChangeEl):
+class ChangeDictValue(ChangeEl):
     def apply(self, tree):
         logging.debug("changing key %s", short_display_el(self.el.key))
 
@@ -1072,21 +1072,34 @@ class ChangeDictItem(ChangeEl):
         return apply_changes(item.value, self.changes)
 
 
-class ChangeDictComment(ChangeEl):
+class ChangeDictItem(ChangeEl):
     def apply(self, tree):
-        logging.debug("changing dict comment %s", short_display_el(self.el))
+        logging.debug("changing key %s", short_display_el(self.el.key))
 
         item = find_key(self.el.key, tree)
         if not item:
             return []
+        return apply_changes(item, self.changes)
+
+
+class ChangeAssociatedSep:
+    def __repr__(self):
+        return "<%s changes=%r>" % (self.__class__.__name__, self.changes)
+
+    def __init__(self, changes):
+        self.changes = changes
+
+    def apply(self, tree):
+        logging.debug("changing associated sep")
 
         if isinstance(self.changes[0], Replace):
-            item.associated_sep = self.changes.pop(0).new_value
+            tree.associated_sep = self.changes.pop(0).new_value
 
         if not self.changes:
             return []
 
-        return apply_changes(item.associated_sep, self.changes)
+        return apply_changes(tree.associated_sep, self.changes,
+                             skip_checks=True)
 
 
 class ReplaceDictComment(BaseEl):

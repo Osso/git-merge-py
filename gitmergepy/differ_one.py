@@ -11,11 +11,9 @@ from .differ import (compute_diff,
 from .tools import (INDENT,
                     changed_in_list,
                     diff_list,
-                    get_call_els,
                     id_from_arg,
                     id_from_decorator,
                     id_from_el,
-                    same_el,
                     short_display_el)
 from .tree import (AddAllDecoratorArgs,
                    AddBase,
@@ -30,15 +28,15 @@ from .tree import (AddAllDecoratorArgs,
                    ChangeAnnotation,
                    ChangeArg,
                    ChangeAssignmentNode,
-                   ChangeAtomtrailersCall,
+                   ChangeAssociatedSep,
                    ChangeAtomtrailersEl,
                    ChangeAttr,
                    ChangeCallArg,
                    ChangeDecorator,
                    ChangeDecoratorArgs,
                    ChangeDefArg,
-                   ChangeDictComment,
                    ChangeDictItem,
+                   ChangeDictValue,
                    ChangeElseNode,
                    ChangeExceptsNode,
                    ChangeNumberValue,
@@ -146,6 +144,10 @@ def diff_def_node(left, right, indent):
             diff_arg += [MoveArg(context=gather_context(new_arg))]
         if diff_arg:
             diff += [ChangeDefArg(new_arg, changes=diff_arg)]
+
+    # Comments in args
+    diff += diff_list_comments(left.arguments, right.arguments, indent=indent,
+                               list_changer=ChangeDefArg)
 
     # Decorators
     to_add, to_remove = diff_list(left.decorators, right.decorators,
@@ -264,6 +266,10 @@ def diff_call_node(left, right, indent):
         if id_from_el(get_previous_arg(old_arg, to_remove)) != id_from_el(get_previous_arg(new_arg, to_remove)):
             diff_arg += [MoveArg(context=gather_context(new_arg))]
         diff += [ChangeCallArg(new_arg, changes=diff_arg)]
+
+    # Comments
+    diff += diff_list_comments(left, right, indent=indent,
+                               list_changer=ChangeCallArg)
 
     # New lines for brackets
     if len(left) > 0 and left[-1].endl and len(right) > 0 and not right[-1].endl:
@@ -438,26 +444,13 @@ def diff_dict_node(left, right, indent):
     changed = changed_in_list(left, right)
     for left_el, right_el in changed:
         logging.debug('%s dict changed key %r', indent, short_display_el(left_el.key))
-        diff += [ChangeDictItem(left_el,
+        diff += [ChangeDictValue(left_el,
                                 changes=compute_diff(left_el.value,
                                                      right_el.value,
                                                      indent=indent+INDENT))]
 
-    # Comments
-    def comment_getter(el):
-        sep = el.associated_sep
-        if sep is None:
-            return None
-        return sep.dumps()
-
-    changed = changed_in_list(left, right, value_getter=comment_getter)
-    for left_el, right_el in changed:
-        if left_el.associated_sep and right_el.associated_sep:
-            changes = compute_diff(left_el.associated_sep, right_el.associated_sep,
-                                   indent=indent+INDENT)
-        else:
-            changes = [Replace(right_el, old_value=left_el)]
-        diff += [ChangeDictComment(left_el, changes=changes)]
+    diff += diff_list_comments(left, right, indent=indent,
+                               list_changer=ChangeDictItem)
 
     return diff
 
@@ -546,6 +539,33 @@ def diff_string_node(left, right, indent):
 
 def diff_name_node(left, right, indent):
     return [Replace(new_value=right, old_value=left)]
+
+
+def diff_list_comments(left, right, indent, list_changer):
+    def _comment_getter(el):
+        sep = el.associated_sep
+        if sep is None:
+            return None
+        return sep.dumps()
+
+    diff = []
+    changed = changed_in_list(left, right, value_getter=_comment_getter)
+
+    for left_el, right_el in changed:
+        if left_el.associated_sep and right_el.associated_sep:
+            if not left_el.associated_sep.second_formatting and not right_el.associated_sep.second_formatting:
+                continue
+            changes = compute_diff(left_el.associated_sep, right_el.associated_sep,
+                                   indent=indent+INDENT)
+        else:
+            if right_el.associated_sep and not right_el.associated_sep.second_formatting:
+                continue
+            changes = [Replace(right_el.associated_sep,
+                               old_value=left_el.associated_sep)]
+        diff += [list_changer(left_el,
+                              changes=[ChangeAssociatedSep(changes=changes)])]
+
+    return diff
 
 
 COMPUTE_DIFF_ONE_CALLS = {

@@ -96,7 +96,6 @@ def append_replace(diff, to_add, to_remove, indent):
         diff.pop()
         diff.append(remove)
     elif not to_add:
-        # Transform add+remove into a ReplaceEls
         logging.debug("%s removing empty AddEls", indent)
         diff.pop()
 

@@ -117,12 +117,15 @@ class RemoveEls:
                 logging.debug(". looking for el %r",
                               short_display_el(el_to_remove))
                 anchor_el = find_el(tree, el_to_remove, self.context)
-                if anchor_el is not None:
+                if anchor_el:
                     logging.debug(". el found")
                     break
-                else:
-                    logging.debug(". el not found")
 
+                find_el(tree, el_to_remove, self.context)
+                logging.debug(". el not found")
+
+            assert el_to_remove is to_remove[0]
+            self.context.insert(0, el_to_remove)
             skipped_to_remove.append(to_remove.pop(0))
 
         if anchor_el:
@@ -311,7 +314,7 @@ class ReplaceEls(BaseAddEls):
         super().__init__(to_add=to_add, context=context)
 
     def __repr__(self):
-        return "<%s\nto_add:\n* %s\nto_remove:\n* %s\ncontext:\n%s\n>" % (
+        return "<%s\nto_add:\n* %s\nto_remove:\n* %s\ncontext:\n* %s\n>" % (
             self.__class__.__name__,
             '\n* '.join(short_display_el(el).lstrip(" ") for el in self.to_add),
             '\n* '.join(short_display_el(el).lstrip(" ") for el in self.to_remove),

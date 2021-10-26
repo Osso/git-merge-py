@@ -2000,3 +2000,20 @@ fun(
     arg2)
 """
     _test_apply_changes(base, current)
+
+
+def test_remove_with_context_reduction():
+    base = """
+# line 1
+# line 2
+
+# line 3
+# line 4
+# line 3
+"""
+    current = """
+# line 2
+# line 4
+# line 3
+"""
+    _test_apply_changes(base, current)

@@ -84,9 +84,11 @@ def find_single(tree, types):
 def same_call_guess(left, right):
     name_els_left = get_name_els_from_call(left)
     name_els_right = get_name_els_from_call(right)
+    left_call_string = name_els_to_string(name_els_left)
+    right_call_string = name_els_to_string(name_els_right)
 
     # Same function
-    if name_els_to_string(name_els_left) != name_els_to_string(name_els_right):
+    if left_call_string.lower() != right_call_string.lower():
         return False
     # Same number of calls
     if len(get_call_els(left)) != len(get_call_els(right)):

@@ -350,6 +350,10 @@ class ReplaceEls(BaseAddEls):
         if not indexes:
             logging.debug(". cannot match context")
             indexes = self._look_for_els(tree)
+        if not indexes:
+            matches = find_context_with_reduction(tree, self.context)
+            if len(matches) == 1:
+                indexes = matches
 
         if not indexes:
             add_conflicts(tree, [Conflict(self.to_remove, self,
@@ -365,13 +369,19 @@ class ReplaceEls(BaseAddEls):
             self._insert_el(el_to_add, index, tree)
             index += 1
 
-        for offset, el_to_remove in enumerate(self.to_remove):
+        offset = 0
+        for el_to_remove in self.to_remove:
             el = tree[index+offset]
             if isinstance(el, nodes.CommentNode) and not isinstance(el_to_remove, nodes.CommentNode):
                 tree.hide(el)
                 el = el.next
+
+            if not same_el_guess(el, el_to_remove):
+                continue
+
             tree.hide(el)
             set_cursor(tree, el)
+            offset += 1
 
         return []
 

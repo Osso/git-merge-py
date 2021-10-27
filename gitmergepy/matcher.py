@@ -317,8 +317,8 @@ def dict_similarity(left, right):
 
 
 def args_similarity(left, right):
-    left_args = set(arg.dumps() for arg in left)
-    right_args = set(arg.dumps() for arg in right)
+    left_args = set(arg.dumps().strip() for arg in left)
+    right_args = set(arg.dumps().strip() for arg in right)
     same_args_count = len(left_args & right_args)
     args_count = max(len(left_args), len(right_args))
     if args_count == 0:

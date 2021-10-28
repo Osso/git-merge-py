@@ -3,6 +3,7 @@ import logging
 from redbaron import RedBaron
 
 from gitmergepy.applyier import apply_changes
+from gitmergepy.context import AfterContext
 from gitmergepy.differ import compute_diff
 from gitmergepy.tree import (AddCallArg,
                              AddEls,
@@ -11,6 +12,7 @@ from gitmergepy.tree import (AddCallArg,
                              ChangeImport,
                              ChangeString,
                              MoveImport,
+                             RemoveEls,
                              RemoveWith,
                              SameEl)
 
@@ -2017,3 +2019,35 @@ def test_remove_with_context_reduction():
 # line 3
 """
     _test_apply_changes(base, current)
+
+
+def test_add_comment_before_function():
+    base = """
+def fun1():
+    pass
+"""
+    current = """
+# comment
+def fun1():
+    pass
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], AddEls)
+    assert isinstance(changes[0].context, AfterContext)
+
+
+def test_remove_comment_before_function():
+    base = """
+# comment
+def fun1():
+    pass
+"""
+    current = """
+def fun1():
+    pass
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[0], RemoveEls)
+    assert isinstance(changes[0].context, AfterContext)

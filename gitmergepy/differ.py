@@ -115,10 +115,23 @@ def __remove_or_replace(diff, els, indent, ignore_context=False):
         append_replace(diff, to_add, to_remove, indent=indent+INDENT)
 
     else:
-        logging.debug("%s remove els %r, context ~%r", indent+INDENT,
-                      ", ".join(short_display_el(el) for el in els),
-                      short_context(context))
-        diff += [RemoveEls(els, context=context)]
+        diff += __remove(els, context=context, indent=indent+INDENT)
+
+
+def __remove(els, context, indent):
+    logging.debug("%s remove els %r", indent,
+                  ", ".join(short_display_el(el) for el in els))
+
+    if len(els) == 1:
+        el = els[0]
+        comment_before_function = detect_comment_before_function(el)
+        if comment_before_function is not None:
+            context = gather_after_context(comment_before_function)
+            logging.debug("%s after context %r", indent, short_context(context))
+            return [RemoveEls([el], context=context)]
+
+    logging.debug("%s context %r", indent, short_context(context))
+    return [RemoveEls(els, context=context)]
 
 
 def _remove_or_replace(diff, els, indent):

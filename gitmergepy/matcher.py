@@ -1,4 +1,7 @@
+from collections import namedtuple
+
 from redbaron import nodes
+from redbaron.node_mixin import CodeBlockMixin
 
 from Levenshtein import distance as levenshtein
 
@@ -260,6 +263,11 @@ def find_el(tree, target_el, context):
         if el:
             return el
 
+    if isinstance(target_el, CodeBlockMixin):
+        el = best_block(tree, target_el, target_el.baron_type)
+        if el:
+            return el
+
     el = _find_el(same_el_guess)
     if el:
         return el
@@ -291,6 +299,22 @@ def find_with_node_same_context(tree, target_el, context):
     for el in tree:
         if isinstance(el, nodes.WithNode) and context.match_el(tree, el):
             return el
+    return None
+
+
+def best_block(tree, target_el, block_type):
+    Result = namedtuple("Result", ["el", "score"])
+    blocks_found = [Result(el, code_block_similarity(target_el, el))
+                    for el in tree.find_all(block_type)]
+    if len(blocks_found) >= 2:
+        blocks_found = sorted(blocks_found,
+                              key=lambda x: x.score, reverse=True)
+        if blocks_found[0].score - blocks_found[1].score > 0.10:
+            return blocks_found[0].el
+
+    if len(blocks_found) == 1:
+        return blocks_found[0].el
+
     return None
 
 

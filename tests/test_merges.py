@@ -950,3 +950,67 @@ call(3)
 call(0.5)
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_change_with_best_block():
+    base = """
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 first
+    call(1)
+# context
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 second
+    call(2)
+"""
+    current = """
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 first
+    call(1)
+# context
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 second
+    call("changed")
+"""
+    other = """
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 first
+    call(1)
+# changed context
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 changed
+    call(2)
+"""
+    expected = """
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 first
+    call(1)
+# changed context
+with fun():
+    # 1
+    # 2
+    # 3
+    # 4 changed
+    call("changed")
+"""
+    _test_merge_changes(base, current, other, expected)

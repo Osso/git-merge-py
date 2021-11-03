@@ -718,37 +718,41 @@ class MoveElWithId(ChangeEl):
     def apply(self, tree):
         fun = self.finder(tree, self.el)
         # If function still exists, move it then apply changes
-        if fun:
-            logging.debug("moving fun %r", short_display_el(fun))
-            indexes = find_context_with_reduction(tree, self.context)
-            if len(indexes) == 1:
-                index = indexes[0]
-                tree.hide(fun)
-                line = fun.next
-                for _ in self.empty_lines:
-                    if not isinstance(line, nodes.EmptyLineNode):
-                        break
-                    tree.hide(line)
-                    line = line.next
+        if not fun:
+            return []
 
-                try:
-                    while isinstance(tree[index], nodes.EmptyLineNode):
-                        index += 1
-                except IndexError:
-                    pass
-                new_fun = fun.copy()
-                new_fun.new = True
-                tree.insert(index, new_fun)
+        logging.debug("moving fun %r", short_display_el(fun))
+        indexes = find_context_with_reduction(tree, self.context)
+        if len(indexes) == 1:
+            index = indexes[0]
+            tree.hide(fun)
+            line = fun.next
+            for _ in self.empty_lines:
+                if not isinstance(line, nodes.EmptyLineNode):
+                    break
+                tree.hide(line)
+                line = line.next
 
-                if new_fun.displayable_next:
-                    for line in self.empty_lines:
-                        index += 1
-                        new_line = nodes.EmptyLineNode()
-                        new_line.new = True
-                        tree.insert_with_new_line(index, new_line)
+            try:
+                while isinstance(tree[index], nodes.EmptyLineNode):
+                    index += 1
+            except IndexError:
+                pass
+            new_fun = fun.copy()
+            new_fun.new = True
+            tree.insert(index, new_fun)
 
-                conflicts = apply_changes(new_fun, self.changes)
-                add_conflicts(tree, conflicts)
+            if new_fun.displayable_next:
+                for line in self.empty_lines:
+                    index += 1
+                    new_line = nodes.EmptyLineNode()
+                    new_line.new = True
+                    tree.insert_with_new_line(index, new_line)
+        else:
+            new_fun = fun
+
+        conflicts = apply_changes(new_fun, self.changes)
+        add_conflicts(tree, conflicts)
         return []
 
 

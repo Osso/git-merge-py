@@ -27,6 +27,7 @@ from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
 from .tools import (apply_diff_to_list,
                     as_from_contexts,
                     empty_lines,
+                    get_args_names,
                     get_call_els,
                     id_from_arg,
                     id_from_el,
@@ -833,6 +834,12 @@ class AddFunArg:
     def apply(self, tree):
         args = self.get_args(tree)
         arg = self.arg.copy()
+
+        if arg.target and arg.target.value in get_args_names(args):
+            logging.debug(". arg %r already exists",
+                          short_display_el(self.arg))
+            return []
+
         logging.debug(". adding arg %r to %r, new_line=%r",
                       short_display_el(self.arg), short_display_el(args),
                       self.on_new_line)
@@ -1107,18 +1114,22 @@ class ChangeAssociatedSep:
         return "<%s changes=%r>" % (self.__class__.__name__, self.changes)
 
     def __init__(self, changes):
-        self.changes = changes
+        assert changes
+        self.changes = tuple(changes)
 
     def apply(self, tree):
         logging.debug("changing associated sep")
 
         if isinstance(self.changes[0], Replace):
-            tree.associated_sep = self.changes.pop(0).new_value
+            changes = list(self.changes)
+            tree.associated_sep = changes.pop(0).new_value
+        else:
+            changes = self.changes
 
-        if not self.changes:
+        if not changes:
             return []
 
-        return apply_changes(tree.associated_sep, self.changes,
+        return apply_changes(tree.associated_sep, changes,
                              skip_checks=True)
 
 

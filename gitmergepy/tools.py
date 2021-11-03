@@ -239,3 +239,7 @@ def same_el(left, right, discard_indentation=True):
 def empty_lines(els):
     return all(isinstance(el, (nodes.EmptyLineNode, nodes.EndlNode))
                for el in els)
+
+
+def get_args_names(args):
+    return [arg.target.value for arg in args]

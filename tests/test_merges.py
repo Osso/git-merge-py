@@ -1014,3 +1014,23 @@ with fun():
     call("changed")
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_fun_add_arg_already_existsing():
+    base = """
+def fun1(arg):
+    pass
+"""
+    current = """
+def fun1(arg, new_arg):
+    pass
+"""
+    other = """
+def fun1(arg, new_arg):
+    pass
+"""
+    expected = """
+def fun1(arg, new_arg):
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)

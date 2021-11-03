@@ -746,8 +746,9 @@ class MoveElWithId(ChangeEl):
                         new_line = nodes.EmptyLineNode()
                         new_line.new = True
                         tree.insert_with_new_line(index, new_line)
-            conflicts = apply_changes(fun, self.changes)
-            add_conflicts(tree, conflicts)
+
+                conflicts = apply_changes(new_fun, self.changes)
+                add_conflicts(tree, conflicts)
         return []
 
 

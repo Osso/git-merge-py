@@ -14,7 +14,8 @@ from .applyier import (add_conflict,
 from .context import (AfterContext,
                       find_context,
                       find_context_with_reduction,
-                      gather_after_context)
+                      gather_after_context,
+                      gather_context)
 from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
                       code_block_similarity,
                       find_class,
@@ -722,6 +723,9 @@ class MoveElWithId(ChangeEl):
         fun = self.finder(tree, self.el)
         # If function still exists, move it then apply changes
         if not fun:
+            return []
+        if gather_context(tree) == self.context:
+            logging.debug("fun already in position %r", short_display_el(fun))
             return []
 
         logging.debug("moving fun %r", short_display_el(fun))

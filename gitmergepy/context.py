@@ -1,11 +1,17 @@
 from redbaron import nodes
 
-from .matcher import same_el_guess
+from .matcher import (same_el,
+                      same_el_guess)
 from .tools import (WHITESPACE_NODES,
                     empty_lines)
 
 
 class BeforeContext(list):
+    def __eq__(self, other):
+        if len(other) != len(self):
+            return False
+        return all(same_el(el, el_other) for el, el_other in zip(self, other))
+
     def match_el(self, tree, el):
         index = tree.index(el)
         return self.match(tree, index)

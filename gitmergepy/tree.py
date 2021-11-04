@@ -721,10 +721,12 @@ class MoveElWithId(ChangeEl):
 
     def apply(self, tree):
         fun = self.finder(tree, self.el)
+
         # If function still exists, move it then apply changes
         if not fun:
             return []
-        if gather_context(tree) == self.context:
+
+        if gather_context(fun) == self.context:
             logging.debug("fun already in position %r", short_display_el(fun))
             return []
 

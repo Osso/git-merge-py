@@ -2049,5 +2049,5 @@ def fun1():
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    assert isinstance(changes[1], RemoveEls)
-    assert isinstance(changes[1].context, AfterContext)
+    assert isinstance(changes[0], RemoveEls)
+    assert isinstance(changes[0].context, AfterContext)

@@ -5,7 +5,9 @@ from redbaron import nodes
 from .context import gather_context
 from .differ import (add_to_diff,
                      changed_el,
-                     compute_diff)
+                     compute_diff,
+                     process_stack_till_el,
+                     simplify_white_lines)
 from .matcher import (best_block,
                       find_class,
                       find_func,
@@ -75,11 +77,13 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
         logging.debug("%s already matched %r", indent+INDENT,
                       id_from_el(el_right))
         most_similiar_node = el_right.matched_el
+        moved = True
     else:
         logging.debug("%s looking for best match %r",
                       indent+INDENT, id_from_el(el_right))
         most_similiar_node = finder_with_rename_handling(stack_left, el_right,
                                                          finder=finder)
+        moved = False
 
     if not most_similiar_node:
         logging.debug("%s new", indent+INDENT)
@@ -89,16 +93,31 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
         diff += changed_el(el_right, stack_left, indent=indent,
                             change_class=change_class)
     else:
-        logging.debug("%s moved", indent+INDENT)
+        if moved:
+            logging.debug("%s moved", indent+INDENT)
+        else:
+            logging.debug("%s %r ahead, processing stack", indent+INDENT,
+                          id_from_el(el_right))
+            process_stack_till_el(stack_left, stop_el=most_similiar_node,
+                                  tree=el_right.parent,
+                                  diff=diff,
+                                  indent=indent)
+            global_diff.extend(diff)
+            simplify_white_lines(global_diff, indent=indent+INDENT)
+            diff = []
+
         most_similiar_node.already_processed = True
         el_right.already_processed = True
         empty_lines = _process_empty_lines(most_similiar_node, el_right)
         el_diff = compute_diff(most_similiar_node, el_right,
                                indent=indent+2*INDENT)
-        diff += [move_class(most_similiar_node, changes=el_diff,
-                            context=gather_context(el_right),
-                            empty_lines=empty_lines)]
-
+        context = gather_context(el_right)
+        if moved:
+            diff += [move_class(most_similiar_node, changes=el_diff,
+                                context=context, empty_lines=empty_lines)]
+        elif el_diff:
+            diff += [change_class(most_similiar_node, changes=el_diff,
+                                context=context)]
     return diff
 
 

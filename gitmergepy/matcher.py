@@ -305,7 +305,7 @@ def find_with_node_same_context(tree, target_el, context):
 def best_block(tree, target_el, block_type):
     Result = namedtuple("Result", ["el", "score"])
     blocks_found = [Result(el, code_block_similarity(target_el, el))
-                    for el in tree.find_all(block_type)]
+                    for el in tree if el.baron_type == block_type]
     if len(blocks_found) >= 2:
         blocks_found = sorted(blocks_found,
                               key=lambda x: x.score, reverse=True)

@@ -242,4 +242,5 @@ def empty_lines(els):
 
 
 def get_args_names(args):
-    return [arg.target.value for arg in args]
+    assert isinstance(args.parent, nodes.DefNode)
+    return [id_from_el(arg) for arg in args]

@@ -219,10 +219,11 @@ class RemoveImports:
 
 
 class BaseAddEls:
-    def __init__(self, to_add, context):
+    def __init__(self, to_add, context, after_context=None):
         assert context
         self.to_add = to_add
         self.context = context
+        self.after_context = after_context
 
     def __repr__(self):
         return "<%s to_add=\"%s\" context=%r>" % (
@@ -242,17 +243,22 @@ class BaseAddEls:
         # Make it one insert branch by using index
         if self.context[-1] is None and False:
             if isinstance(self.context, AfterContext):
-                logging.debug("    at the end")
+                logging.debug(". at the end")
                 index = len(tree)
             else:
-                logging.debug("    at the beginning")
+                logging.debug(". at the beginning")
                 index = skip_context_endl(tree, self.context)
         else:
-            logging.debug("    context %r", short_context(self.context))
+            logging.debug(". context %r", short_context(self.context))
             indexes = find_context_with_reduction(tree, self.context)
 
+            if not indexes and self.after_context:
+                logging.debug(". context not found, looking for after context "
+                              "%r", short_context(self.after_context))
+                indexes = find_context_with_reduction(tree, self.after_context)
+
             if not indexes:
-                logging.debug("    context not found")
+                logging.debug(". context not found")
                 if empty_lines(self.to_add):
                     return []
                 return [Conflict(self.to_add, self,
@@ -348,7 +354,7 @@ class ReplaceEls(BaseAddEls):
 
     def apply(self, tree):
         logging.debug("replacing els")
-        logging.debug("    context %r", short_context(self.context))
+        logging.debug(". context %r", short_context(self.context))
 
         indexes = self._look_for_context(tree)
         if not indexes:
@@ -485,10 +491,10 @@ class ChangeEl(BaseEl):
     def apply(self, tree):
         logging.debug("changing %s context %s", short_display_el(self.el),
                       short_context(self.context))
-
         el = find_el(tree, self.el, self.context)
         if el is None:
             logging.debug(". not found")
+            add_conflicts(tree, [Conflict([self.el], self, 'el not found')])
         else:
             logging.debug(". found")
             conflicts = apply_changes(el, self.changes)

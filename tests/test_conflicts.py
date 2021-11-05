@@ -25,7 +25,7 @@ def _test_merge_changes(base, current, other, expected):
     return other_ast
 
 
-def test_if_else():
+def test_added_elements_different_context():
     base = """
 if cond:
     # context
@@ -34,22 +34,64 @@ if cond:
     current = """
 if cond:
     # context
-    # text
+    # added elements
     pass
 """
     other = """
 if cond:
     # changed context
-    pass
+    changed_too
 """
     expected = """
 # <<<<<<<<<<
 # Reason context not found
-# <AddEls to_add="    # text" context='None|    # context'>
-#     # text
+# <AddEls to_add="    # added elements" context='None|    # context'>
+#     # added elements
 # >>>>>>>>>>
 if cond:
     # changed context
+    changed_too
+"""
+    ast = _test_merge_changes(base, current, other, expected)
+    assert isinstance(ast[0], nodes.CommentNode)
+
+
+def test_if_else():
+    base = """
+if cond:
+    pass
+"""
+    current = """
+if cond:
+    # added elements
+    pass
+"""
+    other = """
+# different context
+if cond:
+    # changed context 1
+    # changed context 2
+    pass
+if cond:
+    # changed context 1
+    # changed context 2
+    pass
+"""
+    expected = """
+# <<<<<<<<<<
+# Reason el not found
+# <ChangeEl el="if cond:" changes=[<ChangeValue el="if cond:" changes=[<ChangeEl el="if cond:" changes=[<AddEls to_add="    # added elements" context='None'>, <SameEl el="    pass">] context='None'>] context='no context'>] context='None'>
+# if cond:
+#     pass
+# >>>>>>>>>>
+# different context
+if cond:
+    # changed context 1
+    # changed context 2
+    pass
+if cond:
+    # changed context 1
+    # changed context 2
     pass
 """
     ast = _test_merge_changes(base, current, other, expected)

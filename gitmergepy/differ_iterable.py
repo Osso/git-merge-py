@@ -47,25 +47,17 @@ def _process_empty_lines(el, el_right):
 
 
 def finder_with_rename_handling(stack_left, el_right, finder):
-    node_with_same_id = finder(stack_left, el_right)
-    if not node_with_same_id:
-        return best_block(stack_left, target_el=el_right,
-                          block_type=el_right.baron_type)
+    most_similiar_node = best_block(stack_left, target_el=el_right,
+                                    block_type=el_right.baron_type)
 
-    most_similiar_node = best_block(el_right.parent,
-                                    target_el=node_with_same_id,
-                                    block_type=node_with_same_id.baron_type)
+    if not most_similiar_node:  # no best match
+        # use node with the same name
+        node_with_same_id = finder(stack_left, el_right)
+        if not best_block(el_right.parent, target_el=node_with_same_id,
+                          block_type=node_with_same_id.baron_type):
+            most_similiar_node = node_with_same_id
 
-    if not most_similiar_node or most_similiar_node is el_right:
-        # el has not been moved, some old elements are before it
-        found_el = node_with_same_id
-    else:
-        # Probably el_right is new node and node_with_same_id has been renamed
-        most_similiar_node.matched_el = node_with_same_id
-        most_similiar_node.old_name = id_from_el(node_with_same_id)
-        found_el = None
-
-    return found_el
+    return most_similiar_node
 
 
 def diff_node_with_id(stack_left, el_right, indent, global_diff,
@@ -77,13 +69,13 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
         logging.debug("%s already matched %r", indent+INDENT,
                       id_from_el(el_right))
         most_similiar_node = el_right.matched_el
-        moved = True
+        maybe_moved = True
     else:
-        logging.debug("%s looking for best match %r",
-                      indent+INDENT, id_from_el(el_right))
         most_similiar_node = finder_with_rename_handling(stack_left, el_right,
                                                          finder=finder)
-        moved = False
+        logging.debug("%s looking for best match %r",
+                      indent+INDENT, id_from_el(most_similiar_node))
+        maybe_moved = False
 
     if not most_similiar_node:
         logging.debug("%s new", indent+INDENT)
@@ -93,7 +85,7 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
         diff += changed_el(el_right, stack_left, indent=indent,
                             change_class=change_class)
     else:
-        if moved:
+        if maybe_moved:
             logging.debug("%s moved", indent+INDENT)
         else:
             logging.debug("%s %r ahead, processing stack", indent+INDENT,
@@ -112,7 +104,7 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
         el_diff = compute_diff(most_similiar_node, el_right,
                                indent=indent+2*INDENT)
         context = gather_context(el_right)
-        if moved:
+        if maybe_moved:
             diff += [move_class(most_similiar_node, changes=el_diff,
                                 context=context, empty_lines=empty_lines)]
         elif el_diff:

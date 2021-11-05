@@ -53,8 +53,9 @@ def finder_with_rename_handling(stack_left, el_right, finder):
     if not most_similiar_node:  # no best match
         # use node with the same name
         node_with_same_id = finder(stack_left, el_right)
-        if not best_block(el_right.parent, target_el=node_with_same_id,
-                          block_type=node_with_same_id.baron_type):
+        if node_with_same_id and not best_block(el_right.parent,
+                                    target_el=node_with_same_id,
+                                    block_type=node_with_same_id.baron_type):
             most_similiar_node = node_with_same_id
 
     return most_similiar_node

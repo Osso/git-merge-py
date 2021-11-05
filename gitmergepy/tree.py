@@ -842,7 +842,7 @@ class AddFunArg:
         arg = self.arg.copy()
 
         if (isinstance(tree, nodes.DefNode) and
-                arg.target and arg.target.value in get_args_names(args)):
+                id_from_el(arg) in get_args_names(args)):
             logging.debug(". arg %r already exists",
                           short_display_el(self.arg))
             return []

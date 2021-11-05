@@ -18,27 +18,37 @@ DICT_SIMILARITY_THRESHOLD = 0.5
 ARGS_SIMILARITY_THRESHOLD = 0.6
 
 
-def find_code_block_with_id(tree, node):
-    node_type = type(node)
+def find_code_block_with_id(tree, target_el):
+    node_type = type(target_el)
+    node_id = id_from_el(target_el)
     functions = [f for f in tree if isinstance(f, node_type)]
-    matching = [f for f in functions if f.name == node.name]
-    if len(matching) > 1:
-        matching = [
-            f for f in matching
-            if code_block_similarity(f, node) > CODE_BLOCK_SAME_THRESHOLD
-        ]
+    matching = [f for f in functions if id_from_el(f) == node_id]
+    return best_block(matching, target_el)
 
-    return matching[0] if matching else None
+
+def finder_with_rename_handling(tree, target_el, finder):
+    most_similiar_node = best_block(tree, target_el=target_el)
+
+    if not most_similiar_node:  # no best match
+        # use node with the same name
+        node_with_same_id = finder(tree, target_el)
+        if node_with_same_id and not best_block(target_el.parent,
+                                                target_el=node_with_same_id):
+            most_similiar_node = node_with_same_id
+
+    return most_similiar_node
 
 
 def find_func(tree, func_node):
     assert isinstance(func_node, nodes.DefNode)
-    return find_code_block_with_id(tree, func_node)
+    return finder_with_rename_handling(tree, target_el=func_node,
+                                       finder=find_code_block_with_id)
 
 
 def find_class(tree, class_node):
     assert isinstance(class_node, nodes.ClassNode)
-    return find_code_block_with_id(tree, class_node)
+    return finder_with_rename_handling(tree, target_el=class_node,
+                                       finder=find_code_block_with_id)
 
 
 def find_import(tree, import_node):
@@ -50,10 +60,6 @@ def find_import(tree, import_node):
                 return el
 
     return None
-
-
-def match_el_without_context(el, target_el, context):
-    return same_el(el, target_el)
 
 
 def match_el_with_if_condition(el, target_el, context):
@@ -209,18 +215,23 @@ def find_els_exact(tree, target_el, old_tree=False):
         def filter(el):
             return not el.hidden
 
-    return [el for el in tree if same_el(el, target_el) if filter(el)]
+    return [el for el in tree if same_el(el, target_el) and filter(el)]
 
 
 def find_el(tree, target_el, context):
     el = find_el_strong(tree, target_el, context)
-    if el is not None:
+    if el:
         return el
 
-    # Match full context
-    el = find_el_exact_match_with_context(tree, target_el, context)
-    if el is not None:
-        return el
+    # Match context
+    if isinstance(target_el, CodeBlockMixin):
+        el = find_best_el_with_context(tree, target_el, context)
+        if el:
+            return el
+    else:
+        el = find_single_el_with_context(tree, target_el, context)
+        if el:
+            return el
 
     # Require context for indentation
     if isinstance(target_el, nodes.EndlNode):
@@ -233,14 +244,12 @@ def find_el(tree, target_el, context):
     els = find_els_exact(tree, target_el, old_tree=True)
     if len(els) == 1:
         return els[0]
-    if len(els) > 1:
-        return None
 
     # Start guessing here
     def _find_el(func):
-        for el in tree:
-            if func(el, target_el, context):
-                return el
+        matches = [el for el in tree if func(el, target_el, context)]
+        if len(matches) == 1:
+            return matches[0]
         return None
 
     if isinstance(target_el, nodes.IfelseblockNode):
@@ -248,23 +257,8 @@ def find_el(tree, target_el, context):
         if el:
             return el
 
-        el = find_if(tree, target_el)
-        if el:
-            return el
-
-    if isinstance(target_el, nodes.WithNode):
-        # only one
-        el = find_single(tree, nodes.WithNode)
-        if el:
-            return el
-
-        # same context, changed with attributes
-        el = find_with_node_same_context(tree, target_el, context)
-        if el:
-            return el
-
     if isinstance(target_el, CodeBlockMixin):
-        el = best_block(tree, target_el, target_el.baron_type)
+        el = best_block(tree, target_el)
         if el:
             return el
 
@@ -274,38 +268,39 @@ def find_el(tree, target_el, context):
     return None
 
 
-def find_with_node(tree):
-    return tree.find('with')
+def find_single_el_with_context(tree, target_el, context):
+    matches = [el for el in find_els_with_context(tree, context)
+               if same_el_guess(el, target_el)]
+    if len(matches) == 1:
+        return matches[0]
+    return None
 
 
-def find_el_exact_match_with_context(tree, target_el, context):
-    from .context import (_find_context,
-                          AfterContext,
+def find_els_with_context(tree, context):
+    from .context import (AfterContext,
                           find_context_with_reduction)
+    matches = []
 
     for index in find_context_with_reduction(tree, context):
         if isinstance(context, AfterContext):
             index -= 1
         if index == len(tree):
             continue
-        el = tree[index]
-        if same_el_guess(el, target_el):
-            return el
+        matches.append(tree[index])
 
-    return None
+    return matches
 
 
-def find_with_node_same_context(tree, target_el, context):
-    for el in tree:
-        if isinstance(el, nodes.WithNode) and context.match_el(tree, el):
-            return el
-    return None
+def find_best_el_with_context(tree, target_el, context):
+    matches = find_els_with_context(tree, context)
+    return best_block(matches, target_el)
 
 
-def best_block(tree, target_el, block_type):
+def best_block(tree, target_el):
+    target_el_type = type(target_el)
     Result = namedtuple("Result", ["el", "score"])
     blocks_found = [Result(el, code_block_similarity(target_el, el))
-                    for el in tree if el.baron_type == block_type]
+                    for el in tree if isinstance(el, target_el_type)]
     if len(blocks_found) >= 2:
         blocks_found = sorted(blocks_found,
                               key=lambda x: x.score, reverse=True)
@@ -315,14 +310,6 @@ def best_block(tree, target_el, block_type):
     if len(blocks_found) == 1:
         return blocks_found[0].el
 
-    return None
-
-
-def find_if(tree, target_el):
-    ifs_found = [el for el in tree.find_all('ifelseblock')
-             if code_block_similarity(target_el, el) > CODE_BLOCK_SIMILARITY_THRESHOLD]
-    if len(ifs_found) == 1:
-        return ifs_found[0]
     return None
 
 

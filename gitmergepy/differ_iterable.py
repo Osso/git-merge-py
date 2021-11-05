@@ -46,21 +46,6 @@ def _process_empty_lines(el, el_right):
     return empty_lines
 
 
-def finder_with_rename_handling(stack_left, el_right, finder):
-    most_similiar_node = best_block(stack_left, target_el=el_right,
-                                    block_type=el_right.baron_type)
-
-    if not most_similiar_node:  # no best match
-        # use node with the same name
-        node_with_same_id = finder(stack_left, el_right)
-        if node_with_same_id and not best_block(el_right.parent,
-                                    target_el=node_with_same_id,
-                                    block_type=node_with_same_id.baron_type):
-            most_similiar_node = node_with_same_id
-
-    return most_similiar_node
-
-
 def diff_node_with_id(stack_left, el_right, indent, global_diff,
                       el_type, finder, change_class, move_class):
     logging.debug("%s changed %r", indent, short_display_el(el_right))
@@ -72,8 +57,7 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
         most_similiar_node = el_right.matched_el
         maybe_moved = True
     else:
-        most_similiar_node = finder_with_rename_handling(stack_left, el_right,
-                                                         finder=finder)
+        most_similiar_node = finder(stack_left, el_right)
         logging.debug("%s looking for best match %r",
                       indent+INDENT, id_from_el(most_similiar_node))
         maybe_moved = False

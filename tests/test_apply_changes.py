@@ -2051,3 +2051,15 @@ def fun1():
     changes = compute_diff(RedBaron(base), RedBaron(current))
     assert isinstance(changes[0], RemoveEls)
     assert isinstance(changes[0].context, AfterContext)
+
+
+def test_rename_and_delete_class():
+    base = """
+class A: a()
+class B: b()
+"""
+    current = """
+class C: c()
+class A: b()
+"""
+    _test_apply_changes(base, current)

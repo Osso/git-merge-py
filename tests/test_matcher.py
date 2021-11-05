@@ -4,7 +4,8 @@ from redbaron import (RedBaron,
 
 from gitmergepy.context import (AfterContext,
                                 BeforeContext)
-from gitmergepy.matcher import (find_el,
+from gitmergepy.matcher import (code_block_similarity,
+                                find_el,
                                 find_el_exact_match_with_context)
 
 
@@ -45,3 +46,9 @@ def test_find_el_middle():
     el_to_remove = node("call2")
     assert find_el_exact_match_with_context(tree, el_to_remove, context) is tree[1]
     assert find_el(tree, el_to_remove, context) is tree[1]
+
+
+def test_code_block_similarity():
+    node1 = node("class A: a()")
+    node2 = node("class B: a()")
+    assert code_block_similarity(node1, node2) == 1

@@ -327,8 +327,8 @@ def find_if(tree, target_el):
 
 
 def code_block_similarity(left, right):
-    left_lines = set(left.dumps().splitlines()) - set([""])
-    right_lines = set(right.dumps().splitlines()) - set([""])
+    left_lines = set(line.dumps() for line in left) - set([""])
+    right_lines = set(line.dumps() for line in right) - set([""])
     same_lines_count = len(left_lines & right_lines)
     total_lines_count = max(len(left_lines), len(right_lines))
     return same_lines_count / total_lines_count

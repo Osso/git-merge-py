@@ -481,8 +481,9 @@ def add_to_diff(diff, el, last_added=False, indent=""):
         diff[-1].add_el(el)
     else:
         context = gather_context(el)
+        after_context = gather_after_context(el)
         logging.debug("%s context %r", indent, short_context(context))
-        diff += [AddEls([el], context=context)]
+        diff += [AddEls([el], context=context, after_context=after_context)]
 
 
 def diff_indent(left, right):

@@ -152,7 +152,6 @@ def same_el_guess(left, right, context=None):
             return True
         if hasattr(left, 'old_name') and left.old_name == right.name:
             return True
-        # return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.AtomtrailersNode):
         return same_call_guess(left, right)
     if isinstance(left, nodes.FromImportNode):
@@ -324,8 +323,12 @@ def best_block(tree, target_el):
 
 
 def code_block_similarity(left, right):
-    left_lines = set(line.dumps().strip() for line in left) - set([""])
-    right_lines = set(line.dumps().strip() for line in right) - set([""])
+    if isinstance(left, (nodes.DefNode, nodes.ClassNode, nodes.WithNode,
+                         nodes.ForNode)):
+        left = left.value
+        right = right.value
+    left_lines = set(line.strip() for line in left.dumps().splitlines()) - set([""])
+    right_lines = set(line.strip() for line in right.dumps().splitlines()) - set([""])
     same_lines_count = len(left_lines & right_lines)
     total_lines_count = max(len(left_lines), len(right_lines))
     return same_lines_count / total_lines_count

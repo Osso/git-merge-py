@@ -1838,10 +1838,8 @@ pass
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    assert isinstance(changes[0], SameEl)
     assert isinstance(changes[1], RemoveWith)
-    assert isinstance(changes[2], SameEl)
-    assert len(changes) == 3
+    assert len([c for c in changes if not isinstance(c, SameEl)]) == 1
 
 
 def test_try_except_1():

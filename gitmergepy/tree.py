@@ -629,7 +629,6 @@ class Conflict:
 class ChangeFun(ChangeEl):
     def apply(self, tree):
         logging.debug("changing fun %r", short_display_el(self.el))
-        import pdb; pdb.set_trace()
         el = find_func(tree, self.el)
         if not el and hasattr(self.el, 'old_name'):
             tmp_el = self.el.copy()

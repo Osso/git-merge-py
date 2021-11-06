@@ -52,3 +52,9 @@ def test_code_block_similarity():
     node1 = node("class A: a()")
     node2 = node("class B: a()")
     assert code_block_similarity(node1, node2) == 1
+
+
+def test_code_block_similarity_indentation():
+    node1 = node("class A:\n                   a()")
+    node2 = node("class B:\n a()")
+    assert code_block_similarity(node1, node2) == 1

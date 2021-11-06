@@ -29,7 +29,11 @@ def find_code_block_with_id(tree, target_el):
 def finder_with_rename_handling(tree, target_el, finder):
     most_similiar_node = best_block(tree, target_el=target_el)
 
-    if not most_similiar_node:  # no best match
+    if most_similiar_node:
+        if target_el is not best_block(target_el.parent,
+                                       target_el=most_similiar_node):
+            most_similiar_node = None
+    else:  # no best match
         # use node with the same name
         node_with_same_id = finder(tree, target_el)
         if node_with_same_id and not best_block(target_el.parent,
@@ -144,7 +148,9 @@ def same_el_guess(left, right, context=None):
     if isinstance(left, (nodes.DefNode, nodes.ClassNode)):
         if left.name == right.name:
             return True
-        if right.old_name and left.name == right.old_name:
+        if hasattr(right, 'old_name') and left.name == right.old_name:
+            return True
+        if hasattr(left, 'old_name') and left.old_name == right.name:
             return True
         # return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.AtomtrailersNode):

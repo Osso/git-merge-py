@@ -627,21 +627,12 @@ class Conflict:
 
 
 class ChangeFun(ChangeEl):
-    def __init__(self, el, changes, context=None, old_name=None):
-        super().__init__(el, changes=changes, context=context)
-        self.old_name = old_name
-
-    def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r old_name=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context), self.old_name)
-
     def apply(self, tree):
         logging.debug("changing fun %r", short_display_el(self.el))
         el = find_func(tree, self.el)
-        if not el and self.old_name:
+        if not el and hasattr(self.el, 'old_name'):
             tmp_el = self.el.copy()
-            tmp_el.name = self.old_name
+            tmp_el.name = self.el.old_name
             el = find_func(tree, tmp_el)
 
         if el:

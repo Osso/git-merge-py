@@ -2064,3 +2064,16 @@ class C: c()
 class A: b()
 """
     _test_apply_changes(base, current)
+
+
+def test_rename_and_add_function():
+    base = """def fun():
+    call()
+"""
+    current = """def fun():
+    pass
+
+def fun_renamed():
+    call()
+"""
+    _test_apply_changes(base, current)

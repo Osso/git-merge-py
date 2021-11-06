@@ -117,6 +117,7 @@ def diff_def_node(left, right, indent):
     diff = []
     # Name
     if left.name != right.name:
+        right.old_name = left.name
         diff += [RenameDef(right)]
 
     # Args

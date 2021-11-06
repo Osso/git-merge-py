@@ -1034,3 +1034,33 @@ def fun1(arg, new_arg):
     pass
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_rename_and_add_function_after_context():
+    base = """def context(): context()
+def fun():
+    call()
+"""
+    current = """def context(): context()
+def fun():
+    pass
+
+def fun_renamed():
+    call()
+"""
+    other = """
+def changed_context(): context()
+
+def fun():
+    call()
+"""
+    expected = """
+def changed_context(): context()
+
+def fun():
+    pass
+
+def fun_renamed():
+    call()
+"""
+    _test_merge_changes(base, current, other, expected)

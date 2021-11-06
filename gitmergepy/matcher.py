@@ -27,20 +27,20 @@ def find_code_block_with_id(tree, target_el):
 
 
 def finder_with_rename_handling(tree, target_el, finder):
-    most_similiar_node = best_block(tree, target_el=target_el)
+    most_similar_node = best_block(tree, target_el=target_el)
 
-    if most_similiar_node:
+    if most_similar_node:
         if target_el is not best_block(target_el.parent,
-                                       target_el=most_similiar_node):
-            most_similiar_node = None
+                                       target_el=most_similar_node):
+            most_similar_node = None
     else:  # no best match
         # use node with the same name
         node_with_same_id = finder(tree, target_el)
         if node_with_same_id and not best_block(target_el.parent,
                                                 target_el=node_with_same_id):
-            most_similiar_node = node_with_same_id
+            most_similar_node = node_with_same_id
 
-    return most_similiar_node
+    return most_similar_node
 
 
 def find_func(tree, func_node):

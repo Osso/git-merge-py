@@ -1,3 +1,4 @@
+from itertools import islice
 import logging
 
 from redbaron import nodes
@@ -8,8 +9,7 @@ from .differ import (add_to_diff,
                      compute_diff,
                      process_stack_till_el,
                      simplify_white_lines)
-from .matcher import (best_block,
-                      find_class,
+from .matcher import (find_class,
                       find_func,
                       find_import)
 from .tools import (INDENT,
@@ -20,28 +20,21 @@ from .tree import (AddImports,
                    ChangeEl,
                    ChangeFun,
                    ChangeImport,
+                   EnsureEmptyLines,
                    MoveClass,
                    MoveFun,
                    MoveImport,
                    RemoveEls)
 
 
-def _process_empty_lines(el, el_right):
+def _process_empty_lines(el):
     empty_lines = []
 
-    _el = el.next
-    _el_right = el_right
-    for _ in range(2):
+    for _el in islice(el.next_neighbors, 0, 2):
         if not isinstance(_el, nodes.EmptyLineNode):
             break
-        empty_lines.append(_el)
         _el.already_processed = True
-        if (isinstance(_el_right.next, nodes.EmptyLineNode) and
-                _el_right.already_processed):
-            _el_right.next.already_processed = True
-
-        _el = _el.next
-        _el_right = _el_right.next
+        empty_lines.append(_el)
 
     return empty_lines
 
@@ -85,16 +78,20 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
 
         most_similiar_node.already_processed = True
         el_right.already_processed = True
-        empty_lines = _process_empty_lines(most_similiar_node, el_right)
+        new_empty_lines = _process_empty_lines(el_right)
+        old_empty_lines = _process_empty_lines(most_similiar_node)
         el_diff = compute_diff(most_similiar_node, el_right,
                                indent=indent+2*INDENT)
+        if new_empty_lines:
+            el_diff += [EnsureEmptyLines(new_empty_lines)]
         context = gather_context(el_right)
         if maybe_moved:
             diff += [move_class(most_similiar_node, changes=el_diff,
-                                context=context, empty_lines=empty_lines)]
+                                context=context,
+                                old_empty_lines=old_empty_lines)]
         elif el_diff:
             diff += [change_class(most_similiar_node, changes=el_diff,
-                                context=context)]
+                                  context=context)]
     return diff
 
 

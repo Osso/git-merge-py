@@ -158,10 +158,9 @@ def process_stack_till_el(stack_left, stop_el, tree, diff, indent):
             logging.debug("%s el aready processed %r, flushing", indent+INDENT,
                           short_display_el(el))
             _flush_remove(els, diff=diff, indent=indent)
-            continue
-
-        process_stack_el(stack_left=stack_left, el_to_delete=el, tree=tree,
-                         els=els, diff=diff, indent=indent)
+        else:
+            process_stack_el(stack_left=stack_left, el_to_delete=el, tree=tree,
+                             els=els, diff=diff, indent=indent)
 
     _flush_remove(els, diff=diff, indent=indent)
 

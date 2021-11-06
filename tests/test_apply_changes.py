@@ -11,6 +11,7 @@ from gitmergepy.tree import (AddCallArg,
                              ChangeExceptsNode,
                              ChangeImport,
                              ChangeString,
+                             MoveFun,
                              MoveImport,
                              RemoveEls,
                              RemoveWith,
@@ -171,7 +172,7 @@ def fun1():
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    assert len([c for c in changes if not isinstance(c, SameEl)]) == 1
+    assert len([c for c in changes if isinstance(c, MoveFun)]) == 1
 
 
 def test_move_function_with_empty_lines_at_the_end():

@@ -61,7 +61,7 @@ def short_context(context):
     if isinstance(context, AfterContext):
         # if context[-1] is None:
         #     return "last -%d" % (len(context) - 1)
-        return 'after ' + '|'.join(short_display_el(el) for el in context)
+        return 'before ' + '|'.join(short_display_el(el) for el in context)
 
     # if context[-1] is None:
     #     return "first +%d" % (len(context) - 1)

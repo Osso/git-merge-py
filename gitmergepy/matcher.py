@@ -144,7 +144,7 @@ def same_el_guess(left, right, context=None):
     if isinstance(left, (nodes.DefNode, nodes.ClassNode)):
         if left.name == right.name:
             return True
-        return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
+        # return code_block_similarity(left, right) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.AtomtrailersNode):
         return same_call_guess(left, right)
     if isinstance(left, nodes.FromImportNode):

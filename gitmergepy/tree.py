@@ -715,15 +715,40 @@ class ChangeClass(ChangeEl):
         return []
 
 
+class EnsureEmptyLines:
+    def __init__(self, lines):
+        self.lines = lines
+
+    def __repr__(self):
+        return "<%s %r>" % (self.__class__.__name__,
+                                        self.lines)
+
+    def apply(self, tree):
+        index = tree.index_on_parent + 1
+        parent = tree.parent
+
+        # no new lines at the end
+        if not tree.next:
+            return []
+
+        for _ in self.lines:
+            if not isinstance(parent.get(index, None), nodes.EmptyLineNode):
+                new_line = nodes.EmptyLineNode()
+                new_line.new = True
+                parent.insert_with_new_line(index, new_line)
+            index += 1
+        return []
+
+
 class MoveElWithId(ChangeEl):
-    def __init__(self, el, changes, context=None, empty_lines=None):
+    def __init__(self, el, changes, context=None, old_empty_lines=None):
         super().__init__(el, changes=changes, context=context)
-        self.empty_lines = empty_lines or []
+        self.old_empty_lines = old_empty_lines or []
 
     def __repr__(self):
         return "<%s el=\"%s\" changes=%r context=%r empty_lines=%r>" % (
             self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context), self.empty_lines)
+            short_context(self.context), self.old_empty_lines)
 
     def apply(self, tree):
         fun = self.finder(tree, self.el)
@@ -742,7 +767,7 @@ class MoveElWithId(ChangeEl):
             index = indexes[0]
             tree.hide(fun)
             line = fun.next
-            for _ in self.empty_lines:
+            for _ in self.old_empty_lines:
                 if not isinstance(line, nodes.EmptyLineNode):
                     break
                 tree.hide(line)
@@ -756,13 +781,6 @@ class MoveElWithId(ChangeEl):
             new_fun = fun.copy()
             new_fun.new = True
             tree.insert(index, new_fun)
-
-            if new_fun.displayable_next:
-                for line in self.empty_lines:
-                    index += 1
-                    new_line = nodes.EmptyLineNode()
-                    new_line.new = True
-                    tree.insert_with_new_line(index, new_line)
         else:
             new_fun = fun
 

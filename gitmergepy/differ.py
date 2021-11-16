@@ -372,33 +372,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Handle removed withs
         diff += check_removed_withs(stack_left, el_right, indent=indent)
 
-        # Handle the case of an element we can know it is deleted thanks to
-        # to find_el_strong
-        while stack_left and isinstance(stack_left[0], NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID):
-            # Check to see if element has been moved
-            if find_el_strong(right, stack_left[0], None):
-                break
-            # Check to see if element on the same line still exists
-            matching_el_by_name = find_el_strong(stack_left, el_right, None)
-            if not matching_el_by_name:
-                break
-            # Double renaming case
-            if (
-                    # looks the same as element on same line
-                    code_block_similarity(el_right, stack_left[0]) > CODE_BLOCK_SAME_THRESHOLD and  # pylint: disable=chained-comparison
-                    # looks different than element with same name
-                    code_block_similarity(el_right, matching_el_by_name) < CODE_BLOCK_SAME_THRESHOLD):
-                break
-
-            logging.debug("%s removing el by id %r", indent+INDENT,
-                          short_display_el(stack_left[0]))
-            to_remove = [stack_left.pop(0)]
-            while stack_left and isinstance(stack_left[0], (nodes.EmptyLineNode, nodes.SpaceNode)):
-                to_remove.append(stack_left.pop(0))
-            diff.append(RemoveEls(to_remove,
-                                  context=gather_context(to_remove[0])))
-            last_added = False
-
         # Handle new els at the end
         if not stack_left:
             assert not hasattr(el_right, 'matched_el')

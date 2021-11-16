@@ -456,6 +456,23 @@ call('hello')
     assert isinstance(changes[1], RemoveWith)
 
 
+def test_remove_with_and_remove_els():
+    base = """
+# removed
+# stuff ahead
+# removed before with
+with fun():
+    call('hello')
+"""
+    current = """
+# stuff ahead
+call('hello')
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert isinstance(changes[3], RemoveWith)
+
+
 def test_change_with():
     base = """
 with fun():

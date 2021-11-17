@@ -1,6 +1,5 @@
 import logging
 import pdb
-import sys
 import traceback
 
 from redbaron import RedBaron
@@ -15,12 +14,12 @@ def parse_file(filename):
         return RedBaron(f.read())
 
 
-def main():
+def main(args):
     logging.basicConfig(level=logging.DEBUG, format='%(message)s')
-    logging.debug(" ".join(sys.argv))
-    base_file = sys.argv[1]
-    current_file = sys.argv[2]
-    other_file = sys.argv[3]
+    logging.debug(" ".join(args))
+    base_file = args[0]
+    current_file = args[1]
+    other_file = args[2]
 
     try:
         r = merge_files(base_file, current_file, other_file)
@@ -28,7 +27,7 @@ def main():
         traceback.print_exc()
         pdb.post_mortem(e.__traceback__)
     else:
-        sys.exit(0 if r else 1)
+        return 0 if r else 1
 
 
 def merge_files(base_file, current_file, other_file):

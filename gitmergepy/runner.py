@@ -47,5 +47,3 @@ def merge_ast(base_ast, current_ast, other_ast):
     logging.info("=========== applying changes")
     conflicts = apply_changes(current_ast, changes)
     add_conflicts(current_ast, conflicts)
-
-

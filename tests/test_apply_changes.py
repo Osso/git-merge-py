@@ -2,20 +2,20 @@ import logging
 
 from redbaron import RedBaron
 
+from gitmergepy.actions import (AddCallArg,
+                                AddEls,
+                                ChangeEl,
+                                ChangeExceptsNode,
+                                ChangeImport,
+                                ChangeString,
+                                MoveFun,
+                                MoveImport,
+                                RemoveEls,
+                                RemoveWith,
+                                SameEl)
 from gitmergepy.applyier import apply_changes
 from gitmergepy.context import AfterContext
 from gitmergepy.differ import compute_diff
-from gitmergepy.tree import (AddCallArg,
-                             AddEls,
-                             ChangeEl,
-                             ChangeExceptsNode,
-                             ChangeImport,
-                             ChangeString,
-                             MoveFun,
-                             MoveImport,
-                             RemoveEls,
-                             RemoveWith,
-                             SameEl)
 
 
 def _test_apply_changes(base, current):

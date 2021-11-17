@@ -7,10 +7,9 @@ from redbaron.node_mixin import CodeBlockMixin
 
 from diff_match_patch import diff_match_patch
 
-from .applyier import (add_conflict,
-                       add_conflicts,
-                       apply_changes,
-                       insert_at_context_coma_list)
+from .applyier import apply_changes
+from .conflicts import (add_conflict,
+                        add_conflicts)
 from .context import (AfterContext,
                       find_context,
                       find_context_with_reduction,
@@ -38,6 +37,8 @@ from .tools import (apply_diff_to_list,
                     short_display_list,
                     skip_context_endl,
                     sort_imports)
+from .tools_actions import remove_with
+from .tools_lists import insert_at_context_coma_list
 
 BaseNode.new = False
 BaseNode.already_processed = False
@@ -1024,16 +1025,9 @@ class RemoveWith(ElWithContext):
                                         insert_before=False))
             return []
 
-        with_node.decrease_indentation()
-        index = with_node.parent.index(with_node) + 1
-        for el, sep in with_node.value._data:
-            el.parent = with_node.parent
-            if sep:
-                sep.parent = with_node.parent
-        with_node.parent._data[index:index] = with_node.value._data
-        with_node.parent._synchronise()
-        tree.remove(with_node)
-        set_cursor(tree, el)
+        added_els = remove_with(with_node)
+        assert added_els[-1] in tree
+        set_cursor(tree, with_node[-1])
         return []
 
 

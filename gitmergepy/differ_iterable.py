@@ -3,6 +3,16 @@ import logging
 
 from redbaron import nodes
 
+from .actions import (AddImports,
+                      ChangeClass,
+                      ChangeEl,
+                      ChangeFun,
+                      ChangeImport,
+                      EnsureEmptyLines,
+                      MoveClass,
+                      MoveFun,
+                      MoveImport,
+                      RemoveEls)
 from .context import gather_context
 from .differ import (add_to_diff,
                      changed_el,
@@ -15,16 +25,6 @@ from .matcher import (find_class,
 from .tools import (INDENT,
                     id_from_el,
                     short_display_el)
-from .tree import (AddImports,
-                   ChangeClass,
-                   ChangeEl,
-                   ChangeFun,
-                   ChangeImport,
-                   EnsureEmptyLines,
-                   MoveClass,
-                   MoveFun,
-                   MoveImport,
-                   RemoveEls)
 
 
 def _process_empty_lines(el):

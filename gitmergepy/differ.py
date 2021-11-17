@@ -2,10 +2,18 @@ import logging
 
 from redbaron import nodes
 
+from .actions import (AddEls,
+                      ChangeEl,
+                      ChangeIndentation,
+                      RemoveEls,
+                      RemoveWith,
+                      Replace,
+                      ReplaceAttr,
+                      ReplaceEls,
+                      SameEl)
 from .context import (gather_after_context,
                       gather_context)
-from .matcher import (CODE_BLOCK_SAME_THRESHOLD,
-                      code_block_similarity,
+from .matcher import (code_block_similarity,
                       find_el_strong,
                       same_el_guess)
 from .tools import (INDENT,
@@ -13,15 +21,7 @@ from .tools import (INDENT,
                     same_el,
                     short_context,
                     short_display_el)
-from .tree import (AddEls,
-                   ChangeEl,
-                   ChangeIndentation,
-                   RemoveEls,
-                   RemoveWith,
-                   Replace,
-                   ReplaceAttr,
-                   ReplaceEls,
-                   SameEl)
+from .tools_actions import remove_with
 
 NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID = (nodes.DefNode,
                                       nodes.ClassNode,
@@ -225,12 +225,10 @@ def check_removed_withs(stack_left, el_right, indent, max_ahead=10):
             diff = []
             process_stack_till_el(stack_left, stack_left[i], el_right.parent,
                                   diff, indent)
-            orig_with_node = stack_left.pop(0)
-            with_node = orig_with_node.copy()
-            with_node.decrease_indentation()
-            import pdb; pdb.set_trace()
-            stack_left[:] = list(with_node) + stack_left
-            return diff + [RemoveWith(orig_with_node,
+            with_node = stack_left.pop(0)
+            added_els = remove_with(with_node)
+            stack_left[:] = added_els + stack_left
+            return diff + [RemoveWith(with_node,
                                       context=gather_context(el_right))]
         if isinstance(stack_left[i], nodes.WithNode):
             break

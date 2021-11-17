@@ -1,9 +1,9 @@
 from redbaron import (node,
                       nodes)
 
+from gitmergepy.actions import (AddEls,
+                                RemoveEls)
 from gitmergepy.differ import simplify_white_lines
-from gitmergepy.tree import (AddEls,
-                             RemoveEls)
 
 
 def test_simplify_white_lines():

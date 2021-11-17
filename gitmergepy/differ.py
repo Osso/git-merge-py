@@ -207,22 +207,33 @@ def process_matched_el_from_look_ahead(el_right, stack_left, indent):
                        change_class=ChangeEl)
 
 
-def check_removed_withs(stack_left, el_right, indent):
+def _check_removed_withs(stack_left, el_right, indent):
     """Check for removal of with node + shifting of content"""
-    if (stack_left and
+    return (stack_left and
             isinstance(stack_left[0], nodes.WithNode) and
-            not isinstance(el_right, nodes.WithNode)):
-        orig_with_node = stack_left[0]
-        with_node = orig_with_node.copy()
-        with_node.decrease_indentation()
+            not isinstance(el_right, nodes.WithNode) and
+            compare_with_code(stack_left[0], start_el=el_right) > 0.6)
 
-        if compare_with_code(orig_with_node, start_el=el_right) > 0.6:
+
+def check_removed_withs(stack_left, el_right, indent, max_ahead=10):
+    for i in range(max_ahead):
+        if not stack_left[i:]:
+            break
+        if _check_removed_withs(stack_left[i:], el_right, indent):
             logging.debug("%s with node removal %r", indent+INDENT,
                           short_display_el(stack_left[0]))
-            del stack_left[0]
+            diff = []
+            process_stack_till_el(stack_left, stack_left[i], el_right.parent,
+                                  diff, indent)
+            orig_with_node = stack_left.pop(0)
+            with_node = orig_with_node.copy()
+            with_node.decrease_indentation()
+            import pdb; pdb.set_trace()
             stack_left[:] = list(with_node) + stack_left
-            return [RemoveWith(orig_with_node,
-                               context=gather_context(el_right))]
+            return diff + [RemoveWith(orig_with_node,
+                                      context=gather_context(el_right))]
+        if isinstance(stack_left[i], nodes.WithNode):
+            break
 
     return []
 

@@ -7,18 +7,6 @@ INDENT = "."
 WHITESPACE_NODES = (nodes.EndlNode, nodes.EmptyLineNode)
 
 
-def append_coma_list(target_list, to_add, on_new_line=False):
-    insert_coma_list(target_list, len(target_list), to_add,
-                     on_new_line=on_new_line)
-
-
-def insert_coma_list(target_list, position, to_add, on_new_line=False):
-    if on_new_line:
-        target_list.insert_on_new_line(position, to_add)
-    else:
-        target_list.insert(position, to_add)
-
-
 def sort_imports(targets):
     targets.sort(key=lambda el: el.value)
     targets.reformat(force_separator=True)

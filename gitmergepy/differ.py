@@ -391,7 +391,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Actual processing
 
         # Direct match
-        if stack_left and same_el(stack_left[0], el_right):
+        if same_el(stack_left[0], el_right):
             # Exactly same element
             diff += process_same_el(el_right, stack_left, indent=indent+INDENT)
             last_added = False

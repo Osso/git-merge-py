@@ -221,7 +221,7 @@ def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
             break
         if _check_removed_withs(stack_left[i:], el_right, indent):
             logging.debug("%s with node removal %r", indent+INDENT,
-                          short_display_el(stack_left[0]))
+                          short_display_el(stack_left[i]))
             process_stack_till_el(stack_left, stack_left[i], el_right.parent,
                                   diff, indent)
             with_node = stack_left.pop(0)

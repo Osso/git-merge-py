@@ -376,10 +376,6 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
 
         # Pre-processing
 
-        # Handle removed withs
-        diff += check_removed_withs(stack_left, el_right, indent=indent,
-                                    diff=diff)
-
         # Handle new els at the end
         if not stack_left:
             assert not hasattr(el_right, 'matched_el')
@@ -387,6 +383,10 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                           short_display_el(el_right))
             add_to_diff(diff, el_right, last_added=last_added, indent=indent)
             continue
+
+        # Handle removed withs
+        diff += check_removed_withs(stack_left, el_right, indent=indent,
+                                    diff=diff)
 
         # Actual processing
 

@@ -215,21 +215,19 @@ def _check_removed_withs(stack_left, el_right, indent):
             compare_with_code(stack_left[0], start_el=el_right) > 0.6)
 
 
-def check_removed_withs(stack_left, el_right, indent, max_ahead=10):
+def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
     for i in range(max_ahead):
         if not stack_left[i:]:
             break
         if _check_removed_withs(stack_left[i:], el_right, indent):
             logging.debug("%s with node removal %r", indent+INDENT,
                           short_display_el(stack_left[0]))
-            diff = []
             process_stack_till_el(stack_left, stack_left[i], el_right.parent,
                                   diff, indent)
             with_node = stack_left.pop(0)
             added_els = remove_with(with_node)
             stack_left[:] = added_els + stack_left
-            return diff + [RemoveWith(with_node,
-                                      context=gather_context(el_right))]
+            return [RemoveWith(with_node, context=gather_context(el_right))]
         if isinstance(stack_left[i], nodes.WithNode):
             break
 
@@ -379,7 +377,8 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
         # Pre-processing
 
         # Handle removed withs
-        diff += check_removed_withs(stack_left, el_right, indent=indent)
+        diff += check_removed_withs(stack_left, el_right, indent=indent,
+                                    diff=diff)
 
         # Handle new els at the end
         if not stack_left:

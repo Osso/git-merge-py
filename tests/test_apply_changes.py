@@ -423,7 +423,9 @@ call('hello')
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    assert isinstance(changes[0], RemoveWith)
+    # First element needs to be AddEls, that means the with has been
+    # detected in the correct position
+    assert isinstance(changes[1], RemoveWith)
 
 
 def test_remove_with_and_add_els_with_tail():

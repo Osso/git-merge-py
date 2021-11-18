@@ -209,10 +209,13 @@ def process_matched_el_from_look_ahead(el_right, stack_left, indent):
 
 def _check_removed_withs(stack_left, el_right, indent):
     """Check for removal of with node + shifting of content"""
-    return (stack_left and
-            isinstance(stack_left[0], nodes.WithNode) and
-            not isinstance(el_right, nodes.WithNode) and
-            compare_with_code(stack_left[0], start_el=el_right) > 0.6)
+    if (isinstance(stack_left[0], nodes.WithNode) and
+            not isinstance(el_right, nodes.WithNode)):
+        with_node = stack_left[0]
+        if same_el(with_node[0], el_right):
+            return compare_with_code(with_node, start_el=el_right) > 0.6
+
+    return False
 
 
 def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):

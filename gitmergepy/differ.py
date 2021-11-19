@@ -207,32 +207,68 @@ def process_matched_el_from_look_ahead(el_right, stack_left, indent):
                        change_class=ChangeEl)
 
 
-def _check_removed_withs(stack_left, el_right, indent):
-    """Check for removal of with node + shifting of content"""
-    if (isinstance(stack_left[0], nodes.WithNode) and
-            not isinstance(el_right, nodes.WithNode)):
-        with_node = stack_left[0]
-        if same_el(with_node[0], el_right):
-            return compare_with_code(with_node, start_el=el_right) > 0.6
+def check_for_with_first_element(with_node, start_el):
+    assert start_el
+    code_block = start_el.parent.make_code_block(start=start_el,
+                                                 length=len(with_node))
+    return any([same_el(with_node[0], el) for el in code_block[1:5]])
 
-    return False
+
+def score_removed_with(with_node, start_el, indent):
+    """Check for removal of with node + shifting of content"""
+    if start_el is None:
+        return 0
+
+    if (isinstance(with_node, nodes.WithNode) and
+            not isinstance(start_el, nodes.WithNode)):
+
+        if check_for_with_first_element(with_node, start_el):
+            return 0
+
+        return compare_with_code(with_node, start_el=start_el)
+
+    return 0
+
+
+def process_removed_with(stack_left, i, start_el, diff, indent):
+    logging.debug("%s with node removal %r", indent+INDENT,
+                  short_display_el(stack_left[i]))
+    process_stack_till_el(stack_left, stack_left[i], start_el.parent,
+                          diff, indent)
+    with_node = stack_left.pop(0)
+    added_els = remove_with(with_node)
+    stack_left[:] = added_els + stack_left
+    return [RemoveWith(with_node, context=gather_context(start_el))]
+
+
+# def find_best_with_match(stack_left, el_right, indent):
+#     start_el = el_right
+#     best_score = 0
+#     while start_el:
+#         score = score_removed_with(stack_left, start_el, indent)
+#         if score <= best_score:
+#             break
+#         best_score = score
+#         start_el = start_el.next
+#     return start_el, score
 
 
 def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
     for i in range(max_ahead):
         if not stack_left[i:]:
             break
-        if _check_removed_withs(stack_left[i:], el_right, indent):
-            logging.debug("%s with node removal %r", indent+INDENT,
-                          short_display_el(stack_left[i]))
-            process_stack_till_el(stack_left, stack_left[i], el_right.parent,
-                                  diff, indent)
-            with_node = stack_left.pop(0)
-            added_els = remove_with(with_node)
-            stack_left[:] = added_els + stack_left
-            return [RemoveWith(with_node, context=gather_context(el_right))]
         if isinstance(stack_left[i], nodes.WithNode):
-            break
+            with_node = stack_left[i]
+            # with_start, score = find_best_with_match(stack_left[i:], el_right,
+            #                                      indent=indent)
+            score = score_removed_with(with_node, el_right, indent)
+            if score < score_removed_with(with_node, el_right.next, indent):
+                return []
+            if score < 0.6:
+                return []
+
+            return process_removed_with(stack_left, i, el_right,
+                                        diff=diff, indent=indent)
 
     return []
 

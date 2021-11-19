@@ -241,26 +241,12 @@ def process_removed_with(stack_left, i, start_el, diff, indent):
     return [RemoveWith(with_node, context=gather_context(start_el))]
 
 
-# def find_best_with_match(stack_left, el_right, indent):
-#     start_el = el_right
-#     best_score = 0
-#     while start_el:
-#         score = score_removed_with(stack_left, start_el, indent)
-#         if score <= best_score:
-#             break
-#         best_score = score
-#         start_el = start_el.next
-#     return start_el, score
-
-
 def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
     for i in range(max_ahead):
         if not stack_left[i:]:
             break
         if isinstance(stack_left[i], nodes.WithNode):
             with_node = stack_left[i]
-            # with_start, score = find_best_with_match(stack_left[i:], el_right,
-            #                                      indent=indent)
             score = score_removed_with(with_node, el_right, indent)
             if score < score_removed_with(with_node, el_right.next, indent):
                 return []

@@ -335,6 +335,8 @@ class ReplaceEls(BaseAddEls):
         # match all to_remove items
         for offset, el in enumerate(self.to_remove):
             try:
+                if tree[index+offset].hidden:
+                    continue
                 if not same_el_guess(tree[index+offset], el):
                     if offset > 0 and isinstance(tree[index+offset], nodes.CommentNode):
                         continue

@@ -182,7 +182,7 @@ def same_el_guess(left, right, context=None):
     return same_el(left, right)
 
 
-def find_el_strong(tree, target_el, context):
+def find_el_strong(tree, target_el):
     """Strong matches: match with an id"""
     if isinstance(target_el, nodes.DefNode):
         el = find_func(tree, target_el)
@@ -227,18 +227,20 @@ def find_els_exact(tree, target_el, old_tree=False):
     return [el for el in tree if same_el(el, target_el) and filter(el)]
 
 
-def find_el(tree, target_el, context):
-    el = find_el_strong(tree, target_el, context)
+def find_el(tree, target_el, context, look_in_old_tree_first=False):
+    el = find_el_strong(tree, target_el)
     if el:
         return el
 
     # Match context
     if isinstance(target_el, CodeBlockMixin):
-        el = find_best_el_with_context(tree, target_el, context)
+        el = find_best_el_with_context(tree, target_el, context,
+                                       look_in_old_tree_first=look_in_old_tree_first)
         if el:
             return el
     else:
-        el = find_single_el_with_context(tree, target_el, context)
+        el = find_single_el_with_context(tree, target_el, context,
+                                         look_in_old_tree_first=look_in_old_tree_first)
         if el:
             return el
 
@@ -277,20 +279,23 @@ def find_el(tree, target_el, context):
     return None
 
 
-def find_single_el_with_context(tree, target_el, context):
-    matches = [el for el in find_els_with_context(tree, context)
+def find_single_el_with_context(tree, target_el, context,
+                                look_in_old_tree_first=False):
+    matches = [el for el in find_els_with_context(tree, context=context,
+                                                  look_in_old_tree_first=look_in_old_tree_first)
                if same_el_guess(el, target_el)]
     if len(matches) == 1:
         return matches[0]
     return None
 
 
-def find_els_with_context(tree, context):
+def find_els_with_context(tree, context, look_in_old_tree_first):
     from .context import (AfterContext,
                           find_context_with_reduction)
     matches = []
 
-    for index in find_context_with_reduction(tree, context):
+    for index in find_context_with_reduction(tree, context=context,
+                                             look_in_old_tree_first=look_in_old_tree_first):
         if isinstance(context, AfterContext):
             index -= 1
         if index == len(tree):
@@ -300,8 +305,10 @@ def find_els_with_context(tree, context):
     return matches
 
 
-def find_best_el_with_context(tree, target_el, context):
-    matches = find_els_with_context(tree, context)
+def find_best_el_with_context(tree, target_el, context,
+                              look_in_old_tree_first=False):
+    matches = find_els_with_context(tree, context,
+                                    look_in_old_tree_first=look_in_old_tree_first)
     return best_block(matches, target_el)
 
 

@@ -102,11 +102,12 @@ class AfterContext(list):
         return AfterContext(self)
 
 
-def find_context_with_reduction(tree, context):
+def find_context_with_reduction(tree, context, look_in_old_tree_first=False):
     relevant_context = context.copy()
 
     # Simple case: exact context found
-    matches = find_context(tree, relevant_context)
+    matches = find_context(tree, relevant_context,
+                           look_in_old_tree_first=look_in_old_tree_first)
     if matches:
         return matches
 
@@ -115,7 +116,8 @@ def find_context_with_reduction(tree, context):
         while relevant_context and isinstance(relevant_context[0],
                                               nodes.EmptyLineNode):
             del relevant_context[0]
-        matches = find_context(tree, relevant_context)
+        matches = find_context(tree, relevant_context,
+                               look_in_old_tree_first=look_in_old_tree_first)
         if matches:
             return matches
 
@@ -141,10 +143,11 @@ def _find_context(tree, context, old_tree):
     return matches
 
 
-def find_context(tree, context):
-    indexes = _find_context(tree, context, old_tree=False)
+def find_context(tree, context, look_in_old_tree_first=False):
+    indexes = _find_context(tree, context, old_tree=look_in_old_tree_first)
     if not indexes:
-        indexes = _find_context(tree, context, old_tree=True)
+        indexes = _find_context(tree, context,
+                                old_tree=not look_in_old_tree_first)
     return indexes
 
 

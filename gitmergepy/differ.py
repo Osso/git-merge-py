@@ -167,8 +167,7 @@ def process_stack_till_el(stack_left, stop_el, tree, diff, indent):
 
 def process_stack_el(stack_left, el_to_delete, tree, els, diff,
                      indent, force_separate=False):
-    matching_el_by_id = find_el_strong(tree, target_el=el_to_delete,
-                                       context=[])
+    matching_el_by_id = find_el_strong(tree, target_el=el_to_delete)
     if matching_el_by_id:
         logging.debug("%s marking as found %r", indent+2*INDENT,
                       short_display_el(el_to_delete))

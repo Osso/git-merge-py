@@ -119,7 +119,10 @@ class RemoveEls:
             else:
                 logging.debug(". looking for el %r",
                               short_display_el(el_to_remove))
-                anchor_el = find_el(tree, el_to_remove, self.context)
+                # Removed els were not found in the new tree, therefore
+                # the context gathered is from the old tree
+                anchor_el = find_el(tree, el_to_remove, context=self.context,
+                                    look_in_old_tree_first=True)
                 if anchor_el:
                     logging.debug(". el found")
                     break
@@ -332,17 +335,20 @@ class ReplaceEls(BaseAddEls):
             '\n* '.join(line.lstrip(" ") for line in short_context(self.context).split("|")))
 
     def match_to_remove_at_index(self, tree, index):
+        offset = 0
         # match all to_remove items
-        for offset, el in enumerate(self.to_remove):
+        for el in self.to_remove:
+            while tree[index+offset].hidden:
+                offset += 1
             try:
-                if tree[index+offset].hidden:
-                    continue
                 if not same_el_guess(tree[index+offset], el):
                     if offset > 0 and isinstance(tree[index+offset], nodes.CommentNode):
                         continue
                     return False
+                # import pdb; pdb.set_trace()
             except IndexError:
                 return False
+            offset += 1
 
         return True
 
@@ -387,7 +393,7 @@ class ReplaceEls(BaseAddEls):
         offset = 0
         for el_to_remove in self.to_remove:
             el = tree[index+offset]
-            if (isinstance(el, nodes.CommentNode) and
+            if (offset > 0 and isinstance(el, nodes.CommentNode) and
                     not isinstance(el_to_remove, nodes.CommentNode)):
                 tree.hide(el)
                 el = el.next
@@ -395,7 +401,7 @@ class ReplaceEls(BaseAddEls):
             if not same_el_guess(el, el_to_remove):
                 continue
 
-            logging.debug("    removing %r", short_display_el(el))
+            logging.debug("    removing %r @ %d", short_display_el(el), el.index_on_parent)
             tree.hide(el)
             set_cursor(tree, el)
             offset += 1
@@ -1297,7 +1303,9 @@ class SameEl(BaseEl):
         from .differ import look_ahead
 
         if isinstance(tree, CodeBlockMixin):
-            el = look_ahead(tree_after_cursor(tree), self.el, max_ahead=10)
+            max_ahead = 10 if not isinstance(self.el, nodes.EmptyLineNode) else 1
+            el = look_ahead(tree_after_cursor(tree), self.el,
+                            max_ahead=max_ahead)
             if el:
                 set_cursor(tree, el)
 

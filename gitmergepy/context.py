@@ -148,7 +148,7 @@ def find_context(tree, context, look_in_old_tree_first=False):
     return indexes
 
 
-def gather_context(el, limit=4):
+def gather_context(el, limit=5):
     el = el.previous
     context = BeforeContext([])
     for _ in range(limit):

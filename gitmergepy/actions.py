@@ -110,8 +110,6 @@ class RemoveEls:
     def find_anchor(self, tree):
         # We modify this
         to_remove = self.to_remove.copy()
-        if "setup_method" in self.to_remove[0].dumps():
-            import pdb; pdb.set_trace()
 
         skipped_to_remove = []
         anchor_el = None

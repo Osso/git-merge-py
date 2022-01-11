@@ -215,18 +215,18 @@ def check_for_with_first_element(with_node, start_el):
 
 def score_removed_with(with_node, start_el, indent):
     """Check for removal of with node + shifting of content"""
+    assert isinstance(with_node, nodes.WithNode)
+
     if start_el is None:
         return 0
 
-    if (isinstance(with_node, nodes.WithNode) and
-            not isinstance(start_el, nodes.WithNode)):
+    if isinstance(start_el, nodes.WithNode):
+        return 0
 
-        if check_for_with_first_element(with_node, start_el):
-            return 0
+    if check_for_with_first_element(with_node, start_el):
+        return 0
 
-        return compare_with_code(with_node, start_el=start_el)
-
-    return 0
+    return compare_with_code(with_node, start_el=start_el)
 
 
 def process_removed_with(stack_left, i, start_el, diff, indent):
@@ -241,6 +241,9 @@ def process_removed_with(stack_left, i, start_el, diff, indent):
 
 
 def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
+    if isinstance(el_right, nodes.EmptyLineNode):
+        return []
+
     for i in range(max_ahead):
         if not stack_left[i:]:
             break

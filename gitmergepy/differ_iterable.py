@@ -158,7 +158,8 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
     if hasattr(el_right, 'matched_el'):  # Already matched earlier
         el = el_right.matched_el
     else:
-        el = find_import(stack_left, el_right)
+        els = find_import(stack_left, el_right)
+        el = els[0] if els else None
 
     if el:
         el_diff = compute_diff(el, el_right, indent=indent+INDENT)

@@ -31,6 +31,7 @@ from .tools import (apply_diff_to_list,
                     get_call_els,
                     id_from_arg,
                     id_from_el,
+                    merge_imports,
                     same_el,
                     short_context,
                     short_display_el,
@@ -181,7 +182,7 @@ class AddImports:
                                               for el in self.imports))
 
     def apply(self, tree):
-        logging.debug("adding imports: %r", self.imports)
+        logging.debug(". adding imports")
         existing_imports = set(el.value for el in tree.targets)
 
         # Never add brackets for single import
@@ -190,7 +191,7 @@ class AddImports:
 
         for import_el in self.imports:
             if import_el.value not in existing_imports:
-                logging.debug(". adding import: %r", import_el.value)
+                logging.debug(".. adding import: %r", import_el.value)
                 if import_el.endl:
                     tree.targets.append_with_new_line(import_el.copy())
                 else:
@@ -211,9 +212,15 @@ class RemoveImports:
         self.imports = imports
 
     def __repr__(self):
-        return "<%s imports=%r>" % (self.__class__.__name__, self.imports)
+        return "<%s imports=%r>" % (self.__class__.__name__,
+                                    ', '.join(short_display_el(el)
+                                              for el in self.imports))
 
     def apply(self, tree):
+        logging.debug(". removing imports")
+        for import_el in self.imports:
+            logging.debug(".. removing import %r", short_display_el(import_el))
+
         apply_diff_to_list(tree.targets, to_add=[], to_remove=self.imports,
                            key_getter=lambda t: t.value)
         if len(tree.targets) == 1:
@@ -672,10 +679,14 @@ class ChangeImport(ChangeEl):
     def apply(self, tree):
         logging.debug("changing import %r", short_display_el(self.el))
 
-        # if self.el:
-        el = find_import(tree, self.el)
-        if el:
+        els = find_import(tree, self.el)
+        if els:
             logging.debug(". found")
+            el = els[0]
+            if len(els) > 1:
+                logging.debug(". merging imports")
+                merge_imports(els)
+                logging.debug(". done merging")
         else:
             logging.debug(". not found")
             if not any(isinstance(c, AddImports) for c in self.changes):
@@ -688,7 +699,7 @@ class ChangeImport(ChangeEl):
             if self.can_be_added_as_is:
                 # all the imports in self.el are to be added
                 return []
-            el = find_import(tree, self.el)
+            el = find_import(tree, self.el)[0]
             el.targets.clear()
             el.targets.remove_brackets()
 

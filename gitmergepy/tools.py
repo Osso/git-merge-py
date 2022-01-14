@@ -12,6 +12,14 @@ def sort_imports(targets):
     targets.reformat(force_separator=True)
 
 
+def merge_imports(imports):
+    from .actions import AddImports
+    target_import = imports.pop(0)
+    for import_el in imports:
+        AddImports(import_el.targets).apply(target_import)
+        import_el.parent.remove(import_el)
+
+
 def short_display_el(el):
     if el is None:
         return "None"

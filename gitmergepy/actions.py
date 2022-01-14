@@ -218,6 +218,8 @@ class RemoveImports:
                            key_getter=lambda t: t.value)
         if len(tree.targets) == 1:
             tree.targets.remove_brackets()
+            tree.targets.header = []
+            tree.targets._synchronise()
 
         return []
 

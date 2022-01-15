@@ -1252,8 +1252,6 @@ class MoveEl(ElWithContext):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
 
-        tree.hidden = True
-
         if self.context[0] is None:
             tree.parent.insert_with_new_line(0, tree.copy())
             return []
@@ -1265,6 +1263,10 @@ class MoveEl(ElWithContext):
             logging.debug(".. %s", msg.lower())
             return [Conflict([tree], self, reason=msg)]
 
+        if indexes[0] == tree.index_on_parent:
+            return []
+
+        tree.hidden = True
         new_el = copy_and_transfer_anchors(tree)
         tree.parent.insert_with_new_line(indexes[0], new_el)
         move_anchored(new_el)

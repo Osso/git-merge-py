@@ -354,7 +354,6 @@ class ReplaceEls(BaseAddEls):
                     if offset > 0 and isinstance(tree[index+offset], nodes.CommentNode):
                         continue
                     return False
-                # import pdb; pdb.set_trace()
             except IndexError:
                 return False
             offset += 1
@@ -1253,10 +1252,9 @@ class MoveEl(ElWithContext):
                       short_display_el(tree), self.context[0])
 
         if self.context[0] is None:
-            tree.parent.insert_with_new_line(0, tree.copy())
-            return []
-
-        indexes = find_context_with_reduction(tree.parent, self.context)
+            indexes = [0]
+        else:
+            indexes = find_context_with_reduction(tree.parent, self.context)
         if not indexes:
             tree.hidden = False
             msg = "Context not found"
@@ -1270,7 +1268,8 @@ class MoveEl(ElWithContext):
         new_el = copy_and_transfer_anchors(tree)
         tree.parent.insert_with_new_line(indexes[0], new_el)
         move_anchored(new_el)
-        anchor(new_el, to=new_el.previous)
+        if new_el.previous:
+            anchor(new_el, to=new_el.previous)
         return []
 
 

@@ -1949,6 +1949,16 @@ def test_atom_trailer_string():
     assert isinstance(changes[0].changes[0].changes[0], ChangeString)
 
 
+def test_atom_trailer_el():
+    base = """
+a = fun()
+"""
+    current = """
+a = self.fun2
+"""
+    _test_apply_changes(base, current)
+
+
 def test_dict_remove_comment():
     base = """
     {'key': 'value',

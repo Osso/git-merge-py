@@ -220,8 +220,8 @@ def diff_atom_trailer_node(left, right, indent):
     for index, (el_left, el_right) in enumerate(zip(left, right)):
         if not isinstance(el_left, type(el_right)):
             diff += [ChangeAtomtrailersEl(el_left, index=index,
-                                            changes=[Replace(new_value=right,
-                                                             old_value=left)])]
+                                            changes=[Replace(new_value=el_right,
+                                                             old_value=el_left)])]
         else:
             el_diff = compute_diff(el_left, el_right)
             if el_diff:

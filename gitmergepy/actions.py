@@ -426,7 +426,8 @@ class Replace:
         if tree.dumps() != self.new_value.dumps():
             if tree.dumps() != self.old_value.dumps():
                 return [Conflict([tree], self,
-                                 reason="Different from old value")]
+                                 reason="Different from old value %r" %
+                                        short_display_el(self.old_value))]
         tree.replace(self.new_value)
         return []
 

@@ -243,6 +243,8 @@ def process_removed_with(stack_left, i, start_el, diff, indent):
 def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
     if isinstance(el_right, nodes.EmptyLineNode):
         return []
+    if look_ahead(stack_left, el_right):
+        return []
 
     for i in range(max_ahead):
         if not stack_left[i:]:

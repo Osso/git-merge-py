@@ -344,6 +344,9 @@ class ReplaceEls(BaseAddEls):
             '\n* '.join(line.lstrip(" ") for line in short_context(self.context).split("|")))
 
     def match_to_remove_at_index(self, tree, index):
+        if tree[index].hidden:
+            return False
+
         offset = 0
         # match all to_remove items
         for el in self.to_remove:
@@ -399,7 +402,6 @@ class ReplaceEls(BaseAddEls):
             index += 1
 
         offset = 0
-        import pdb; pdb.set_trace()
         for el_to_remove in self.to_remove:
             el = tree[index+offset]
             if (offset > 0 and isinstance(el, nodes.CommentNode) and

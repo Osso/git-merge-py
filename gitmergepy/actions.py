@@ -399,12 +399,14 @@ class ReplaceEls(BaseAddEls):
             index += 1
 
         offset = 0
+        import pdb; pdb.set_trace()
         for el_to_remove in self.to_remove:
             el = tree[index+offset]
             if (offset > 0 and isinstance(el, nodes.CommentNode) and
                     not isinstance(el_to_remove, nodes.CommentNode)):
                 tree.hide(el)
                 el = el.next
+                offset += 1
 
             if not same_el_guess(el, el_to_remove):
                 continue

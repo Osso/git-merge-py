@@ -2115,3 +2115,18 @@ def fun_renamed():
     call()
 """
     _test_apply_changes(base, current)
+
+
+def test_multiline_expr():
+    base = """
+(stuff(elements) == stuff(items) * 2 + 2 - stuff(s1) - stuff(s2) - (2 if cond else 1 if cond2 else 0)
+            + (2 if cond3 else 0))  # comment
+"""
+    current = """
+(stuff(elements) == stuff(items) * 2 +
+        2 - stuff(s1) -
+        stuff(s2) -
+        (2 if cond else 1 if cond2 else 0) +
+        (2 if cond3 else 0))  # comment
+"""
+    _test_apply_changes(base, current)

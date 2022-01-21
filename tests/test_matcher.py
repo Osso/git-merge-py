@@ -6,7 +6,8 @@ from gitmergepy.context import (AfterContext,
                                 BeforeContext)
 from gitmergepy.matcher import (code_block_similarity,
                                 find_el,
-                                find_single_el_with_context)
+                                find_single_el_with_context,
+                                same_el_guess)
 
 
 def test_find_el_at_the_end():
@@ -58,3 +59,9 @@ def test_code_block_similarity_indentation():
     node1 = node("class A:\n                   a()")
     node2 = node("class B:\n a()")
     assert code_block_similarity(node1, node2) == 1
+
+
+def test_same_el_guess_call_named_arg():
+    node1 = node("fun(arg)")
+    node2 = node("fun(arg=arg)")
+    assert same_el_guess(node1, node2)

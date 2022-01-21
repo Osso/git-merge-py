@@ -380,27 +380,36 @@ class ReplaceEls(BaseAddEls):
         if not indexes:
             logging.debug(". cannot match context")
             indexes = self._look_for_els(tree)
+        else:
+            logging.debug(". matched context")
+
         if not indexes:
             logging.debug(". cannot match els")
             matches = find_context_with_reduction(tree, self.context)
             if len(matches) == 1:
                 indexes = matches
+        else:
+            logging.debug(". matched els")
 
         if not indexes:
             logging.debug(". cannot match reduced context")
             add_conflicts(tree, [Conflict(self.to_remove, self,
                                         reason="Cannot match els")])
             return []
+        else:
+            logging.debug(". matched reduced context")
 
         index = indexes[0]
         if len(indexes) > 1:
             index = first_index_after_cursor(tree, indexes)
 
+        logging.debug(". adding els")
         for el_to_add in self.to_add:
-            logging.debug("    adding %r", short_display_el(el_to_add))
+            logging.debug(".. adding %r", short_display_el(el_to_add))
             self._insert_el(el_to_add, index, tree)
             index += 1
 
+        logging.debug(". removing els")
         offset = 0
         for el_to_remove in self.to_remove:
             el = tree[index+offset]
@@ -411,9 +420,10 @@ class ReplaceEls(BaseAddEls):
                 offset += 1
 
             if not same_el_guess(el, el_to_remove):
+                logging.debug("... el not matching")
                 continue
 
-            logging.debug("    removing %r @ %d", short_display_el(el), el.index_on_parent)
+            logging.debug(".. removing %r @ %d", short_display_el(el), el.index_on_parent)
             tree.hide(el)
             set_cursor(tree, el)
             offset += 1

@@ -1036,6 +1036,26 @@ def fun1(arg, new_arg):
     _test_merge_changes(base, current, other, expected)
 
 
+def test_fun_add_arg_already_existsing_2():
+    base = """
+def fun1(arg):
+    pass
+"""
+    current = """
+def fun1(arg, new_arg=new_arg):
+    pass
+"""
+    other = """
+def fun1(arg, new_arg=new_arg):
+    pass
+"""
+    expected = """
+def fun1(arg, new_arg=new_arg):
+    pass
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_rename_and_add_function_after_context():
     base = """def context(): context()
 def fun():

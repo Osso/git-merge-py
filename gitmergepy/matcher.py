@@ -30,8 +30,8 @@ def finder_with_rename_handling(tree, target_el, finder):
     most_similar_node = best_block(tree, target_el=target_el)
 
     if most_similar_node:
-        if target_el is not best_block(target_el.parent,
-                                       target_el=most_similar_node):
+        best_match = best_block(target_el.parent, target_el=most_similar_node)
+        if best_match and target_el is not best_match:
             most_similar_node = None
     else:  # no best match
         # use node with the same name

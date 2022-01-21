@@ -348,7 +348,7 @@ def dict_similarity(left, right):
 
 def args_similarity(left, right):
     def simplify_arg(arg):
-        if arg.target and arg.target.dumps() == arg.value.dumps():
+        if getattr(arg, 'target', None) and arg.target.dumps() == arg.value.dumps():
             return arg.value.dumps()
         return arg.dumps().strip()
 

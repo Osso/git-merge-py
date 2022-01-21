@@ -274,6 +274,11 @@ class BaseAddEls:
                 logging.debug(". context not found")
                 if empty_lines(self.to_add):
                     return []
+                if (isinstance(self.context[0], (nodes.DefNode,
+                                                 nodes.ClassNode)) and
+                        all(isinstance(el, nodes.CommentNode)
+                            for el in self.to_add)):
+                    return []
                 return [Conflict(self.to_add, self,
                                  reason="context not found")]
 

@@ -230,7 +230,7 @@ def find_el(tree, target_el, context, look_in_old_tree_first=False):
         return el
 
     # Match context
-    if isinstance(target_el, CodeBlockMixin):
+    if context and isinstance(target_el, CodeBlockMixin):
         el = find_best_el_with_context(tree, target_el, context,
                                        look_in_old_tree_first=look_in_old_tree_first)
         if el:

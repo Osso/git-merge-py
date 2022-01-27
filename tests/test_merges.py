@@ -1084,3 +1084,37 @@ def fun_renamed():
     call()
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_delete_out_of_order():
+    base = """def fun():
+        super().fun()
+        reset_db()
+        CACHE.flush_all()
+        clear_all_event_stats()
+        self.secret_base = ""
+        self.secret_iv = ""
+        self.client = stuff()
+        self.proc = load()
+        reset_mockups()
+"""
+    current = """def fun():
+        super().fun()
+        self.secret_base = ""
+        self.secret_iv = ""
+        self.client = stuff()
+        self.proc = load()
+"""
+    other = """def fun():
+        super().fun()
+        reset_db()
+        reset_mockups()
+        CACHE.flush_all()
+        clear_all_event_stats()
+        self.secret_base = ""
+"""
+    expected = """def fun():
+        super().fun()
+        self.secret_base = ""
+"""
+    _test_merge_changes(base, current, other, expected)

@@ -128,7 +128,6 @@ class RemoveEls:
                     logging.debug(". el found")
                     break
 
-                find_el(tree, el_to_remove, self.context)
                 logging.debug(". el not found")
 
             assert el_to_remove is to_remove[0]
@@ -151,6 +150,13 @@ class RemoveEls:
         if anchor_el is None:
             return []
 
+        def delete_el(el):
+            tree.hide(el)
+            set_cursor(tree, el)
+            context.insert(0, el)
+            return index + 1
+
+        context = self.context.copy()
         index = tree.index(anchor_el)
         for el_to_remove in to_remove:
             try:
@@ -161,11 +167,15 @@ class RemoveEls:
                 break
             logging.debug(". removing el %r", short_display_el(el_to_remove))
             if same_el_guess(el, el_to_remove):
-                tree.hide(el)
-                set_cursor(tree, el)
-                index += 1
+                index = delete_el(el)
             else:
                 logging.debug(".. not matching %r", short_display_el(el))
+                logging.debug(".. looking for new index")
+                updated_el = find_el(tree, el_to_remove, context)
+                if updated_el:
+                    logging.debug(".. found new index")
+                    index = tree.index(updated_el)
+                    index = delete_el(updated_el)
 
         return []
 

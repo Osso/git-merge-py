@@ -247,6 +247,7 @@ class BaseAddEls:
         self.to_add = to_add
         self.context = context
         self.after_context = after_context
+        self.added = []
 
     def __repr__(self):
         return "<%s to_add=\"%s\" context=%r>" % (
@@ -334,6 +335,8 @@ class BaseAddEls:
         else:
             tree.insert(index, el)
 
+        self.added.append(el)
+
         set_cursor(tree, el)
 
         # Handle comma separated lists and such that don't add a new line
@@ -344,6 +347,18 @@ class BaseAddEls:
 
 class AddEls(BaseAddEls):
     pass
+
+
+class AddChangeEl(BaseAddEls):
+    def __init__(self, to_add, changes, context, after_context=None):
+        super().__init__([to_add], context, after_context=after_context)
+        self.changes = changes or []
+
+    def apply(self, tree):
+        conflicts = super().apply(tree)
+        if conflicts:
+            return conflicts
+        return apply_changes(self.added[0], self.changes)
 
 
 class ReplaceEls(BaseAddEls):

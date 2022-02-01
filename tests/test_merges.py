@@ -1076,7 +1076,6 @@ def fun():
 """
     expected = """
 def changed_context(): context()
-
 def fun():
     pass
 

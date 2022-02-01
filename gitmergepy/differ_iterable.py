@@ -57,7 +57,11 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
 
     if not most_similiar_node:
         logging.debug("%s new", indent+INDENT)
-        add_to_diff(diff, el_right, indent=indent+2*INDENT)
+        el_diff = []
+        new_empty_lines = _process_empty_lines(el_right)
+        if new_empty_lines:
+            el_diff += [EnsureEmptyLines(new_empty_lines)]
+        add_to_diff(diff, el_right, indent=indent+2*INDENT, changes=el_diff)
     elif most_similiar_node is stack_left[0]:
         logging.debug("%s not moved", indent+INDENT)
         diff += changed_el(el_right, stack_left, indent=indent,

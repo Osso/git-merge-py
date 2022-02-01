@@ -2,7 +2,8 @@ import logging
 
 from redbaron import nodes
 
-from .actions import (AddEls,
+from .actions import (AddChangeEl,
+                      AddEls,
                       ChangeEl,
                       ChangeIndentation,
                       RemoveEls,
@@ -480,9 +481,10 @@ def detect_comment_before_function(el):
     return comment_before_function
 
 
-def add_to_diff(diff, el, last_added=False, indent=""):
+def add_to_diff(diff, el, last_added=False, indent="", changes=None):
     comment_before_function = detect_comment_before_function(el)
     if comment_before_function is not None:
+        assert not changes
         context = gather_after_context(comment_before_function)
         logging.debug("%s after context %r", indent, short_context(context))
         diff += [AddEls([el], context=context)]
@@ -492,7 +494,11 @@ def add_to_diff(diff, el, last_added=False, indent=""):
         context = gather_context(el)
         after_context = gather_after_context(el)
         logging.debug("%s context %r", indent, short_context(context))
-        diff += [AddEls([el], context=context, after_context=after_context)]
+        if changes:
+            diff += [AddChangeEl(el, changes=changes,
+                                 context=context, after_context=after_context)]
+        else:
+            diff += [AddEls([el], context=context, after_context=after_context)]
 
 
 def diff_indent(left, right):

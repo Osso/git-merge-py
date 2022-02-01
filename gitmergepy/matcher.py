@@ -317,7 +317,7 @@ def best_block(tree, target_el):
     if len(blocks_found) >= 2:
         blocks_found = sorted(blocks_found,
                               key=lambda x: x.score, reverse=True)
-        if blocks_found[0].score - blocks_found[1].score > 0.10:
+        if blocks_found[0].score - blocks_found[1].score > 0.039:
             return blocks_found[0].el
 
     if len(blocks_found) == 1:

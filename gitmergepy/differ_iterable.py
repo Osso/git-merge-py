@@ -51,6 +51,7 @@ def diff_node_with_id(stack_left, el_right, indent, global_diff,
         maybe_moved = True
     else:
         most_similiar_node = finder(stack_left, el_right)
+        el_right.matched_el = most_similiar_node
         logging.debug("%s looking for best match %r",
                       indent+INDENT, id_from_el(most_similiar_node))
         maybe_moved = False

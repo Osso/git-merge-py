@@ -36,8 +36,10 @@ def finder_with_rename_handling(tree, target_el, finder):
     else:  # no best match
         # use node with the same name
         node_with_same_id = finder(tree, target_el)
-        if node_with_same_id and not best_block(target_el.parent,
-                                                target_el=node_with_same_id):
+        most_similar_same_id = best_block(target_el.parent,
+                                          target_el=node_with_same_id)
+        if node_with_same_id and (not most_similar_same_id or
+                                  most_similar_same_id is target_el):
             most_similar_node = node_with_same_id
 
     return most_similar_node
@@ -313,7 +315,8 @@ def best_block(tree, target_el):
     target_el_type = type(target_el)
     Result = namedtuple("Result", ["el", "score"])
     blocks_found = [Result(el, code_block_similarity(target_el, el))
-                    for el in tree if isinstance(el, target_el_type)]
+                    for el in tree if isinstance(el, target_el_type)
+                    and not el.hidden]
     if len(blocks_found) >= 2:
         blocks_found = sorted(blocks_found,
                               key=lambda x: x.score, reverse=True)

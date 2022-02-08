@@ -56,6 +56,7 @@ def compute_diff(left, right, indent=""):
     if not isinstance(right, type(left)) or type(left) not in COMPUTE_DIFF_ONE_CALLS:  # pylint: disable=unidiomatic-typecheck
         diff = [Replace(new_value=right, old_value=left)]
     else:
+        logging.debug('%s diff_one %s', indent+INDENT, type(left).__name__)
         diff += COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
 
     # Compare formatting

@@ -551,11 +551,9 @@ class ChangeEl(BaseEl):
         self.context = context
 
     def __repr__(self):
-        changes_str = "\n".join(indent_str(str(change), ".")
-                                for change in self.changes)
-        return "<%s el=\"%s\" context=%r> changes=\n.%s" % (
+        return "<%s el=\"%s\" context=%r changes=%s>" % (
             self.__class__.__name__, short_display_el(self.el),
-            short_context(self.context), changes_str)
+            short_context(self.context), len(self.changes))
 
     def apply(self, tree):
         logging.debug("changing %s context %s", short_display_el(self.el),
@@ -580,10 +578,8 @@ class ChangeAttr:
         self.changes = changes
 
     def __repr__(self):
-        changes_str = "\n".join(indent_str(str(change), ".")
-                                for change in self.changes)
-        return "<%s el=\"%s\" changes=\n.%s>" % (
-            self.__class__.__name__, self.attr_name, changes_str)
+        return "<%s el=\"%s\" changes=%s>" % (
+            self.__class__.__name__, self.attr_name, len(self.changes))
 
     def apply(self, tree):
         attr = getattr(tree, self.attr_name)
@@ -640,7 +636,7 @@ class ChangeDefArg(ChangeEl):
     def __repr__(self):
         return "<%s el=%r changes=%r>" % (self.__class__.__name__,
                                           short_display_el(self.el),
-                                          self.changes)
+                                          len(self.changes))
 
 
 class ChangeCallArg(ChangeDefArg):
@@ -721,9 +717,9 @@ class ChangeImport(ChangeEl):
         self.can_be_added_as_is = can_be_added_as_is
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context))
+        return "<%s el=\"%s\" changes=%s context=%r>" % (
+            self.__class__.__name__, short_display_el(self.el),
+            len(self.changes), short_context(self.context))
 
     def apply(self, tree):
         logging.debug("changing import %r", short_display_el(self.el))
@@ -761,9 +757,9 @@ class ChangeClass(ChangeEl):
         self.old_name = old_name
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r old_name=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context), self.old_name)
+        return "<%s el=\"%s\" changes=%s context=%r old_name=%r>" % (
+            self.__class__.__name__, short_display_el(self.el),
+            len(self.changes), short_context(self.context), self.old_name)
 
     def apply(self, tree):
         el = find_class(tree, self.el)
@@ -812,9 +808,10 @@ class MoveElWithId(ChangeEl):
         self.old_empty_lines = old_empty_lines or []
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r empty_lines=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context), self.old_empty_lines)
+        return "<%s el=\"%s\" changes=%s context=%r empty_lines=%r>" % (
+            self.__class__.__name__, short_display_el(self.el),
+            len(self.changes), short_context(self.context),
+            self.old_empty_lines)
 
     def apply(self, tree):
         fun = self.finder(tree, self.el)
@@ -1200,7 +1197,7 @@ class ChangeDictItem(ChangeEl):
 
 class ChangeAssociatedSep:
     def __repr__(self):
-        return "<%s changes=%r>" % (self.__class__.__name__, self.changes)
+        return "<%s changes=%s>" % (self.__class__.__name__, len(self.changes))
 
     def __init__(self, changes):
         assert changes
@@ -1445,7 +1442,7 @@ class ChangeExceptsNode:
 
     def __repr__(self):
         return "<%s index=%r changes=%r>" % (self.__class__.__name__,
-                                             self.index, self.changes)
+                                             self.index, len(self.changes))
 
 
 class ChangeString(ChangeEl):

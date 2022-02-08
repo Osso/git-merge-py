@@ -59,8 +59,8 @@ def compute_diff(left, right, indent=""):
         logging.debug('%s diff_one %s', indent+INDENT, type(left).__name__)
         diff += COMPUTE_DIFF_ONE_CALLS[type(left)](left, right, indent+INDENT)
 
-    # Compare formatting
-    diff += compare_formatting(left, right)
+        # Compare formatting
+        diff += compare_formatting(left, right)
 
     logging.debug('%s diff =', indent)
     for d in diff:

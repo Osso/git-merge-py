@@ -2130,3 +2130,15 @@ def test_multiline_expr():
         (2 if cond3 else 0))  # comment
 """
     _test_apply_changes(base, current)
+
+
+def test_change_if():
+    base = """
+if call() and more_stuff:
+    pass
+"""
+    current = """
+if stuff:
+    pass
+"""
+    _test_apply_changes(base, current)

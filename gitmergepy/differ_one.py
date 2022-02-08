@@ -105,7 +105,8 @@ def diff_arg_node(left, right, indent):
         if left.annotation is None and right.annotation is None:
             pass
         elif left.annotation is not None and right.annotation is not None:
-            changes = compute_diff(left.annotation, right.annotation, indent=indent+INDENT)
+            changes = compute_diff(left.annotation, right.annotation,
+                                   indent=indent+INDENT)
             if changes:
                 diff += [ChangeAnnotation(right, changes=changes)]
         else:
@@ -223,7 +224,8 @@ def diff_atom_trailer_node(left, right, indent):
                                             changes=[Replace(new_value=el_right,
                                                              old_value=el_left)])]
         else:
-            el_diff = compute_diff(el_left, el_right)
+            el_diff = compute_diff(el_left, el_right,
+                                   indent=indent+INDENT)
             if el_diff:
                 diff += [ChangeAtomtrailersEl(el_left, index=index,
                                                 changes=el_diff)]
@@ -378,7 +380,8 @@ def diff_if_else_block_node(left, right, indent):
 def diff_if_node(left, right, indent):
     diff = []
     if left.test.dumps() != right.test.dumps():
-        diff += [ChangeAttr('test', compute_diff(left.test, right.test))]
+        diff += [ChangeAttr('test', compute_diff(left.test, right.test,
+                                                 indent=indent+INDENT))]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
     return diff
@@ -387,7 +390,8 @@ def diff_if_node(left, right, indent):
 def diff_elif_node(left, right, indent):
     diff = []
     if left.test.dumps() != right.test.dumps():
-        diff += [ChangeAttr('test', compute_diff(left.test, right.test))]
+        diff += [ChangeAttr('test', compute_diff(left.test, right.test,
+                                                 indent=indent+INDENT))]
 
     diff += compute_diff_iterables(left, right, indent=indent+INDENT)
     return diff
@@ -402,7 +406,7 @@ def diff_endl_node(left, right, indent):
 
 
 def diff_return_node(left, right, indent):
-    diff = compute_diff(left.value, right.value, indent+INDENT)
+    diff = compute_diff(left.value, right.value, indent=indent+INDENT)
     if diff:
         return [ChangeReturn(right, changes=diff)]
     return []
@@ -423,11 +427,11 @@ def diff_tuple_node(left, right, indent):
 
 
 def diff_list_argument_node(left, right, indent):
-    return compute_diff(left.value, right.value, indent+INDENT)
+    return compute_diff(left.value, right.value, indent=indent+INDENT)
 
 
 def diff_dict_argument_node(left, right, indent):
-    return compute_diff(left.value, right.value, indent+INDENT)
+    return compute_diff(left.value, right.value, indent=indent+INDENT)
 
 
 def diff_dict_node(left, right, indent):
@@ -556,7 +560,8 @@ def diff_list_comments(left, right, indent, list_changer):
         if left_el.associated_sep and right_el.associated_sep:
             if not left_el.associated_sep.second_formatting and not right_el.associated_sep.second_formatting:
                 continue
-            changes = compute_diff(left_el.associated_sep, right_el.associated_sep,
+            changes = compute_diff(left_el.associated_sep,
+                                   right_el.associated_sep,
                                    indent=indent+INDENT)
         else:
             if right_el.associated_sep and not right_el.associated_sep.second_formatting:

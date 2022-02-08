@@ -1,6 +1,7 @@
 import logging
 
 from redbaron import nodes
+from redbaron.utils import indent_str
 
 from .actions import (AddChangeEl,
                       AddEls,
@@ -60,7 +61,9 @@ def compute_diff(left, right, indent=""):
     # Compare formatting
     diff += compare_formatting(left, right)
 
-    logging.debug('%s compute_diff diff=%r', indent, diff)
+    logging.debug('%s diff =', indent)
+    for d in diff:
+        logging.debug(indent_str(repr(d), indent+"."))
 
     return diff
 

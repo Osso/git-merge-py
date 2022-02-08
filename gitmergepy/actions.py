@@ -4,6 +4,7 @@ from redbaron import nodes
 from redbaron.base_nodes import (BaseNode,
                                  NodeList)
 from redbaron.node_mixin import CodeBlockMixin
+from redbaron.utils import indent_str
 
 from diff_match_patch import diff_match_patch
 
@@ -550,9 +551,11 @@ class ChangeEl(BaseEl):
         self.context = context
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r>" % (
+        changes_str = "\n".join(indent_str(str(change), ".")
+                                for change in self.changes)
+        return "<%s el=\"%s\" context=%r> changes=\n.%s" % (
             self.__class__.__name__, short_display_el(self.el),
-            self.changes, short_context(self.context))
+            short_context(self.context), changes_str)
 
     def apply(self, tree):
         logging.debug("changing %s context %s", short_display_el(self.el),
@@ -577,8 +580,10 @@ class ChangeAttr:
         self.changes = changes
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r>" % (
-            self.__class__.__name__, self.attr_name, self.changes)
+        changes_str = "\n".join(indent_str(str(change), ".")
+                                for change in self.changes)
+        return "<%s el=\"%s\" changes=\n.%s>" % (
+            self.__class__.__name__, self.attr_name, changes_str)
 
     def apply(self, tree):
         attr = getattr(tree, self.attr_name)

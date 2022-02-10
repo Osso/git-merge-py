@@ -2165,3 +2165,9 @@ def test_change_list():
         ])
 """
     _test_apply_changes(base, current)
+
+
+def test_assert_type():
+    base = "assert a == b"
+    current = "assert c"
+    _test_apply_changes(base, current)

@@ -178,8 +178,9 @@ def same_el_guess(left, right, context=None):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.NumberNode):
         return True
-    if isinstance(left, nodes.AssertNode) and isinstance(left.value,
-                                                         nodes.ComparisonNode):
+    if (isinstance(left, nodes.AssertNode) and
+            isinstance(left.value, nodes.ComparisonNode) and
+            isinstance(right.value, nodes.ComparisonNode)):
         return (left.value.first.dumps() == right.value.first.dumps() or
                 left.value.second.dumps() == right.value.second.dumps())
 

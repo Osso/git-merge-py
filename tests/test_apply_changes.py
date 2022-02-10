@@ -2142,3 +2142,26 @@ if stuff:
     pass
 """
     _test_apply_changes(base, current)
+
+
+def test_change_list():
+    base = """
+        a = sorted([
+            'VAL1',
+            'VAL2',
+            'VAL3',
+        ], [
+            'VALUE1',
+            'VALUE2',
+        ])
+"""
+    current = """
+        a = sorted([
+            'VAL1',
+            'VAL3',
+        ], [
+            'VALUE1',
+            'VALUE2',
+        ])
+"""
+    _test_apply_changes(base, current)

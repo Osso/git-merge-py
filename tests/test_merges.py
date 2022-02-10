@@ -1117,3 +1117,43 @@ def test_delete_out_of_order():
         self.secret_base = ""
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_double_list():
+    base = """
+        a = sorted([
+            'VAL1',
+            'VAL2',
+            'VAL3',
+        ], [
+            'VALUE1',
+            'VALUE2',
+        ])
+"""
+    current = """
+        a = sorted([
+            'VAL1',
+            'VAL3',
+        ], [
+            'VALUE1',
+            'VALUE2',
+        ])
+"""
+    other = """
+        a = sorted([
+            'VAL2',
+            'VAL3',
+        ], [
+            'VALUE1',
+            'VALUE2',
+        ])
+"""
+    expected = """
+        a = sorted([
+            'VAL3',
+        ], [
+            'VALUE1',
+            'VALUE2',
+        ])
+"""
+    _test_merge_changes(base, current, other, expected)

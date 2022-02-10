@@ -4,10 +4,12 @@ from redbaron import RedBaron
 
 from gitmergepy.actions import (AddCallArg,
                                 AddEls,
+                                ChangeAssignment,
                                 ChangeEl,
                                 ChangeExceptsNode,
                                 ChangeImport,
                                 ChangeString,
+                                ChangeValue,
                                 MoveFun,
                                 MoveImport,
                                 RemoveEls,
@@ -2171,3 +2173,43 @@ def test_assert_type():
     base = "assert a == b"
     current = "assert c"
     _test_apply_changes(base, current)
+
+
+def test_tuple_list():
+    base = """
+l = [
+        ("section1", [
+            ("a1", b1),
+            ("a2", b2),
+        ]),
+        ("section2", [
+            ("c1", c1),
+            ("d2", d2),
+        ]),
+    ]
+"""
+    current = """
+l = [
+        ("section1", [
+            ("a1", b1),
+            ("a2", b2),
+        ]),
+        ("section2", [
+            ("c1", c1),
+        ]),
+    ]
+"""
+    _test_apply_changes(base, current)
+    changes = compute_diff(RedBaron(base), RedBaron(current))
+    assert len(changes) == 1
+    assert isinstance(changes[0], ChangeEl)
+    assert isinstance(changes[0].changes[0], ChangeAssignment)
+    assert isinstance(changes[0].changes[0].changes[0], ChangeValue)
+    assert isinstance(changes[0].changes[0].changes[0].changes[0], SameEl)
+    assert isinstance(changes[0].changes[0].changes[0].changes[1], ChangeEl)
+    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0], ChangeValue)
+    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[0], SameEl)
+    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1], ChangeEl)
+    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0], ChangeValue)
+    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[0], SameEl)
+    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[1], RemoveEls)

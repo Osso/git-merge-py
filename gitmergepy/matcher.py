@@ -14,7 +14,8 @@ from .tools import (get_call_els,
 MAX_LEVENSHTEIN_DISTANCE = 2
 CODE_BLOCK_SIMILARITY_THRESHOLD = 0.5
 CODE_BLOCK_SAME_THRESHOLD = 0.8
-DICT_SIMILARITY_THRESHOLD = 0.5
+DICT_SIMILARITY_THRESHOLD = 0.49
+LIST_SIMILARITY_THRESHOLD = 0.49
 ARGS_SIMILARITY_THRESHOLD = 0.6
 
 
@@ -176,6 +177,8 @@ def same_el_guess(left, right, context=None):
         return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.DictNode):
         return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
+    if isinstance(left, (nodes.ListNode, nodes.TupleNode)):
+        return list_similarity(left, right) > LIST_SIMILARITY_THRESHOLD
     if isinstance(left, nodes.NumberNode):
         return True
     if (isinstance(left, nodes.AssertNode) and
@@ -350,6 +353,14 @@ def code_block_similarity(left, right):
 def dict_similarity(left, right):
     left_lines = set(item.key.dumps() for item in left)
     right_lines = set(item.key.dumps() for item in right)
+    same_lines_count = len(left_lines & right_lines)
+    total_lines_count = max(len(left_lines), len(right_lines))
+    return same_lines_count / total_lines_count
+
+
+def list_similarity(left, right):
+    left_lines = set(item.dumps() for item in left)
+    right_lines = set(item.dumps() for item in right)
     same_lines_count = len(left_lines & right_lines)
     total_lines_count = max(len(left_lines), len(right_lines))
     return same_lines_count / total_lines_count

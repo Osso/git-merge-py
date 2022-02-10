@@ -17,7 +17,7 @@ from .actions import (AddAllDecoratorArgs,
                       ArgRemoveNewLine,
                       ChangeAnnotation,
                       ChangeArg,
-                      ChangeAssignmentNode,
+                      ChangeAssignment,
                       ChangeAssociatedSep,
                       ChangeAtomtrailersEl,
                       ChangeAttr,
@@ -288,7 +288,7 @@ def diff_assignment_node(left, right, indent):
 
     el_diff = compute_diff(left.value, right.value, indent=indent+INDENT)
     if el_diff:
-        diff += [ChangeAssignmentNode(left, changes=el_diff)]
+        diff += [ChangeAssignment(left, changes=el_diff)]
 
     return diff
 

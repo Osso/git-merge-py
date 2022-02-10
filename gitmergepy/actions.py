@@ -553,7 +553,7 @@ class ChangeEl(BaseEl):
     def __repr__(self):
         changes_str = "\n".join(indent_str(str(change), ".")
                                 for change in self.changes)
-        return "<%s el=\"%s\" context=%r> changes=\n.%s" % (
+        return "<%s el=\"%s\" context=%r> changes=\n%s" % (
             self.__class__.__name__, short_display_el(self.el),
             short_context(self.context), changes_str)
 
@@ -867,7 +867,7 @@ class MoveClass(MoveElWithId):
         self.finder = find_class
 
 
-class ChangeAssignmentNode(ChangeEl):
+class ChangeAssignment(ChangeEl):
     def apply(self, tree):
         return apply_changes(tree.value, self.changes)
 

@@ -1449,6 +1449,11 @@ class ChangeExceptsNode:
 
 
 class ChangeString(ChangeEl):
+    def __repr__(self):
+        return "<%s el=\"%s\" context=%r>" % (
+            self.__class__.__name__, short_display_el(self.el),
+            short_context(self.context))
+
     def apply(self, tree):
         dmp = diff_match_patch()
         patches = dmp.patch_fromText(self.changes)

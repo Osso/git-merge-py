@@ -574,6 +574,31 @@ def diff_list_comments(left, right, indent, list_changer):
     return diff
 
 
+def diff_assert_node(left, right, indent):
+    changes = compute_diff(left.value, right.value)
+    if changes:
+        return [ChangeAttr('value', changes)]
+    return []
+
+
+def diff_comparison_node(left, right, indent):
+    diff = []
+
+    changes = compute_diff(left.value, right.value)
+    if changes:
+        diff += [ChangeAttr('value', changes)]
+
+    changes = compute_diff(left.first, right.first)
+    if changes:
+        diff += [ChangeAttr('first', changes)]
+
+    changes = compute_diff(left.second, right.second)
+    if changes:
+        diff += [ChangeAttr('second', changes)]
+
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -605,4 +630,6 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.TryNode: diff_try_node,
     nodes.StringNode: diff_string_node,
     nodes.NameNode: diff_name_node,
+    nodes.AssertNode: diff_assert_node,
+    nodes.ComparisonNode: diff_comparison_node,
 }

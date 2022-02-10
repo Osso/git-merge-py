@@ -107,6 +107,9 @@ def id_from_arg(arg):
     if isinstance(arg.value, nodes.ListNode):
         target = arg.target if arg.target else "%d" % arg.index_on_parent
         return target + "=[...]"
+    if isinstance(arg.value, nodes.StringNode):
+        target = arg.target if arg.target else "%d" % arg.index_on_parent
+        return target + "=\"\""
     return id_from_el(arg)
 
 

@@ -1157,3 +1157,11 @@ def test_double_list():
         ])
 """
     _test_merge_changes(base, current, other, expected)
+
+
+def test_assert():
+    base = """assert stuff == set("A B C D")"""
+    current = """assert stuff == set("A B C")"""
+    other = """assert stuff == set("A B D")"""
+    expected = """assert stuff == set("A B ")"""
+    _test_merge_changes(base, current, other, expected)

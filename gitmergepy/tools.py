@@ -38,7 +38,7 @@ def short_display_el(el):
 
     for line in el.dumps().splitlines():
         if line.strip():
-            return line
+            return line.strip()
 
     return "a bunch of blank lines"
 

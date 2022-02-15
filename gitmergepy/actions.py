@@ -582,7 +582,7 @@ class ChangeAttr:
     def __repr__(self):
         changes_str = "\n".join(indent_str(str(change), ".")
                                 for change in self.changes)
-        return "<%s el=\"%s\" changes=\n.%s>" % (
+        return "<%s el=\"%s\" changes=\n%s>" % (
             self.__class__.__name__, self.attr_name, changes_str)
 
     def apply(self, tree):

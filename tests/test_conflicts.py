@@ -45,7 +45,7 @@ if cond:
     expected = """
 # <<<<<<<<<<
 # Reason context not found
-# <AddEls to_add="    # added elements" context='None|    # context'>
+# <AddEls to_add="# added elements" context='None|# context'>
 #     # added elements
 # >>>>>>>>>>
 if cond:
@@ -83,8 +83,8 @@ if cond:
 # <ChangeEl el="if cond:" context='None'> changes=
 # .<ChangeValue el="if cond:" context='no context'> changes=
 # ..<ChangeEl el="if cond:" context='None'> changes=
-# ...<AddEls to_add="    # added elements" context='None'>
-# ...<SameEl el="    pass">
+# ...<AddEls to_add="# added elements" context='None'>
+# ...<SameEl el="pass">
 # if cond:
 #     pass
 # >>>>>>>>>>

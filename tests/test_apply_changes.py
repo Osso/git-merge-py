@@ -2216,6 +2216,12 @@ l = [
 
 
 def test_change_call_brackets():
-    base = "data.fetch()['imsi']"
-    current = "data['imsi']"
+    base = "data.fetch()['stuff']"
+    current = "data['stuff']"
+    _test_apply_changes(base, current)
+
+
+def test_change_call_brackets_2():
+    base = "assert call.fetch(args)[\"stuff\"] == _stuff1"
+    current = "assert user_info[\"stuff\"] == _stuff1"
     _test_apply_changes(base, current)

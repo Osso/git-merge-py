@@ -473,7 +473,7 @@ class Replace:
                 return [Conflict([tree], self,
                                  reason="Different from old value %r" %
                                         short_display_el(self.old_value))]
-        tree.replace(self.new_value)
+        tree.replace(self.new_value.copy())
         return []
 
     def __repr__(self):

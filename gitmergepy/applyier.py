@@ -7,10 +7,14 @@ PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
 
 def apply_changes(tree, changes, skip_checks=False):
+    from .actions import Replace
+
     conflicts = []
     for change in changes:
         conflicts += change.apply(tree)
 
+    if len(changes) == 1 and isinstance(changes[0], Replace):
+        tree = tree.parent
     if isinstance(tree, nodes.CallNode) and tree.value.auto_separator:
         tree.value.reformat()
     elif isinstance(tree, nodes.DefNode):

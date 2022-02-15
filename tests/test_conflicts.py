@@ -81,9 +81,9 @@ if cond:
 # <<<<<<<<<<
 # Reason el not found
 # <ChangeEl el="if cond:" context='None'> changes=
-# ..<ChangeValue el="if cond:" context='no context'> changes=
-# ...<ChangeEl el="if cond:" context='None'> changes=
-# ....<AddEls to_add="    # added elements" context='None'>
+# .<ChangeValue el="if cond:" context='no context'> changes=
+# ..<ChangeEl el="if cond:" context='None'> changes=
+# ...<AddEls to_add="    # added elements" context='None'>
 # ...<SameEl el="    pass">
 # if cond:
 #     pass

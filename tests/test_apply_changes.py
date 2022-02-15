@@ -2213,3 +2213,9 @@ l = [
     assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0], ChangeValue)
     assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[0], SameEl)
     assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[1], RemoveEls)
+
+
+def test_change_call_brackets():
+    base = "data.fetch()['imsi']"
+    current = "data['imsi']"
+    _test_apply_changes(base, current)

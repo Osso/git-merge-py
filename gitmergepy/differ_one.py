@@ -216,7 +216,7 @@ def diff_atom_trailer_node(left, right, indent):
     diff = []
 
     if len(left) != len(right):
-        diff += [Replace(new_value=right, old_value=left)]
+        return [Replace(new_value=right, old_value=left)]
 
     for index, (el_left, el_right) in enumerate(zip(left, right)):
         if not isinstance(el_left, type(el_right)):

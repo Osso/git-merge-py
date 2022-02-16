@@ -22,6 +22,7 @@ from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
                       find_el,
                       find_func,
                       find_import,
+                      find_imports,
                       find_key,
                       same_arg_guess,
                       same_el_guess)
@@ -728,7 +729,7 @@ class ChangeImport(ChangeEl):
     def apply(self, tree):
         logging.debug("changing import %r", short_display_el(self.el))
 
-        els = find_import(tree, self.el)
+        els = find_imports(tree, self.el)
         if els:
             logging.debug(". found")
             el = els[0]
@@ -748,7 +749,7 @@ class ChangeImport(ChangeEl):
             if self.can_be_added_as_is:
                 # all the imports in self.el are to be added
                 return []
-            el = find_import(tree, self.el)[0]
+            el = find_import(tree, self.el)
             el.targets.clear()
             el.targets.remove_brackets()
 

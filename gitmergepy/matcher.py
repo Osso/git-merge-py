@@ -59,12 +59,19 @@ def find_class(tree, class_node):
                                        finder=find_code_block_with_id)
 
 
-def find_import(tree, import_node):
+def find_imports(tree, import_node):
     import_types = (nodes.FromImportNode, nodes.ImportNode)
     assert isinstance(import_node, import_types)
 
     return [el for el in tree if isinstance(el, import_types) and
                               id_from_el(el) == id_from_el(import_node)]
+
+
+def find_import(tree, import_node):
+    for import_el in find_imports(tree, import_node):
+        if set(import_node.names()) & set(import_el.names()):
+            return import_el
+    return None
 
 
 def match_el_with_if_condition(el, target_el, context):
@@ -203,9 +210,9 @@ def find_el_strong(tree, target_el):
             return el
 
     if isinstance(target_el, nodes.FromImportNode):
-        els = find_import(tree, target_el)
-        if els:
-            return els[0]
+        el = find_import(tree, target_el)
+        if el:
+            return el
 
     if isinstance(target_el, nodes.IfNode):
         el = tree[0]

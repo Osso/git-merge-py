@@ -163,8 +163,7 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
     if hasattr(el_right, 'matched_el'):  # Already matched earlier
         el = el_right.matched_el
     else:
-        els = find_import(stack_left, el_right)
-        el = els[0] if els else None
+        el = find_import(stack_left, el_right)
 
     if el:
         el_diff = compute_diff(el, el_right, indent=indent+INDENT)
@@ -172,6 +171,8 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
             logging.debug("%s not changed", indent+INDENT)
 
         if not stack_left or el is not stack_left[0]:
+            if "mockupspims.mockup_data" == id_from_el(el_right):
+                import pdb; pdb.set_trace()
             logging.debug("%s moved", indent+INDENT)
             el_diff += [MoveImport(el_right, context=gather_context(el_right))]
 

@@ -6,6 +6,7 @@ from gitmergepy.context import (AfterContext,
                                 BeforeContext)
 from gitmergepy.matcher import (code_block_similarity,
                                 find_el,
+                                find_import,
                                 find_single_el_with_context,
                                 same_el_guess)
 
@@ -65,3 +66,27 @@ def test_same_el_guess_call_named_arg():
     node1 = node("fun(arg)")
     node2 = node("fun(arg=arg)")
     assert same_el_guess(node1, node2)
+
+
+def test_find_import():
+    import_node = node("from a import b")
+    tree = RedBaron("from a import b")
+    assert find_import(tree, import_node)
+
+
+def test_find_import_2():
+    import_node = node("from a import b")
+    tree = RedBaron("from a import c, b")
+    assert find_import(tree, import_node)
+
+
+def test_find_import_not():
+    import_node = node("from a import b")
+    tree = RedBaron("from a import b2")
+    assert not find_import(tree, import_node)
+
+
+def test_find_import_not_2():
+    import_node = node("from a import b")
+    tree = RedBaron("from a2 import b")
+    assert not find_import(tree, import_node)

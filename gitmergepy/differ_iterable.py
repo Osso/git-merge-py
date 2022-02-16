@@ -188,7 +188,9 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
 
     else:
         # new import
-        logging.debug("%s new import %r", indent+INDENT, id_from_el(el_right))
+        for target in el_right.targets:
+            logging.debug("%s new import %r", indent+INDENT,
+                          short_display_el(target))
         diff += [ChangeImport(el_right, changes=[AddImports(el_right.targets)],
                               can_be_added_as_is=True,
                               context=gather_context(el_right))]

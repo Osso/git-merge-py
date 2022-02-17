@@ -7,6 +7,7 @@ from Levenshtein import distance as levenshtein
 
 from .tools import (get_call_els,
                     get_name_els_from_call,
+                    id_from_arg,
                     id_from_el,
                     name_els_to_string,
                     same_el)
@@ -400,6 +401,4 @@ def find_key(key_node, dict_node):
 
 
 def same_arg_guess(left, right):
-    if left.target:
-        return left.target.dumps() == right.target.dumps()
-    return same_el(left.value, right.value)
+    return id_from_arg(left) == id_from_arg(right)

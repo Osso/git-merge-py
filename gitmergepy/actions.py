@@ -376,6 +376,8 @@ class ReplaceEls(BaseAddEls):
             '\n* '.join(line.lstrip(" ") for line in short_context(self.context).split("|")))
 
     def match_to_remove_at_index(self, tree, index):
+        if index >= len(tree):
+            return False
         if tree[index].hidden:
             return False
 

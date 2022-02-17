@@ -170,11 +170,12 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
         if not el_diff:
             logging.debug("%s not changed", indent+INDENT)
 
-        if not stack_left or el is not stack_left[0]:
-            if "mockupspims.mockup_data" == id_from_el(el_right):
-                import pdb; pdb.set_trace()
-            logging.debug("%s moved", indent+INDENT)
-            el_diff += [MoveImport(el_right, context=gather_context(el_right))]
+        if stack_left and el is not stack_left[0]:
+            remove_import_if_not_found(stack_left)
+            if el is not stack_left[0]:
+                logging.debug("%s moved", indent+INDENT)
+                el_diff += [MoveImport(el_right,
+                                       context=gather_context(el_right))]
 
         if el_diff:
             diff += [ChangeImport(el, el_diff, context=gather_context(el))]
@@ -185,7 +186,6 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
                 stack_left.pop(0)
             else:
                 el.already_processed = True
-                remove_import_if_not_found(stack_left)
 
     else:
         # new import

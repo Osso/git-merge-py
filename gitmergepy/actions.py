@@ -881,6 +881,8 @@ class ChangeAtomtrailersEl(ChangeEl):
         self.index = index
 
     def apply(self, tree):
+        if not isinstance(tree, nodes.AtomtrailersNode):
+            return [Conflict([self.el], self, 'tree is not atom trailer node')]
         try:
             el = tree[self.index]
         except IndexError:

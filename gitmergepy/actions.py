@@ -594,7 +594,11 @@ class ChangeAttr:
             self.__class__.__name__, self.attr_name, changes_str)
 
     def apply(self, tree):
-        attr = getattr(tree, self.attr_name)
+        try:
+            attr = getattr(tree, self.attr_name)
+        except AttributeError:
+            return [Conflict([self.el], self,
+                             "element has no attr %s" % self.attr_name)]
         return apply_changes(attr, self.changes)
 
 

@@ -942,6 +942,9 @@ class AddFunArg:
         return tree.arguments
 
     def apply(self, tree):
+        if not isinstance(tree, (nodes.DefNode, nodes.CallNode)):
+            return [Conflict([self.el], self, 'tree is not a def node')]
+
         args = self.get_args(tree)
         arg = self.arg.copy()
 

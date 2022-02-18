@@ -446,7 +446,12 @@ class ReplaceEls(BaseAddEls):
         logging.debug(". removing els")
         offset = 0
         for el_to_remove in self.to_remove:
-            el = tree[index+offset]
+            try:
+                el = tree[index+offset]
+            except IndexError:
+                # End of tree, we can only assume the other elements
+                # are already removed
+                break
             if (offset > 0 and isinstance(el, nodes.CommentNode) and
                     not isinstance(el_to_remove, nodes.CommentNode)):
                 tree.hide(el)

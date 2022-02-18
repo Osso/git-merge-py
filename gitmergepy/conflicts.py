@@ -13,14 +13,14 @@ def add_conflict(source_el, conflict):
        isinstance(source_el.parent.parent, nodes.IfelseblockNode):
         source_el = source_el.parent.parent
 
-    if conflict.insert_before and source_el.parent is not None:
+    if conflict.insert_before and isinstance(source_el.parent, CodeBlockMixin):
         tree = source_el.parent
         index = tree.index(source_el)
     else:
         tree = source_el
         index = 0
 
-    while tree.parent and not isinstance(tree, CodeBlockMixin):
+    while tree.parent and (not isinstance(tree, CodeBlockMixin) or isinstance(tree, nodes.IfelseblockNode)):
         tree = tree.parent
 
     # We can only add code to add CodeProxyList

@@ -597,7 +597,7 @@ class ChangeAttr:
         try:
             attr = getattr(tree, self.attr_name)
         except AttributeError:
-            return [Conflict([self.el], self,
+            return [Conflict([], self,
                              "element has no attr %s" % self.attr_name)]
         return apply_changes(attr, self.changes)
 

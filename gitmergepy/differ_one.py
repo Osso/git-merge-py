@@ -268,7 +268,8 @@ def diff_call_node(left, right, indent):
             diff_arg += [ArgRemoveNewLine()]
         if id_from_el(get_previous_arg(old_arg, to_remove)) != id_from_el(get_previous_arg(new_arg, to_remove)):
             diff_arg += [MoveArg(context=gather_context(new_arg))]
-        diff += [ChangeCallArg(new_arg, changes=diff_arg)]
+        if diff_arg:
+            diff += [ChangeCallArg(new_arg, changes=diff_arg)]
 
     # Comments
     diff += diff_list_comments(left, right, indent=indent,

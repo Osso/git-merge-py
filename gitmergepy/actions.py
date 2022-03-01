@@ -1273,6 +1273,10 @@ class MoveArg:
     def __init__(self, context):
         self.context = context
 
+    def __repr__(self):
+        return "<%s context=%r>" % (self.__class__.__name__,
+                                    short_context(self.context))
+
     def apply(self, tree):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])

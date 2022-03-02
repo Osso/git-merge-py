@@ -1837,7 +1837,7 @@ if cond(arg1, arg2):
 """
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
-    add_arg = changes[0].changes[0].changes[0].changes[0].changes[0].changes[0]
+    add_arg = changes[0].changes[0].changes[0].changes[0].changes[0].changes[0].changes[0]
     assert isinstance(add_arg, AddCallArg)
 
 
@@ -1948,7 +1948,7 @@ def test_atom_trailer_string():
     _test_apply_changes(base, current)
     changes = compute_diff(RedBaron(base), RedBaron(current))
     assert isinstance(changes[0], ChangeEl)
-    assert isinstance(changes[0].changes[0].changes[0], ChangeString)
+    assert isinstance(changes[0].changes[0].changes[0].changes[0], ChangeString)
 
 
 def test_atom_trailer_el():

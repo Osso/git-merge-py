@@ -19,6 +19,7 @@ from .actions import (AddAllDecoratorArgs,
                       ChangeArg,
                       ChangeAssignment,
                       ChangeAssociatedSep,
+                      ChangeAtomTrailer,
                       ChangeAtomtrailersEl,
                       ChangeAttr,
                       ChangeCallArg,
@@ -221,16 +222,16 @@ def diff_atom_trailer_node(left, right, indent):
     for index, (el_left, el_right) in enumerate(zip(left, right)):
         if not isinstance(el_left, type(el_right)):
             diff += [ChangeAtomtrailersEl(el_left, index=index,
-                                            changes=[Replace(new_value=el_right,
-                                                             old_value=el_left)])]
+                                          changes=[Replace(new_value=el_right,
+                                                           old_value=el_left)])]
         else:
             el_diff = compute_diff(el_left, el_right,
                                    indent=indent+INDENT)
             if el_diff:
                 diff += [ChangeAtomtrailersEl(el_left, index=index,
-                                                changes=el_diff)]
+                                              changes=el_diff)]
 
-    return diff
+    return [ChangeAtomTrailer(right, diff)]
 
 
 def _check_for_arg_changes(arg):

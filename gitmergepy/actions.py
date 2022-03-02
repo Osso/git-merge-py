@@ -884,6 +884,14 @@ class ChangeAssignment(ChangeEl):
         return apply_changes(tree.value, self.changes)
 
 
+class ChangeAtomTrailer(ChangeEl):
+    def apply(self, tree):
+        if len(tree.value.node_list) != len(self.el.value.node_list):
+            tree.replace(self.el.copy())
+            return []
+        return apply_changes(tree, self.changes)
+
+
 class ChangeAtomtrailersEl(ChangeEl):
     def __init__(self, el, changes, index):
         super().__init__(el, changes=changes)

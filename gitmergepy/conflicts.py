@@ -36,7 +36,7 @@ def add_conflict(source_el, conflict):
     after_text = ">>>>>>>>>>"
     _insert(before_text)
     if conflict.reason:
-        _insert("Reason %s" % conflict.reason)
+        _insert("Conflict: reason %s" % conflict.reason)
     if conflict.change:
         for line in repr(conflict.change).splitlines():
             _insert(line)

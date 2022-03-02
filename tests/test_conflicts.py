@@ -44,7 +44,7 @@ if cond:
 """
     expected = """
 # <<<<<<<<<<
-# Reason context not found
+# Conflict: reason context not found
 # <AddEls to_add="# added elements" context='None|# context'>
 #     # added elements
 # >>>>>>>>>>
@@ -79,7 +79,7 @@ if cond:
 """
     expected = """
 # <<<<<<<<<<
-# Reason el not found
+# Conflict: reason el not found
 # <ChangeEl el="if cond:" context='None'> changes=
 # .<ChangeValue el="if cond:" context='no context'> changes=
 # ..<ChangeEl el="if cond:" context='None'> changes=

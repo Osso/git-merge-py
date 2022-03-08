@@ -886,7 +886,8 @@ class ChangeAssignment(ChangeEl):
 
 class ChangeAtomTrailer(ChangeEl):
     def apply(self, tree):
-        if len(tree.value.node_list) != len(self.el.value.node_list):
+        if (not isinstance(tree, nodes.AtomtrailersNode)
+                or len(tree.value.node_list) != len(self.el.value.node_list)):
             tree.replace(self.el.copy())
             return []
         return apply_changes(tree, self.changes)

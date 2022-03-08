@@ -35,7 +35,7 @@ def apply_changes(tree, changes, skip_checks=False):
             tree = tree.parent.parent
         while isinstance(tree, (nodes.ElseNode, ProxyList)):
             tree = tree.parent
-        if isinstance(tree, nodes.CallNode):
+        if isinstance(tree, (nodes.CallNode, nodes.ExceptNode)):
             tree = tree.parent.parent
         RedBaron(tree.dumps())
 

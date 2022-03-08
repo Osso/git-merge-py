@@ -65,7 +65,8 @@ def find_imports(tree, import_node):
     assert isinstance(import_node, import_types)
 
     return [el for el in tree if isinstance(el, import_types) and
-                              id_from_el(el) == id_from_el(import_node)]
+                              id_from_el(el) == id_from_el(import_node)
+                              and not el.hidden]
 
 
 def find_import(tree, import_node):

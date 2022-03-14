@@ -1335,6 +1335,8 @@ def copy_and_transfer_anchors(el):
 
 
 class MoveEl(ElWithContext):
+    conflict_if_missing = True
+
     def apply(self, tree):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
@@ -1347,7 +1349,10 @@ class MoveEl(ElWithContext):
             tree.hidden = False
             msg = "Context not found"
             logging.debug(".. %s", msg.lower())
-            return [Conflict([tree], self, reason=msg)]
+            if self.conflict_if_missing:
+                return [Conflict([tree], self, reason=msg)]
+            else:
+                return []
 
         if indexes[0] == tree.index_on_parent:
             return []
@@ -1362,7 +1367,7 @@ class MoveEl(ElWithContext):
 
 
 class MoveImport(MoveEl):
-    pass
+    conflict_if_missing = True
 
 
 class ChangeHeader:

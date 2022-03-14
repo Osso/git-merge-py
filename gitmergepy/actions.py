@@ -1346,7 +1346,6 @@ class MoveEl(ElWithContext):
         else:
             indexes = find_context_with_reduction(tree.parent, self.context)
         if not indexes:
-            tree.hidden = False
             msg = "Context not found"
             logging.debug(".. %s", msg.lower())
             if self.conflict_if_missing:

@@ -1289,6 +1289,15 @@ class MoveArg:
     def apply(self, tree):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
+        if tree.previous is None and tree.previous is None:
+            logging.debug("... already at the beginning")
+            return []
+        if (tree.previous and
+                self.context[0] and
+                same_arg_guess(self.context[0], tree.previous)):
+            logging.debug("... already in place")
+            return []
+
         tree.parent.remove(tree)
 
         if self.context[0] is None:

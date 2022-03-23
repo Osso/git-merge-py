@@ -756,7 +756,8 @@ class ChangeImport(ChangeEl):
             logging.debug(". adding")
             conflicts = AddEls([self.el], context=self.context).apply(tree)
             if conflicts:
-                return conflicts
+                # Context not found, insert at the beginning
+                tree.insert_with_new_line(0, self.el.copy())
             if self.can_be_added_as_is:
                 # all the imports in self.el are to be added
                 return []

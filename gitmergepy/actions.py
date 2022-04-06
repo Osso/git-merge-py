@@ -1290,7 +1290,7 @@ class MoveArg:
     def apply(self, tree):
         logging.debug(".. moving %s after %s",
                       short_display_el(tree), self.context[0])
-        if tree.previous is None and tree.previous is None:
+        if tree.previous is None and self.context[0] is None:
             logging.debug("... already at the beginning")
             return []
         if (tree.previous and
@@ -1504,3 +1504,49 @@ class ChangeString(ChangeEl):
         patched, _ = dmp.patch_apply(patches, tree.value)
         tree.value = patched
         return []
+
+
+class RemoveSepComment:
+    def apply(self, tree):
+        sep = tree.associated_sep
+        if sep:
+            sep.second_formatting = []
+        return []
+
+    def __repr__(self):
+        return "<%s>" % (self.__class__.__name__)
+
+
+class AddSepComment(BaseEl):
+    @property
+    def comments(self):
+        return self.el.associated_sep.second_formatting
+
+    def apply(self, tree):
+        sep = tree.associated_sep
+        if sep:
+            sep.second_formatting = self.comments.copy()
+        # Add some point add handling for third_formatting for last comment
+        return []
+
+    def __repr__(self):
+        return "<%s>" % (self.__class__.__name__)
+
+
+class ChangeSepComment(ChangeEl):
+    def __init__(self, changes):
+        super().__init__(None, changes)
+
+    @property
+    def comments(self):
+        return self.el.associated_sep.second_formatting
+
+    def apply(self, tree):
+        sep = tree.associated_sep
+        if sep:
+            return apply_changes(sep.second_formatting, self.changes)
+        # Add some point add handling for third_formatting for last comment
+        return []
+
+    def __repr__(self):
+        return "<%s>" % (self.__class__.__name__)

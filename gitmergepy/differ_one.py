@@ -13,6 +13,7 @@ from .actions import (AddAllDecoratorArgs,
                       AddElseNode,
                       AddFunArg,
                       AddImports,
+                      AddSepComment,
                       ArgOnNewLine,
                       ArgRemoveNewLine,
                       ChangeAnnotation,
@@ -32,6 +33,7 @@ from .actions import (AddAllDecoratorArgs,
                       ChangeExceptsNode,
                       ChangeNumberValue,
                       ChangeReturn,
+                      ChangeSepComment,
                       ChangeString,
                       ChangeValue,
                       MakeInline,
@@ -46,6 +48,7 @@ from .actions import (AddAllDecoratorArgs,
                       RemoveElseNode,
                       RemoveFunArgs,
                       RemoveImports,
+                      RemoveSepComment,
                       RenameClass,
                       RenameDef,
                       Replace,
@@ -549,29 +552,37 @@ def diff_name_node(left, right, indent):
 
 
 def diff_list_comments(left, right, indent, list_changer):
+
     def _comment_getter(el):
         sep = el.associated_sep
         if sep is None:
             return None
-        return sep.dumps()
+        if sep.find("comment"):
+            return sep.dumps()
+        return None
 
     diff = []
     changed = changed_in_list(left, right, value_getter=_comment_getter)
 
     for left_el, right_el in changed:
-        if left_el.associated_sep and right_el.associated_sep:
-            if not left_el.associated_sep.second_formatting and not right_el.associated_sep.second_formatting:
-                continue
-            changes = compute_diff(left_el.associated_sep,
-                                   right_el.associated_sep,
-                                   indent=indent+INDENT)
+        if left_el.associated_sep and left_el.associated_sep.second_formatting:
+            if right_el.associated_sep and right_el.associated_sep.second_formatting:
+                # changes = [ChangeSepComment(changes=compute_diff_iterables(
+                #     left_el.associated_sep.second_formatting,
+                #     right_el.associated_sep.second_formatting,
+                #     indent=indent+INDENT))]
+                changes = [ChangeSepComment(changes=[Replace(
+                    right_el.associated_sep.second_formatting,
+                    left_el.associated_sep.second_formatting)])]
+            elif not right_el.associated_sep or not right_el.associated_sep.second_formatting:
+                # Remove comment
+                changes = [RemoveSepComment()]
+        elif right_el.associated_sep and right_el.associated_sep.second_formatting:
+            # Add comment
+            changes = [AddSepComment(right_el)]
         else:
-            if right_el.associated_sep and not right_el.associated_sep.second_formatting:
-                continue
-            changes = [Replace(right_el.associated_sep,
-                               old_value=left_el.associated_sep)]
-        diff += [list_changer(left_el,
-                              changes=[ChangeAssociatedSep(changes=changes)])]
+            continue
+        diff += [list_changer(left_el, changes=changes)]
 
     return diff
 

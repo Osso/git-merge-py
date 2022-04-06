@@ -2225,3 +2225,15 @@ def test_change_call_brackets_2():
     base = "assert call.fetch(args)[\"stuff\"] == _stuff1"
     current = "assert user_info[\"stuff\"] == _stuff1"
     _test_apply_changes(base, current)
+
+
+def test_arg_more_changes():
+    base = """
+user = get_user_object(session, msisdn=msisdn,
+                       registry=registry)
+"""
+    current = """
+user = get_user_object(msisdn=msisdn,
+                       registry=registry, session=session)
+"""
+    _test_apply_changes(base, current)

@@ -116,6 +116,9 @@ def same_call_guess(left, right):
     # Same number of calls
     if len(get_call_els(left)) != len(get_call_els(right)):
         return False
+    # No calls
+    if len(get_call_els(left)) == len(get_call_els(right)) == 0:
+        return True
 
     # Only one call in parent, we assume it's the same one
     if (left.parent and right.parent and

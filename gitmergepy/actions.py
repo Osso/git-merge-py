@@ -323,7 +323,7 @@ class BaseAddEls:
 
     def _insert_el(self, el_to_add, index, tree):
         if index > 0 and not el_to_add.on_new_line:
-            tree.value._data[index-1][1] = None
+            tree[index-1].remove_endl()
 
         el = el_to_add.copy()
         el.new = True

@@ -190,7 +190,7 @@ def process_stack_el(stack_left, el_to_delete, tree, els, diff,
 
 
 def process_same_el(el_right, stack_left, indent):
-    logging.debug("%s same el %r", indent+INDENT,
+    logging.debug("%s same el %r", indent,
                   short_display_el(el_right))
 
     if stack_left[0].indentation != el_right.indentation:

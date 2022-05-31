@@ -2237,3 +2237,39 @@ user = get_user_object(msisdn=msisdn,
                        registry=registry, session=session)
 """
     _test_apply_changes(base, current)
+
+
+def test_add_comment_bug():
+    """and check that arg3 doesn't get a MoveArg"""
+    base = """
+def fun():
+    # cache hits
+    assert dummy("A", b="B") == a
+    assert dummy("A", b="bbb") == dummy("A", b="bbb")
+    assert dummy(a="A", b="B", c=3) == dummy(a="A", b="B")
+    # d is an excluded arg
+    assert dummy("A", "B", "C", 234, 22, 18, h=99) == g
+
+    wait(lambda: dummy("A", b="B") != a)  # we expire cache
+    assert dummy("A", b="B") != a  # miss now
+
+    assert dummy("A", b="B") != a
+    # cache ignored
+"""
+    current = """
+def fun():
+    # cache hits
+    assert dummy("A", "B") == a  # simplest check
+    assert dummy("A", b="B") == a
+    assert dummy("A", b="bbb") == dummy("A", b="bbb")
+    assert dummy(a="A", b="B", c=3) == dummy(a="A", b="B")
+    # d is an excluded arg
+    assert dummy("A", "B", "C", 234, 22, 18, h=99) == g
+
+    wait(lambda: dummy("A", b="B") != a)  # we expire cache
+    assert dummy("A", b="B") != a  # miss now
+
+    assert dummy("A", b="B") != a
+    # cache ignored
+"""
+    _test_apply_changes(base, current)

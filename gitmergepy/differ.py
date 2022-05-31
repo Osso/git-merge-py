@@ -1,3 +1,4 @@
+from itertools import islice
 import logging
 
 from redbaron import nodes
@@ -268,10 +269,14 @@ def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
     return []
 
 
-def look_ahead(stack_left, el_right, max_ahead=10):
-    for el in stack_left[:max_ahead]:
-        if same_el_guess(el, el_right):
+def look_ahead(stack_left, el_right, max_ahead=10, compare_fun=same_el_guess):
+    if empty_lines([el_right]):
+        return None
+
+    for el in islice(stack_left, 0, max_ahead):
+        if compare_fun(el, el_right):
             return el
+
     return None
 
 
@@ -437,7 +442,11 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
                                        diff=diff)
             last_added = False
         # Look forward a few elements to check if we have a match
-        elif not empty_lines([el_right]) and look_ahead(stack_left, el_right):
+        # also look ahead in right stack to double check that there isn't an
+        # easier solution by adding elements
+        elif (look_ahead(stack_left, el_right) and
+                  not look_ahead(el_right.next_neighbors, stack_left[0],
+                                 max_ahead=3, compare_fun=same_el)):
             logging.debug("%s same el ahead %r", indent+INDENT,
                           short_display_el(el_right))
             stop_el = look_ahead(stack_left, el_right)

@@ -799,34 +799,34 @@ def test_if_else_3():
 if cond:
     pass
 else:
-    pass
-    # another
+    old_call()
+    # unchanged comment
     pass
 """
     current = """
 if cond:
     pass
 else:
-    call('hello')
-    # another
+    new_call()
+    # unchanged comment
     pass
 """
     other = """
 if cond:
     pass
 else:
-    # passing here
-    pass
-    # another
+    # new comment
+    old_call()
+    # unchanged comment
     pass
 """
     expected = """
 if cond:
     pass
 else:
-    # passing here
-    call('hello')
-    # another
+    # new comment
+    new_call()
+    # unchanged comment
     pass
 """
     _test_merge_changes(base, current, other, expected)

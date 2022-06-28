@@ -1171,6 +1171,11 @@ class AddDictItem(BaseAddEls):
         return self.context[0]
 
     def apply(self, tree):
+        if not isinstance(tree, nodes.DictNode):
+            return [Conflict([tree], self,
+                             reason="Invalid type %s, expected dict" %
+                                                                   type(tree))]
+
         if find_key(self.el.key, tree):
             logging.debug("key %s already exists",
                           short_display_el(self.el.key))
@@ -1199,6 +1204,12 @@ class AddDictItem(BaseAddEls):
 class RemoveDictItem(BaseEl):
     def apply(self, tree):
         logging.debug("removing key %s", short_display_el(self.el))
+
+        if not isinstance(tree, nodes.DictNode):
+            return [Conflict([tree], self,
+                             reason="Invalid type %s, expected dict" %
+                                                                   type(tree))]
+
         item = find_key(self.el.key, tree)
         if item is not None:
             tree.remove(item)
@@ -1209,6 +1220,11 @@ class ChangeDictValue(ChangeEl):
     def apply(self, tree):
         logging.debug("changing key %s", short_display_el(self.el.key))
 
+        if not isinstance(tree, nodes.DictNode):
+            return [Conflict([tree], self,
+                             reason="Invalid type %s, expected dict" %
+                                                                   type(tree))]
+
         item = find_key(self.el.key, tree)
         if not item:
             return []
@@ -1218,6 +1234,11 @@ class ChangeDictValue(ChangeEl):
 class ChangeDictItem(ChangeEl):
     def apply(self, tree):
         logging.debug("changing key %s", short_display_el(self.el.key))
+
+        if not isinstance(tree, nodes.DictNode):
+            return [Conflict([tree], self,
+                             reason="Invalid type %s, expected dict" %
+                                                                   type(tree))]
 
         item = find_key(self.el.key, tree)
         if not item:

@@ -1,9 +1,16 @@
 from redbaron import (RedBaron,
                       nodes)
+from redbaron.base_nodes import NodeList
+from redbaron.node_mixin import ValueIterableMixin
 from redbaron.proxy_list import (DictProxyList,
                                  ProxyList)
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
+
+
+def hide_if_empty(tree):
+    if all(el.hidden for el in tree):
+        tree.hidden = True
 
 
 def apply_changes(tree, changes, skip_checks=False):
@@ -23,8 +30,13 @@ def apply_changes(tree, changes, skip_checks=False):
     if isinstance(tree, (nodes.ClassNode, nodes.DefNode)):
         tree.value._synchronise()
 
+    # Hide if empty
+    if isinstance(tree, (NodeList, ValueIterableMixin)):
+        hide_if_empty(tree)
+        skip_checks = True
+
     # Sanity check
-    if not skip_checks:  # skipped for fragments that are not parseable
+    if not skip_checks and not tree.hidden:  # skipped for fragments that are not parseable
         if isinstance(tree.parent, DictProxyList):
             tree = tree.parent.parent
         if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,

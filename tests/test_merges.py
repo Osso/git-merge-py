@@ -1165,3 +1165,24 @@ def test_assert():
     other = """assert stuff == set("A B D")"""
     expected = """assert stuff == set("A B ")"""
     _test_merge_changes(base, current, other, expected)
+
+
+def test_fun_becomes_empty():
+    base = """
+def fun():
+    # comment
+    pass
+    more_stuff
+"""
+    current = """
+def fun():
+    more_stuff
+"""
+    other = """
+def fun():
+    # comment
+    pass
+"""
+    expected = """
+"""
+    _test_merge_changes(base, current, other, expected)

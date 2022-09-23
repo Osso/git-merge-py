@@ -575,6 +575,9 @@ class ChangeEl(BaseEl):
         else:
             logging.debug(". found")
             conflicts = apply_changes(el, self.changes)
+
+            set_cursor(tree, el)
+
             if self.write_conflicts:
                 add_conflicts(el, conflicts)
             else:

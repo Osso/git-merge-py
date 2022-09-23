@@ -384,7 +384,7 @@ class ReplaceEls(BaseAddEls):
         offset = 0
         # match all to_remove items
         for el in self.to_remove:
-            while tree[index+offset].hidden:
+            while index+offset < len(tree) and tree[index+offset].hidden:
                 offset += 1
             try:
                 if not same_el_guess(tree[index+offset], el):

@@ -37,18 +37,24 @@ def apply_changes(tree, changes, skip_checks=False):
 
     # Sanity check
     if not skip_checks and not tree.hidden:  # skipped for fragments that are not parseable
-        if isinstance(tree.parent, DictProxyList):
-            tree = tree.parent.parent
-        if isinstance(tree, (nodes.DictArgumentNode, nodes.DecoratorNode,
-                             nodes.WithNode, nodes.CallArgumentNode,
-                             nodes.ElifNode, nodes.ExceptNode)):
-            tree = tree.parent.parent
-        if isinstance(tree, nodes.CallNode):
-            tree = tree.parent.parent
-        while isinstance(tree, (nodes.ElseNode, ProxyList)):
-            tree = tree.parent
-        if isinstance(tree, (nodes.CallNode, nodes.ExceptNode)):
-            tree = tree.parent.parent
-        RedBaron(tree.dumps())
+        tree_to_check = tree
+        if isinstance(tree_to_check.parent, DictProxyList):
+            tree_to_check = tree_to_check.parent.parent
+        if isinstance(tree_to_check, (nodes.DictArgumentNode,
+                                      nodes.DecoratorNode,
+                                      nodes.WithNode,
+                                      nodes.CallArgumentNode,
+                                      nodes.ElifNode,
+                                      nodes.ExceptNode)):
+            tree_to_check = tree_to_check.parent.parent
+        if isinstance(tree_to_check, nodes.CallNode):
+            tree_to_check = tree_to_check.parent.parent
+        while isinstance(tree_to_check, (nodes.ElseNode, ProxyList)):
+            tree_to_check = tree_to_check.parent
+        if isinstance(tree_to_check.parent, ProxyList) and tree_to_check.is_sep:
+            tree_to_check = tree_to_check.parent.parent
+        if isinstance(tree_to_check, (nodes.CallNode, nodes.ExceptNode)):
+            tree_to_check = tree_to_check.parent.parent
+        RedBaron(tree_to_check.dumps())
 
     return conflicts

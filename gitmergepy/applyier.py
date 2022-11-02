@@ -33,7 +33,6 @@ def apply_changes(tree, changes, skip_checks=False):
     # Hide if empty
     if isinstance(tree, (NodeList, ValueIterableMixin)):
         hide_if_empty(tree)
-        skip_checks = True
 
     # Sanity check
     if not skip_checks and not tree.hidden:  # skipped for fragments that are not parseable

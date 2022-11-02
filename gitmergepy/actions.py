@@ -1323,17 +1323,20 @@ class MoveArg:
             logging.debug("... already in place")
             return []
 
-        tree.parent.remove(tree)
+        assert tree in tree.parent
 
         if self.context[0] is None:
+            tree.parent.remove(tree)
             tree.parent.insert(0, tree)
             return []
 
         for el in tree.parent:
             if same_arg_guess(self.context[0], el):
+                tree.parent.remove(tree)
                 el.insert_after(tree)
                 return []
 
+        assert tree in tree.parent
         return [Conflict([tree], self, reason="Context not found")]
 
 

@@ -21,7 +21,9 @@ def apply_changes(tree, changes, skip_checks=False):
         conflicts += change.apply(tree)
 
     if len(changes) == 1 and isinstance(changes[0], Replace):
-        tree = tree.parent
+        # we don't have the new tree here and tree is now a fragment
+        skip_checks = True
+
     if isinstance(tree, nodes.CallNode) and tree.value.auto_separator:
         tree.value.reformat()
     elif isinstance(tree, nodes.DefNode):

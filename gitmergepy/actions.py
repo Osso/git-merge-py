@@ -1334,9 +1334,9 @@ class MoveArg:
             if same_arg_guess(self.context[0], el):
                 tree.parent.remove(tree)
                 el.insert_after(tree)
+                assert tree in tree.parent
                 return []
 
-        assert tree in tree.parent
         return [Conflict([tree], self, reason="Context not found")]
 
 

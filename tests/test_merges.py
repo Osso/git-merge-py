@@ -83,6 +83,21 @@ from module1 import fun2
     _test_merge_changes(base, current, other, expected)
 
 
+def test_remove_import():
+    base = """
+from module1 import (fun1, fun2, fun3)
+"""
+    current = """
+from module1 import fun3
+"""
+    other = """
+from module1 import fun1
+"""
+    expected = """
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
 def test_move_function():
     base = """def fun1():
     call('hello')

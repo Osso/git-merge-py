@@ -14,13 +14,13 @@ def hide_if_empty(tree):
 
 
 def apply_changes(tree, changes, skip_checks=False):
-    from .actions import Replace
+    from .actions import Replace, RemoveImports
 
     conflicts = []
     for change in changes:
         conflicts += change.apply(tree)
 
-    if len(changes) == 1 and isinstance(changes[0], Replace):
+    if len(changes) == 1 and isinstance(changes[0], (Replace, RemoveImports)):
         # we don't have the new tree here and tree is now a fragment
         skip_checks = True
 

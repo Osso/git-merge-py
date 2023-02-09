@@ -768,7 +768,12 @@ class ChangeImport(ChangeEl):
             el.targets.clear()
             el.targets.remove_brackets()
 
-        return apply_changes(el, self.changes)
+        apply_changes(el, self.changes)
+
+        if not el.targets:
+            el.parent.remove(el)
+
+        return []
 
 
 class ChangeClass(ChangeEl):

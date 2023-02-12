@@ -830,6 +830,8 @@ class ChangeImport(ChangeEl):
 
         if not el.targets:
             el.parent.remove(el)
+        elif len(el.targets) == 1:
+            el.targets.remove_brackets()
 
         return []
 

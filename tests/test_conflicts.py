@@ -1116,11 +1116,11 @@ try:
 except KeyError:
     pass
 """
-    # Other's exception type is kept
+    # Current's change to TypeError is applied to other
     expected = """
 try:
     pass
-except KeyError:
+except TypeError:
     pass
 """
     _test_merge_changes(base, current, other, expected)
@@ -1146,11 +1146,11 @@ try:
 except ValueError:
     modified()
 """
-    # The alias is not added, other's body modification is applied
+    # The alias IS added, and other's body modification is applied
     expected = """
 try:
     pass
-except ValueError:
+except ValueError as e:
     modified()
 """
     _test_merge_changes(base, current, other, expected)
@@ -1254,6 +1254,202 @@ except:
     modified()
 finally:
     cleanup()
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_remove_except_clause():
+    """One removes an except clause, other modifies try body."""
+    base = """
+try:
+    original()
+except ValueError:
+    handle_value()
+except TypeError:
+    handle_type()
+"""
+    current = """
+try:
+    original()
+except ValueError:
+    handle_value()
+"""
+    other = """
+try:
+    modified()
+except ValueError:
+    handle_value()
+except TypeError:
+    handle_type()
+"""
+    # The except TypeError should be removed
+    expected = """
+try:
+    modified()
+except ValueError:
+    handle_value()
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_change_exception_type():
+    """One changes the exception type."""
+    base = """
+try:
+    pass
+except ValueError:
+    handle()
+"""
+    current = """
+try:
+    pass
+except TypeError:
+    handle()
+"""
+    other = """
+try:
+    pass
+except ValueError:
+    handle()
+"""
+    # The exception type should change to TypeError
+    expected = """
+try:
+    pass
+except TypeError:
+    handle()
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_add_exception_alias():
+    """One adds an exception alias (as e)."""
+    base = """
+try:
+    pass
+except ValueError:
+    handle()
+"""
+    current = """
+try:
+    pass
+except ValueError as e:
+    handle()
+"""
+    other = """
+try:
+    pass
+except ValueError:
+    handle()
+"""
+    # The alias should be added
+    expected = """
+try:
+    pass
+except ValueError as e:
+    handle()
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_remove_exception_alias():
+    """One removes an exception alias."""
+    base = """
+try:
+    pass
+except ValueError as e:
+    handle(e)
+"""
+    current = """
+try:
+    pass
+except ValueError:
+    handle(e)
+"""
+    other = """
+try:
+    pass
+except ValueError as e:
+    handle(e)
+"""
+    # The alias should be removed
+    expected = """
+try:
+    pass
+except ValueError:
+    handle(e)
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_remove_finally_block():
+    """One removes the finally block."""
+    base = """
+try:
+    pass
+except:
+    handle()
+finally:
+    cleanup()
+"""
+    current = """
+try:
+    pass
+except:
+    handle()
+"""
+    other = """
+try:
+    pass
+except:
+    handle()
+finally:
+    cleanup()
+"""
+    # The finally should be removed
+    expected = """
+try:
+    pass
+except:
+    handle()
+"""
+    _test_merge_changes(base, current, other, expected)
+
+
+def test_modify_finally_block():
+    """One modifies the finally block body."""
+    base = """
+try:
+    pass
+except:
+    handle()
+finally:
+    original()
+"""
+    current = """
+try:
+    pass
+except:
+    handle()
+finally:
+    modified()
+"""
+    other = """
+try:
+    pass
+except:
+    handle()
+finally:
+    original()
+"""
+    # The finally body should be modified
+    expected = """
+try:
+    pass
+except:
+    handle()
+finally:
+    modified()
 """
     _test_merge_changes(base, current, other, expected)
 

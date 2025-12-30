@@ -1600,10 +1600,57 @@ class ChangeExceptsNode:
             logging.debug(". number of excepts has changed, ignoring changes")
             return []
 
-        return apply_changes(except_node, self.changes)
+        conflicts = []
+        for change in self.changes:
+            # ChangeExceptionType and ChangeExceptionTarget apply to ExceptNode
+            # Body changes apply to except_node.value (the CodeProxyList)
+            if isinstance(change, (ChangeExceptionType, ChangeExceptionTarget)):
+                conflicts += change.apply(except_node)
+            else:
+                conflicts += change.apply(except_node.value)
+        return conflicts
 
     def __repr__(self) -> str:
         return "<%s index=%r changes=%r>" % (self.__class__.__name__, self.index, self.changes)
+
+
+class ChangeExceptionType:
+    """Change the exception type of an except clause."""
+
+    def __init__(self, new_exception: Node | None) -> None:
+        self.new_exception = new_exception
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". changing exception type to %r", self.new_exception)
+        if self.new_exception is None:
+            tree.exception = ""
+        else:
+            tree.exception = self.new_exception.dumps()
+        return []
+
+    def __repr__(self) -> str:
+        return "<%s new_exception=%r>" % (self.__class__.__name__, self.new_exception)
+
+
+class ChangeExceptionTarget:
+    """Change the exception target (as variable) of an except clause."""
+
+    def __init__(self, new_target: Node | None, new_delimiter: str) -> None:
+        self.new_target = new_target
+        self.new_delimiter = new_delimiter
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". changing exception target to %r", self.new_target)
+        if self.new_target is None:
+            tree.target = ""
+            tree.delimiter = ""
+        else:
+            tree.target = self.new_target.dumps()
+            tree.delimiter = self.new_delimiter
+        return []
+
+    def __repr__(self) -> str:
+        return "<%s new_target=%r>" % (self.__class__.__name__, self.new_target)
 
 
 class AddExcept:
@@ -1621,6 +1668,33 @@ class AddExcept:
 
     def __repr__(self) -> str:
         return "<%s except=%r>" % (self.__class__.__name__, short_display_el(self.except_node))
+
+
+class RemoveExcept:
+    """Remove an except clause from a try statement by matching exception type."""
+
+    def __init__(self, except_node: Node) -> None:
+        self.except_node = except_node
+        # Store the exception type for matching
+        self.exception_type = except_node.exception.dumps() if except_node.exception else None
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". removing except clause for %r", self.exception_type)
+        # Find the except clause with matching exception type
+        for exc in tree.excepts:
+            exc_type = exc.exception.dumps() if exc.exception else None
+            if exc_type == self.exception_type:
+                logging.debug(".. found matching except clause, removing")
+                tree.excepts.remove(exc)
+                return []
+        logging.debug(".. except clause not found (already removed?)")
+        return []
+
+    def __repr__(self) -> str:
+        return "<%s exception_type=%r>" % (
+            self.__class__.__name__,
+            self.exception_type,
+        )
 
 
 class AddFinally:
@@ -1648,6 +1722,39 @@ class AddFinally:
 
     def __repr__(self) -> str:
         return "<%s>" % self.__class__.__name__
+
+
+class RemoveFinally:
+    """Remove a finally block from a try statement."""
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". removing finally block")
+        if not tree.finally_:
+            logging.debug(".. finally already removed")
+            return []
+        tree.finally_ = ""
+        return []
+
+    def __repr__(self) -> str:
+        return "<%s>" % self.__class__.__name__
+
+
+class ChangeFinallyNode:
+    """Change the content of a finally block."""
+
+    def __init__(self, changes: list[Action]) -> None:
+        self.changes = changes
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". changing finally block")
+        if not tree.finally_:
+            logging.debug(".. finally doesn't exist, skipping")
+            return []
+        # Apply changes to the finally body (value), not the FinallyNode itself
+        return apply_changes(tree.finally_.value, self.changes)
+
+    def __repr__(self) -> str:
+        return "<%s changes=%r>" % (self.__class__.__name__, self.changes)
 
 
 class ChangeString(ChangeEl):

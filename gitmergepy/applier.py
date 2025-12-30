@@ -55,12 +55,13 @@ def apply_changes(tree: Node, changes: list[Action], skip_checks: bool = False) 
                 nodes.CallArgumentNode,
                 nodes.ElifNode,
                 nodes.ExceptNode,
+                nodes.FinallyNode,
             ),
         ):
             tree_to_check = tree_to_check.parent.parent
         if isinstance(tree_to_check, nodes.CallNode):
             tree_to_check = tree_to_check.parent.parent
-        while isinstance(tree_to_check, (nodes.ElseNode, ProxyList)):
+        while isinstance(tree_to_check, (nodes.ElseNode, nodes.FinallyNode, ProxyList)):
             tree_to_check = tree_to_check.parent
         parent = getattr(tree_to_check, "parent", None)
         if (

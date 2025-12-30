@@ -18,6 +18,9 @@ from .actions import (
     AddFunArg,
     AddImports,
     AddSepComment,
+    ChangeFinallyNode,
+    RemoveExcept,
+    RemoveFinally,
     ArgOnNewLine,
     ArgRemoveNewLine,
     ChangeAnnotation,
@@ -34,6 +37,8 @@ from .actions import (
     ChangeDictValue,
     ChangeElseNode,
     ChangeExceptsNode,
+    ChangeExceptionTarget,
+    ChangeExceptionType,
     ChangeNumberValue,
     ChangeReturn,
     ChangeSepComment,
@@ -568,6 +573,16 @@ def diff_try_node(left: nodes.TryNode, right: nodes.TryNode, indent: str) -> lis
     if not left.finally_ and right.finally_:
         logging.debug("%s added finally block", indent)
         diff += [AddFinally(right.finally_)]
+    elif left.finally_ and not right.finally_:
+        logging.debug("%s removed finally block", indent)
+        diff += [RemoveFinally()]
+    elif left.finally_ and right.finally_:
+        diff_finally = compute_diff_iterables(
+            left.finally_.value, right.finally_.value, indent=indent + INDENT
+        )
+        if diff_finally:
+            logging.debug("%s changed finally block", indent)
+            diff += [ChangeFinallyNode(diff_finally)]
 
     return diff
 
@@ -577,17 +592,43 @@ def diff_excepts_node(left: nodes.TryNode, right: nodes.TryNode, indent: str) ->
 
     # Handle changes to existing except clauses
     for index, (left_except, right_except) in enumerate(zip(left.excepts, right.excepts)):
+        except_changes: list[Action] = []
+
+        # Check for exception type change
+        left_exc_type = left_except.exception.dumps() if left_except.exception else None
+        right_exc_type = right_except.exception.dumps() if right_except.exception else None
+        if left_exc_type != right_exc_type:
+            logging.debug("%s changed exception type from %r to %r", indent, left_exc_type, right_exc_type)
+            except_changes += [ChangeExceptionType(right_except.exception)]
+
+        # Check for target (as e) change
+        left_target = left_except.target.dumps() if left_except.target else None
+        right_target = right_except.target.dumps() if right_except.target else None
+        if left_target != right_target:
+            logging.debug("%s changed exception target from %r to %r", indent, left_target, right_target)
+            except_changes += [ChangeExceptionTarget(right_except.target, right_except.delimiter)]
+
+        # Check for body changes
         diff_except = compute_diff_iterables(
             left_except.value, right_except.value, indent=indent + INDENT
         )
         if diff_except:
-            diff += [ChangeExceptsNode(index, diff_except)]
+            except_changes += diff_except
+
+        if except_changes:
+            diff += [ChangeExceptsNode(index, except_changes)]
 
     # Handle added except clauses
     if len(right.excepts) > len(left.excepts):
         for except_node in right.excepts[len(left.excepts) :]:
             logging.debug("%s added except clause %r", indent, short_display_el(except_node))
             diff += [AddExcept(except_node)]
+
+    # Handle removed except clauses
+    if len(right.excepts) < len(left.excepts):
+        for except_node in left.excepts[len(right.excepts) :]:
+            logging.debug("%s removed except clause %r", indent, short_display_el(except_node))
+            diff += [RemoveExcept(except_node)]
 
     return diff
 

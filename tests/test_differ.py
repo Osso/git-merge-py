@@ -172,5 +172,3 @@ def test_same_el_guess_different_functions():
     left = RedBaron("def foo(): pass")[0]
     right = RedBaron("def bar(): pass")[0]
     assert same_el_guess(left, right) is False
-
-

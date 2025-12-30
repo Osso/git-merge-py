@@ -594,7 +594,9 @@ class AddAllDecoratorArgs(BaseEl):
 class ChangeEl(BaseEl):
     write_conflicts: bool = True
 
-    def __init__(self, el: Node, changes: list[Action], context: BeforeContext | None = None) -> None:
+    def __init__(
+        self, el: Node, changes: list[Action], context: BeforeContext | None = None
+    ) -> None:
         super().__init__(el)
         self.changes = changes
         self.context = context

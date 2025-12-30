@@ -196,7 +196,9 @@ def diff_def_node(left: nodes.DefNode, right: nodes.DefNode, indent: str) -> lis
     return diff
 
 
-def diff_import_node(left: nodes.FromImportNode, right: nodes.FromImportNode, indent: str) -> list[Action]:
+def diff_import_node(
+    left: nodes.FromImportNode, right: nodes.FromImportNode, indent: str
+) -> list[Action]:
     to_add, to_remove = diff_list(left.targets, right.targets, key_getter=lambda t: t.value)
     diff: list[Action] = []
     if to_add:
@@ -223,7 +225,9 @@ def diff_with_node(left: nodes.WithNode, right: nodes.WithNode, indent: str) -> 
     return diff
 
 
-def diff_atom_trailer_node(left: nodes.AtomtrailersNode, right: nodes.AtomtrailersNode, indent: str) -> list[Action]:
+def diff_atom_trailer_node(
+    left: nodes.AtomtrailersNode, right: nodes.AtomtrailersNode, indent: str
+) -> list[Action]:
     diff: list[Action] = []
 
     if len(left) != len(right):
@@ -293,7 +297,9 @@ def diff_call_node(left: nodes.CallNode, right: nodes.CallNode, indent: str) -> 
     return diff
 
 
-def diff_assignment_node(left: nodes.AssignmentNode, right: nodes.AssignmentNode, indent: str) -> list[Action]:
+def diff_assignment_node(
+    left: nodes.AssignmentNode, right: nodes.AssignmentNode, indent: str
+) -> list[Action]:
     diff: list[Action] = []
     if left.target.value != right.target.value:
         diff += [ReplaceAttr("target", right.target)]
@@ -305,7 +311,9 @@ def diff_assignment_node(left: nodes.AssignmentNode, right: nodes.AssignmentNode
     return diff
 
 
-def diff_class_node_decorators(left: nodes.ClassNode, right: nodes.ClassNode, indent: str) -> list[Action]:
+def diff_class_node_decorators(
+    left: nodes.ClassNode, right: nodes.ClassNode, indent: str
+) -> list[Action]:
     diff: list[Action] = []
 
     to_add, to_remove = diff_list(left.decorators, right.decorators)
@@ -334,7 +342,9 @@ def diff_class_node_decorators(left: nodes.ClassNode, right: nodes.ClassNode, in
     return diff
 
 
-def diff_class_node_bases(left: nodes.ClassNode, right: nodes.ClassNode, indent: str) -> list[Action]:
+def diff_class_node_bases(
+    left: nodes.ClassNode, right: nodes.ClassNode, indent: str
+) -> list[Action]:
     diff: list[Action] = []
 
     to_add, to_remove = diff_list(left.inherit_from, right.inherit_from)
@@ -378,7 +388,9 @@ def diff_class_node(left: nodes.ClassNode, right: nodes.ClassNode, indent: str) 
     return diff
 
 
-def diff_if_else_block_node(left: nodes.IfelseblockNode, right: nodes.IfelseblockNode, indent: str) -> list[Action]:
+def diff_if_else_block_node(
+    left: nodes.IfelseblockNode, right: nodes.IfelseblockNode, indent: str
+) -> list[Action]:
     diff = compute_diff_iterables(left.value, right.value, indent + INDENT)
     if diff:
         return [ChangeValue(right, changes=diff)]
@@ -432,11 +444,15 @@ def diff_tuple_node(left: nodes.TupleNode, right: nodes.TupleNode, indent: str) 
     return []
 
 
-def diff_list_argument_node(left: nodes.ListArgumentNode, right: nodes.ListArgumentNode, indent: str) -> list[Action]:
+def diff_list_argument_node(
+    left: nodes.ListArgumentNode, right: nodes.ListArgumentNode, indent: str
+) -> list[Action]:
     return compute_diff(left.value, right.value, indent=indent + INDENT)
 
 
-def diff_dict_argument_node(left: nodes.DictArgumentNode, right: nodes.DictArgumentNode, indent: str) -> list[Action]:
+def diff_dict_argument_node(
+    left: nodes.DictArgumentNode, right: nodes.DictArgumentNode, indent: str
+) -> list[Action]:
     return compute_diff(left.value, right.value, indent=indent + INDENT)
 
 
@@ -603,7 +619,9 @@ def diff_assert_node(left: nodes.AssertNode, right: nodes.AssertNode, indent: st
     return []
 
 
-def diff_comparison_node(left: nodes.ComparisonNode, right: nodes.ComparisonNode, indent: str) -> list[Action]:
+def diff_comparison_node(
+    left: nodes.ComparisonNode, right: nodes.ComparisonNode, indent: str
+) -> list[Action]:
     diff: list[Action] = []
 
     changes = compute_diff(left.value, right.value)

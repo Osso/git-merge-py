@@ -86,6 +86,7 @@ def test_short_display_list():
 def test_short_context():
     """short_context should format context nicely."""
     from gitmergepy.context import BeforeContext
+
     ctx = BeforeContext([None])
     result = short_context(ctx)
     assert "None" in result

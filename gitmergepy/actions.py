@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
 from diff_match_patch import diff_match_patch
 from redbaron import nodes
@@ -46,11 +49,20 @@ from .tools import (
 from .tools_actions import remove_with
 from .tools_lists import insert_at_context_coma_list
 
+if TYPE_CHECKING:
+    from redbaron.base_nodes import Node
+    from redbaron.proxy_list import ProxyList
+
+    from .context import BeforeContext
+
+# Type alias for action classes (no common base class)
+Action = Any
+
 BaseNode.new = False
 BaseNode.already_processed = False
 
 
-def cursor_index(tree):
+def cursor_index(tree: ProxyList) -> int:
     try:
         tree.cursor
     except AttributeError:
@@ -61,16 +73,16 @@ def cursor_index(tree):
     return cursor_index_
 
 
-def tree_after_cursor(tree):
+def tree_after_cursor(tree: ProxyList) -> list[Node]:
     return tree[cursor_index(tree) + 1 :]
 
 
-def set_cursor(tree, el):
+def set_cursor(tree: ProxyList, el: Node) -> None:
     # logging.debug('setting cursor to %s', short_display_el(el))
     tree.cursor = el
 
 
-def first_index_after_cursor(tree, indexes):
+def first_index_after_cursor(tree: ProxyList, indexes: list[int]) -> int | None:
     assert indexes
 
     cursor_index_ = cursor_index(tree)
@@ -83,19 +95,19 @@ def first_index_after_cursor(tree, indexes):
 
 
 class BaseEl:
-    def __init__(self, el):
+    def __init__(self, el: Node) -> None:
         self.el = el
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s el="%s">' % (self.__class__.__name__, short_display_el(self.el))
 
 
 class ElWithContext(BaseEl):
-    def __init__(self, el, context):
+    def __init__(self, el: Node, context: BeforeContext) -> None:
         super().__init__(el)
         self.context = context
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s el="%s" context=%r>' % (
             self.__class__.__name__,
             short_display_el(self.el),
@@ -104,19 +116,19 @@ class ElWithContext(BaseEl):
 
 
 class RemoveEls:
-    def __init__(self, to_remove, context):
+    def __init__(self, to_remove: list[Node], context: BeforeContext) -> None:
         assert to_remove
         self.to_remove = to_remove
         self.context = context
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s to_remove="%s" context=%r>' % (
             self.__class__.__name__,
             short_display_list(self.to_remove),
             short_context(self.context),
         )
 
-    def find_anchor(self, tree):
+    def find_anchor(self, tree: ProxyList) -> tuple[Node | None, list[Node]]:
         # We modify this
         to_remove = self.to_remove.copy()
 
@@ -152,7 +164,7 @@ class RemoveEls:
 
         return anchor_el, to_remove
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         logging.debug("removing els %s", short_display_list(self.to_remove))
         logging.debug(". context %r", short_context(self.context))
 
@@ -191,18 +203,20 @@ class RemoveEls:
 
 
 class AddImports:
-    def __init__(self, imports, one_per_line=False, add_brackets=False):
+    def __init__(
+        self, imports: list[Node], one_per_line: bool = False, add_brackets: bool = False
+    ) -> None:
         self.imports = imports
         self.one_per_line = one_per_line
         self.add_brackets = add_brackets
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s imports=%r>" % (
             self.__class__.__name__,
             ", ".join(short_display_el(el) for el in self.imports),
         )
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". adding imports")
         existing_imports = set(el.value for el in tree.targets)
 
@@ -229,16 +243,16 @@ class AddImports:
 
 
 class RemoveImports:
-    def __init__(self, imports):
+    def __init__(self, imports: list[Node]) -> None:
         self.imports = imports
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s imports=%r>" % (
             self.__class__.__name__,
             ", ".join(short_display_el(el) for el in self.imports),
         )
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". removing imports")
         for import_el in self.imports:
             logging.debug(".. removing import %r", short_display_el(import_el))
@@ -255,28 +269,33 @@ class RemoveImports:
 
 
 class BaseAddEls:
-    def __init__(self, to_add, context, after_context=None):
+    def __init__(
+        self,
+        to_add: list[Node],
+        context: BeforeContext | AfterContext,
+        after_context: AfterContext | None = None,
+    ) -> None:
         assert context
         self.to_add = to_add
-        self.context = context
+        self.context: BeforeContext | AfterContext = context
         self.after_context = after_context
-        self.added = []
+        self.added: list[Node] = []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s to_add="%s" context=%r>' % (
             self.__class__.__name__,
             ", ".join(short_display_el(el) for el in self.to_add),
             short_context(self.context),
         )
 
-    def add_el(self, el):
+    def add_el(self, el: Node) -> None:
         self.to_add.append(el)
         if isinstance(self.context, AfterContext):
             first_in_context = self.context.pop(0)
             assert el is first_in_context
             self.context = gather_after_context(self.to_add[-1])
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         logging.debug("adding els")
         # Make it one insert branch by using index
         if self.context[-1] is None and False:
@@ -333,7 +352,7 @@ class BaseAddEls:
 
         return []
 
-    def _insert_el(self, el_to_add, index, tree):
+    def _insert_el(self, el_to_add: Node, index: int, tree: ProxyList) -> None:
         if index > 0 and not el_to_add.on_new_line:
             tree[index - 1].remove_endl()
 
@@ -364,11 +383,17 @@ class AddEls(BaseAddEls):
 
 
 class AddChangeEl(BaseAddEls):
-    def __init__(self, to_add, changes, context, after_context=None):
+    def __init__(
+        self,
+        to_add: Node,
+        changes: list[Action],
+        context: BeforeContext | AfterContext,
+        after_context: AfterContext | None = None,
+    ) -> None:
         super().__init__([to_add], context, after_context=after_context)
         self.changes = changes or []
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         conflicts = super().apply(tree)
         if conflicts:
             return conflicts
@@ -376,11 +401,13 @@ class AddChangeEl(BaseAddEls):
 
 
 class ReplaceEls(BaseAddEls):
-    def __init__(self, to_add, to_remove, context):
+    def __init__(
+        self, to_add: list[Node], to_remove: list[Node], context: BeforeContext | AfterContext
+    ) -> None:
         self.to_remove = to_remove
         super().__init__(to_add=to_add, context=context)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s\nto_add:\n* %s\nto_remove:\n* %s\ncontext:\n* %s\n>" % (
             self.__class__.__name__,
             "\n* ".join(short_display_el(el).lstrip(" ") for el in self.to_add),
@@ -388,7 +415,7 @@ class ReplaceEls(BaseAddEls):
             "\n* ".join(line.lstrip(" ") for line in short_context(self.context).split("|")),
         )
 
-    def match_to_remove_at_index(self, tree, index):
+    def match_to_remove_at_index(self, tree: ProxyList, index: int) -> bool:
         if index >= len(tree):
             return False
         if tree[index].hidden:
@@ -410,14 +437,14 @@ class ReplaceEls(BaseAddEls):
 
         return True
 
-    def _look_for_context(self, tree):
+    def _look_for_context(self, tree: ProxyList) -> list[int]:
         matches = find_context_with_reduction(tree, self.context)
         return [index for index in matches if self.match_to_remove_at_index(tree, index)]
 
-    def _look_for_els(self, tree):
+    def _look_for_els(self, tree: ProxyList) -> list[int]:
         return [index for index in range(len(tree)) if self.match_to_remove_at_index(tree, index)]
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         logging.debug("replacing els")
         logging.debug(". context %r", short_context(self.context))
 
@@ -484,11 +511,11 @@ class ReplaceEls(BaseAddEls):
 
 
 class Replace:
-    def __init__(self, new_value, old_value):
+    def __init__(self, new_value: Node, old_value: Node) -> None:
         self.new_value = new_value
         self.old_value = old_value
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         if tree.dumps() != self.new_value.dumps():
             if tree.dumps() != self.old_value.dumps():
                 return [
@@ -501,28 +528,28 @@ class Replace:
         tree.replace(self.new_value.copy())
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s new_value=%r>" % (self.__class__.__name__, short_display_el(self.new_value))
 
 
 class ReplaceTarget(Replace):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         tree.target = self.new_value
         return []
 
 
 class ReplaceAttr:
-    def __init__(self, attr_name, attr_value):
+    def __init__(self, attr_name: str, attr_value: Any) -> None:
         self.attr_name = attr_name
         self.attr_value = attr_value
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("changing %s to %s", self.attr_name, self.value_str)
         setattr(tree, self.attr_name, self.attr_value)
         return []
 
     @property
-    def value_str(self):
+    def value_str(self) -> str:
         try:
             self.attr_value.dumps
         except AttributeError:
@@ -531,15 +558,15 @@ class ReplaceAttr:
             value = short_display_el(self.attr_value)
         return value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s %s=%r>" % (self.__class__.__name__, self.attr_name, self.value_str)
 
 
 class ReplaceAnnotation:
-    def __init__(self, new_value):
+    def __init__(self, new_value: Node | None) -> None:
         self.new_value = new_value
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         if self.new_value is not None and tree.annotation is None:
             tree.annotation_second_formatting = self.new_value.parent.annotation_second_formatting
         if self.new_value is not None:
@@ -548,31 +575,31 @@ class ReplaceAnnotation:
             tree.annotation = None
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s new_value=%r>" % (self.__class__.__name__, short_display_el(self.new_value))
 
 
 class RemoveAllDecoratorArgs(BaseEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         tree.call = None
         return []
 
 
 class AddAllDecoratorArgs(BaseEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         tree.call = self.el.copy()
         return []
 
 
 class ChangeEl(BaseEl):
-    write_conflicts = True
+    write_conflicts: bool = True
 
-    def __init__(self, el, changes, context=None):
+    def __init__(self, el: Node, changes: list[Action], context: BeforeContext | None = None) -> None:
         super().__init__(el)
         self.changes = changes
         self.context = context
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         changes_str = "\n".join(indent_str(str(change), ".") for change in self.changes)
         return '<%s el="%s" context=%r> changes=\n%s' % (
             self.__class__.__name__,
@@ -581,7 +608,7 @@ class ChangeEl(BaseEl):
             changes_str,
         )
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         logging.debug(
             "changing %s context %s", short_display_el(self.el), short_context(self.context)
         )
@@ -603,15 +630,15 @@ class ChangeEl(BaseEl):
 
 
 class ChangeAttr:
-    def __init__(self, attr_name, changes):
+    def __init__(self, attr_name: str, changes: list[Action]) -> None:
         self.attr_name = attr_name
         self.changes = changes
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         changes_str = "\n".join(indent_str(str(change), ".") for change in self.changes)
         return '<%s el="%s" changes=\n%s>' % (self.__class__.__name__, self.attr_name, changes_str)
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         try:
             attr = getattr(tree, self.attr_name)
         except AttributeError:
@@ -620,14 +647,14 @@ class ChangeAttr:
 
 
 class ChangeValue(ChangeEl):
-    write_conflicts = False
+    write_conflicts: bool = False
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         return apply_changes(tree.value, self.changes)
 
 
 class ChangeReturn(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". changing %s", short_display_el(tree))
         conflicts = apply_changes(tree.value, self.changes)
         add_conflicts(tree, conflicts)
@@ -639,25 +666,25 @@ class ChangeCall(ChangeEl):
 
 
 class ChangeDecoratorArgs(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         return apply_changes(tree.call, self.changes)
 
 
 class ChangeArg(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         return apply_changes(tree.value, self.changes)
 
 
 class ChangeAnnotation(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         return apply_changes(tree.annotation, self.changes)
 
 
 class ChangeDefArg(ChangeEl):
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree.arguments
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". changing arg %s", short_display_el(self.el))
         for arg in self.get_args(tree):
             if id_from_arg(arg) == id_from_arg(self.el):
@@ -666,7 +693,7 @@ class ChangeDefArg(ChangeEl):
         logging.debug(".. not found")
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s el=%r changes=%r>" % (
             self.__class__.__name__,
             short_display_el(self.el),
@@ -675,38 +702,38 @@ class ChangeDefArg(ChangeEl):
 
 
 class ChangeCallArg(ChangeDefArg):
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree
 
 
 class ArgOnNewLine:
-    def __init__(self, indentation=None):
+    def __init__(self, indentation: str | None = None) -> None:
         self.indentation = indentation
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s indent="%s">' % (self.__class__.__name__, self.indentation)
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". putting arg %s on a new line", short_display_el(tree))
         tree.parent.put_on_new_line(tree, indentation=self.indentation)
         return []
 
 
 class ArgRemoveNewLine:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s>" % self.__class__.__name__
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". remove arg %s new line", short_display_el(tree))
         tree.parent.put_on_same_line(tree)
         return []
 
 
 class RemoveCallEndl:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s>" % (self.__class__.__name__)
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". removing new line before brackets")
         tree[-1].associated_sep = []
         tree.value.footer = []
@@ -715,13 +742,15 @@ class RemoveCallEndl:
 
 
 class Conflict:
-    def __init__(self, els, change, reason="", insert_before=True):
+    def __init__(
+        self, els: list[Node], change: Action, reason: str = "", insert_before: bool = True
+    ) -> None:
         self.els = els
         self.change = change
         self.reason = reason
         self.insert_before = insert_before
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s els="%s" change=%r reason=%r>' % (
             self.__class__.__name__,
             ", ".join(short_display_el(el) for el in self.els),
@@ -731,7 +760,7 @@ class Conflict:
 
 
 class ChangeFun(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         logging.debug("changing fun %r", short_display_el(self.el))
         el = find_func(tree, self.el)
         if not el and hasattr(self.el, "old_name"):
@@ -749,11 +778,17 @@ class ChangeFun(ChangeEl):
 
 
 class ChangeImport(ChangeEl):
-    def __init__(self, el, changes, can_be_added_as_is=False, context=None):
+    def __init__(
+        self,
+        el: Node,
+        changes: list[Action],
+        can_be_added_as_is: bool = False,
+        context: BeforeContext | None = None,
+    ) -> None:
         super().__init__(el, changes=changes, context=context)
         self.can_be_added_as_is = can_be_added_as_is
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s el="%s" changes=%r context=%r>' % (
             self.__class__.__name__,
             short_display_el(self.el),
@@ -761,7 +796,7 @@ class ChangeImport(ChangeEl):
             short_context(self.context),
         )
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         logging.debug("changing import %r", short_display_el(self.el))
 
         els = find_imports(tree, self.el)
@@ -798,11 +833,17 @@ class ChangeImport(ChangeEl):
 
 
 class ChangeClass(ChangeEl):
-    def __init__(self, el, changes, context=None, old_name=None):
+    def __init__(
+        self,
+        el: Node,
+        changes: list[Action],
+        context: BeforeContext | None = None,
+        old_name: str | None = None,
+    ) -> None:
         super().__init__(el, changes=changes, context=context)
         self.old_name = old_name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s el="%s" changes=%r context=%r old_name=%r>' % (
             self.__class__.__name__,
             short_display_el(self.el),
@@ -811,7 +852,7 @@ class ChangeClass(ChangeEl):
             self.old_name,
         )
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         el = find_class(tree, self.el)
         if not el and self.old_name:
             tmp_el = self.el.copy()
@@ -828,13 +869,13 @@ class ChangeClass(ChangeEl):
 
 
 class EnsureEmptyLines:
-    def __init__(self, lines):
+    def __init__(self, lines: list[Node]) -> None:
         self.lines = lines
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s %r>" % (self.__class__.__name__, self.lines)
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         index = tree.index_on_parent + 1
         parent = tree.parent
 
@@ -852,11 +893,19 @@ class EnsureEmptyLines:
 
 
 class MoveElWithId(ChangeEl):
-    def __init__(self, el, changes, context=None, old_empty_lines=None):
+    finder: Any  # Callable set by subclasses
+
+    def __init__(
+        self,
+        el: Node,
+        changes: list[Action],
+        context: BeforeContext | None = None,
+        old_empty_lines: list[Node] | None = None,
+    ) -> None:
         super().__init__(el, changes=changes, context=context)
         self.old_empty_lines = old_empty_lines or []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s el="%s" changes=%r context=%r empty_lines=%r>' % (
             self.__class__.__name__,
             short_display_el(self.el),
@@ -865,7 +914,7 @@ class MoveElWithId(ChangeEl):
             self.old_empty_lines,
         )
 
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         fun = self.finder(tree, self.el)
 
         # If function still exists, move it then apply changes
@@ -905,24 +954,24 @@ class MoveElWithId(ChangeEl):
 
 
 class MoveFun(MoveElWithId):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.finder = find_func
 
 
 class MoveClass(MoveElWithId):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.finder = find_class
 
 
 class ChangeAssignment(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         return apply_changes(tree.value, self.changes)
 
 
 class ChangeAtomTrailer(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         if not isinstance(tree, nodes.AtomtrailersNode) or len(tree.value.node_list) != len(
             self.el.value.node_list
         ):
@@ -932,11 +981,11 @@ class ChangeAtomTrailer(ChangeEl):
 
 
 class ChangeAtomtrailersEl(ChangeEl):
-    def __init__(self, el, changes, index):
+    def __init__(self, el: Node, changes: list[Action], index: int) -> None:
         super().__init__(el, changes=changes)
         self.index = index
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         if not isinstance(tree, nodes.AtomtrailersNode):
             return [Conflict([self.el], self, "tree is not atom trailer node")]
         try:
@@ -948,11 +997,11 @@ class ChangeAtomtrailersEl(ChangeEl):
 
 
 class ChangeAtomtrailersCall(ChangeEl):
-    def __init__(self, el, changes, index):
+    def __init__(self, el: Node, changes: list[Action], index: int) -> None:
         super().__init__(el, changes=changes)
         self.index = index
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         calls_els = get_call_els(tree)
         try:
             el = calls_els[self.index]
@@ -963,11 +1012,13 @@ class ChangeAtomtrailersCall(ChangeEl):
 
 
 class ChangeDecorator(ChangeEl):
-    def __init__(self, el, changes, context=None):
+    def __init__(
+        self, el: Node, changes: list[Action], context: BeforeContext | None = None
+    ) -> None:
         assert isinstance(el, nodes.DecoratorNode)
         super().__init__(el, changes=changes, context=context)
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         for decorator in tree.decorators:
             if id_from_el(decorator) == id_from_el(self.el):
                 return apply_changes(decorator, self.changes)
@@ -975,22 +1026,22 @@ class ChangeDecorator(ChangeEl):
 
 
 class AddFunArg:
-    def __init__(self, arg, context, on_new_line):
+    def __init__(self, arg: Node, context: BeforeContext, on_new_line: bool) -> None:
         self.arg = arg
         self.context = context
         self.on_new_line = on_new_line
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s arg=%r context=%r>" % (
             self.__class__.__name__,
             short_display_el(self.arg),
             short_context(self.context),
         )
 
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree.arguments
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         if not isinstance(tree, (nodes.DefNode, nodes.CallNode)):
             return [Conflict([self.arg], self, "tree is not a def node")]
 
@@ -1012,7 +1063,7 @@ class AddFunArg:
             args.append(arg)
         return []
 
-    def make_conflict(self, reason):
+    def make_conflict(self, reason: str) -> Conflict:
         el = self.arg.parent.parent.copy()
         el.decorators.clear()
         el.value.clear()
@@ -1020,15 +1071,15 @@ class AddFunArg:
 
 
 class AddCallArg(AddFunArg):
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree
 
-    def make_conflict(self, reason):
+    def make_conflict(self, reason: str) -> Conflict:
         return Conflict([self.arg.parent.parent], self, reason=reason)
 
 
 class AddDecorator(ElWithContext):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         decorator = self.el.copy()
         logging.debug(
             ". adding decorator %r to %r", short_display_el(self.el), short_display_el(tree)
@@ -1048,27 +1099,27 @@ class AddDecorator(ElWithContext):
         return []
 
     @staticmethod
-    def get_elements(tree):
+    def get_elements(tree: Node) -> ProxyList:
         return tree.decorators
 
 
 class AddBase(AddDecorator):
     @staticmethod
-    def get_elements(tree):
+    def get_elements(tree: Node) -> ProxyList:
         return tree.inherit_from
 
 
 class RemoveFunArgs:
-    def __init__(self, args):
+    def __init__(self, args: list[Node]) -> None:
         self.args = args
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s args=%r>" % (self.__class__.__name__, [id_from_el(arg) for arg in self.args])
 
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree.arguments
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
         for el in list(args):
@@ -1083,15 +1134,15 @@ class RemoveFunArgs:
 
 
 class RemoveCallArgs(RemoveFunArgs):
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree
 
 
 class RemoveDecorators(RemoveFunArgs):
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree.decorators
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
         for el in args:
@@ -1101,10 +1152,10 @@ class RemoveDecorators(RemoveFunArgs):
 
 
 class RemoveBases(RemoveDecorators):
-    def get_args(self, tree):
+    def get_args(self, tree: Node) -> ProxyList:
         return tree.inherit_from
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         to_remove_values = set(id_from_el(el) for el in self.args)
         args = self.get_args(tree)
         for el in args:
@@ -1114,15 +1165,15 @@ class RemoveBases(RemoveDecorators):
 
 
 class RemoveWith(ElWithContext):
-    def apply(self, tree):
+    def apply(self, tree: ProxyList) -> list[Conflict]:
         logging.debug('removing "with"')
         el_node_as = as_from_contexts(self.el.contexts)
 
         # Similar
-        same_with_nodes = []
-        similar_with_nodes = []
-        context_with_nodes = []
-        previous_el = None
+        same_with_nodes: list[Node] = []
+        similar_with_nodes: list[Node] = []
+        context_with_nodes: list[Node] = []
+        previous_el: Node | None = None
         for el in tree:
             if isinstance(el, nodes.WithNode):
                 with_node_as = as_from_contexts(el.contexts)
@@ -1176,10 +1227,10 @@ class RemoveWith(ElWithContext):
 
 
 class ChangeIndentation:
-    def __init__(self, relative_indentation):
+    def __init__(self, relative_indentation: int) -> None:
         self.relative_indentation = relative_indentation
 
-    def apply(self, tree):
+    def apply(self, tree: Node | NodeList) -> list[Conflict]:
         if isinstance(tree, NodeList):
             if not tree:
                 logging.debug(". empty list, skipping")
@@ -1196,7 +1247,7 @@ class ChangeIndentation:
 
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s relative_indentation="%s">' % (
             self.__class__.__name__,
             self.relative_indentation,
@@ -1204,18 +1255,18 @@ class ChangeIndentation:
 
 
 class AddDictItem(BaseAddEls):
-    def __init__(self, el, previous_item):
+    def __init__(self, el: Node, previous_item: Node | None) -> None:
         super().__init__([el], context=[previous_item])
 
     @property
-    def el(self):
+    def el(self) -> Node:
         return self.to_add[0]
 
     @property
-    def previous_item(self):
+    def previous_item(self) -> Node | None:
         return self.context[0]
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         if not isinstance(tree, nodes.DictNode):
             return [Conflict([tree], self, reason="Invalid type %s, expected dict" % type(tree))]
 
@@ -1245,7 +1296,7 @@ class AddDictItem(BaseAddEls):
 
 
 class RemoveDictItem(BaseEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("removing key %s", short_display_el(self.el))
 
         if not isinstance(tree, nodes.DictNode):
@@ -1258,7 +1309,7 @@ class RemoveDictItem(BaseEl):
 
 
 class ChangeDictValue(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("changing key %s", short_display_el(self.el.key))
 
         if not isinstance(tree, nodes.DictNode):
@@ -1271,7 +1322,7 @@ class ChangeDictValue(ChangeEl):
 
 
 class ChangeDictItem(ChangeEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("changing key %s", short_display_el(self.el.key))
 
         if not isinstance(tree, nodes.DictNode):
@@ -1284,21 +1335,21 @@ class ChangeDictItem(ChangeEl):
 
 
 class ChangeAssociatedSep:
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s changes=%r>" % (self.__class__.__name__, self.changes)
 
-    def __init__(self, changes):
+    def __init__(self, changes: list[Action]) -> None:
         assert changes
         self.changes = tuple(changes)
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("changing associated sep")
 
         if isinstance(self.changes[0], Replace):
             changes = list(self.changes)
             tree.associated_sep = changes.pop(0).new_value
         else:
-            changes = self.changes
+            changes = list(self.changes)
 
         if not changes:
             return []
@@ -1307,11 +1358,11 @@ class ChangeAssociatedSep:
 
 
 class ReplaceDictComment(BaseEl):
-    def __init__(self, el, new_value):
+    def __init__(self, el: Node, new_value: Node) -> None:
         super().__init__(el)
         self.new_value = new_value
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("changing dict comment %s", short_display_el(self.el))
 
         item = find_key(self.el.key, tree)
@@ -1323,27 +1374,27 @@ class ReplaceDictComment(BaseEl):
 
 
 class RenameClass(BaseEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("renaming class %s to %s", tree.name, self.el.name)
         tree.name = self.el.name
         return []
 
 
 class RenameDef(BaseEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug("renaming def %s to %s", tree.name, self.el.name)
         tree.name = self.el.name
         return []
 
 
 class MoveArg:
-    def __init__(self, context):
+    def __init__(self, context: BeforeContext) -> None:
         self.context = context
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s context=%r>" % (self.__class__.__name__, short_context(self.context))
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(".. moving %s after %s", short_display_el(tree), self.context[0])
         if tree.previous is None and self.context[0] is None:
             logging.debug("... already at the beginning")
@@ -1366,21 +1417,21 @@ class MoveArg:
         return [Conflict([tree], self, reason="Context not found")]
 
 
-def get_anchors(el):
+def get_anchors(el: Node) -> list[Node]:
     return el.__dict__.setdefault("anchored_elements", [])
 
 
-def anchor(el, to):
+def anchor(el: Node, to: Node) -> None:
     get_anchors(to).append(el)
 
 
-def move_anchored(el):
+def move_anchored(el: Node) -> None:
     for anchored_el in get_anchors(el):
         anchored_el.move_after(el)
         move_anchored(anchored_el)
 
 
-def copy_and_transfer_anchors(el):
+def copy_and_transfer_anchors(el: Node) -> Node:
     new_el = el.copy()
     new_el.new = True
     new_el.anchored_elements = get_anchors(el)
@@ -1389,9 +1440,9 @@ def copy_and_transfer_anchors(el):
 
 
 class MoveEl(ElWithContext):
-    conflict_if_missing = True
+    conflict_if_missing: bool = True
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(".. moving %s after %s", short_display_el(tree), self.context[0])
 
         if self.context[0] is None:
@@ -1419,20 +1470,20 @@ class MoveEl(ElWithContext):
 
 
 class MoveImport(MoveEl):
-    conflict_if_missing = True
+    conflict_if_missing: bool = True
 
 
 class ChangeHeader:
-    def __init__(self, changes):
+    def __init__(self, changes: list[Action]) -> None:
         self.changes = changes
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(".. changing header")
         return apply_changes(tree.value.header, self.changes)
 
 
 class MakeInline:
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(".. making inline")
         if not tree.value.header:
             logging.debug(".. already inline")
@@ -1445,7 +1496,7 @@ class MakeInline:
 
 
 class MakeMultiline:
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(".. making multiline")
         if tree.value.header:
             logging.debug(".. already multiline")
@@ -1458,7 +1509,7 @@ class MakeMultiline:
 
 
 class SameEl(BaseEl):
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         from .differ import look_ahead
 
         if isinstance(tree, CodeBlockMixin):
@@ -1471,10 +1522,10 @@ class SameEl(BaseEl):
 
 
 class ChangeElseNode:
-    def __init__(self, changes):
+    def __init__(self, changes: list[Action]) -> None:
         self.changes = changes
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". changing else")
 
         if not tree.else_:
@@ -1485,10 +1536,10 @@ class ChangeElseNode:
 
 
 class AddElseNode:
-    def __init__(self, new_else):
+    def __init__(self, new_else: Node) -> None:
         self.new_else = new_else
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". adding else")
 
         if tree.else_:
@@ -1500,7 +1551,7 @@ class AddElseNode:
 
 
 class RemoveElseNode:
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". removing else")
 
         if not tree.else_:
@@ -1511,23 +1562,23 @@ class RemoveElseNode:
 
 
 class ChangeNumberValue:
-    def __init__(self, new_value):
+    def __init__(self, new_value: str) -> None:
         self.new_value = new_value
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         tree.value = self.new_value
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s new_value=%r>" % (self.__class__.__name__, self.new_value)
 
 
 class ChangeExceptsNode:
-    def __init__(self, index, changes):
+    def __init__(self, index: int, changes: list[Action]) -> None:
         self.index = index
         self.changes = changes
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         logging.debug(". changing excepts")
         try:
             except_node = tree.excepts[self.index]
@@ -1537,19 +1588,19 @@ class ChangeExceptsNode:
 
         return apply_changes(except_node, self.changes)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s index=%r changes=%r>" % (self.__class__.__name__, self.index, self.changes)
 
 
 class ChangeString(ChangeEl):
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s el="%s" context=%r>' % (
             self.__class__.__name__,
             short_display_el(self.el),
             short_context(self.context),
         )
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         dmp = diff_match_patch()
         patches = dmp.patch_fromText(self.changes)
         patched, _ = dmp.patch_apply(patches, tree.value)
@@ -1558,46 +1609,46 @@ class ChangeString(ChangeEl):
 
 
 class RemoveSepComment:
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         sep = tree.associated_sep
         if sep:
             sep.second_formatting = []
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s>" % (self.__class__.__name__)
 
 
 class AddSepComment(BaseEl):
     @property
-    def comments(self):
+    def comments(self) -> list[Node]:
         return self.el.associated_sep.second_formatting
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         sep = tree.associated_sep
         if sep:
             sep.second_formatting = self.comments.copy()
         # Add some point add handling for third_formatting for last comment
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s>" % (self.__class__.__name__)
 
 
 class ChangeSepComment(ChangeEl):
-    def __init__(self, changes):
+    def __init__(self, changes: list[Action]) -> None:
         super().__init__(None, changes)
 
     @property
-    def comments(self):
+    def comments(self) -> list[Node]:
         return self.el.associated_sep.second_formatting
 
-    def apply(self, tree):
+    def apply(self, tree: Node) -> list[Conflict]:
         sep = tree.associated_sep
         if sep:
             return apply_changes(sep.second_formatting, self.changes)
         # Add some point add handling for third_formatting for last comment
         return []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s>" % (self.__class__.__name__)

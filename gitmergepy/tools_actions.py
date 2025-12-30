@@ -1,4 +1,8 @@
-def remove_with(with_node):
+from redbaron import nodes
+from redbaron.base_nodes import Node
+
+
+def remove_with(with_node: nodes.WithNode) -> list[Node]:
     assert with_node.parent
     with_node_copy = with_node.copy()
     with_node_copy.decrease_indentation()

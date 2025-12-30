@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 from itertools import islice
+from typing import TYPE_CHECKING, Any, Callable
 
 from redbaron import nodes
 
@@ -26,8 +29,14 @@ from .differ import (
 from .matcher import find_class, find_func, find_import
 from .tools import INDENT, id_from_el, short_display_el
 
+if TYPE_CHECKING:
+    from redbaron.base_nodes import Node
 
-def _process_empty_lines(el):
+# Type alias for action classes (no common base class)
+Action = Any
+
+
+def _process_empty_lines(el: Node) -> list[nodes.EmptyLineNode]:
     empty_lines = []
 
     for _el in islice(el.next_neighbors, 0, 2):
@@ -40,8 +49,15 @@ def _process_empty_lines(el):
 
 
 def diff_node_with_id(
-    stack_left, el_right, indent, global_diff, el_type, finder, change_class, move_class
-):
+    stack_left: list[Node],
+    el_right: Node,
+    indent: str,
+    global_diff: list[Action],
+    el_type: type,
+    finder: Callable[[list[Node], Node], Node | None],
+    change_class: type[Action],
+    move_class: type[Action],
+) -> list[Action]:
     logging.debug("%s changed %r", indent, short_display_el(el_right))
     diff = []
 
@@ -105,7 +121,9 @@ def diff_node_with_id(
     return diff
 
 
-def diff_def_node(stack_left, el_right, indent, global_diff):
+def diff_def_node(
+    stack_left: list[Node], el_right: Node, indent: str, global_diff: list[Action]
+) -> list[Action]:
     return diff_node_with_id(
         stack_left,
         el_right,
@@ -118,7 +136,9 @@ def diff_def_node(stack_left, el_right, indent, global_diff):
     )
 
 
-def diff_class_node(stack_left, el_right, indent, global_diff):
+def diff_class_node(
+    stack_left: list[Node], el_right: Node, indent: str, global_diff: list[Action]
+) -> list[Action]:
     return diff_node_with_id(
         stack_left,
         el_right,
@@ -131,7 +151,9 @@ def diff_class_node(stack_left, el_right, indent, global_diff):
     )
 
 
-def diff_atom_trailer_node(stack_left, el_right, indent, global_diff):
+def diff_atom_trailer_node(
+    stack_left: list[Node], el_right: Node, indent: str, global_diff: list[Action]
+) -> list[Action]:
     diff = []
     if (
         id_from_el(el_right) == id_from_el(stack_left[0])
@@ -150,11 +172,13 @@ def diff_atom_trailer_node(stack_left, el_right, indent, global_diff):
     return diff
 
 
-def diff_from_import_node(stack_left, el_right, indent, global_diff):
+def diff_from_import_node(
+    stack_left: list[Node], el_right: Node, indent: str, global_diff: list[Action]
+) -> list[Action]:
     logging.debug("%s changed import %r", indent, short_display_el(el_right))
-    diff = []
+    diff: list[Action] = []
 
-    def remove_import_if_not_found(stack):
+    def remove_import_if_not_found(stack: list[Node]) -> None:
         nonlocal diff
         to_remove = []
         # Try to keep in left and right stacks in sync, so that empty lines
@@ -222,7 +246,9 @@ def diff_from_import_node(stack_left, el_right, indent, global_diff):
     return diff
 
 
-def diff_return_node(stack_left, el_right, indent, global_diff):
+def diff_return_node(
+    stack_left: list[Node], el_right: Node, indent: str, global_diff: list[Action]
+) -> list[Action]:
     assert el_right.matched_el
     return compute_diff(el_right.matched_el, el_right, indent)
 

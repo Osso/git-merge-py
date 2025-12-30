@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 from itertools import islice
+from typing import TYPE_CHECKING, Any, Callable
 
 from redbaron import nodes
 from redbaron.utils import indent_str
@@ -21,10 +24,17 @@ from .matcher import code_block_similarity, find_el_strong, same_el_guess
 from .tools import INDENT, empty_lines, same_el, short_context, short_display_el
 from .tools_actions import remove_with
 
+if TYPE_CHECKING:
+    from redbaron.base_nodes import Node
+    from redbaron.proxy_list import ProxyList
+
+# Type alias for action classes (no common base class)
+Action = Any
+
 NODE_TYPES_THAT_CAN_BE_FOUND_BY_ID = (nodes.DefNode, nodes.ClassNode, nodes.FromImportNode)
 
 
-def compare_formatting(left, right):
+def compare_formatting(left: Node, right: Node) -> list[Action]:
     diff = []
     names = ("first_formatting", "second_formatting", "third_formatting", "fourth_formatting")
     for name in names:
@@ -33,7 +43,7 @@ def compare_formatting(left, right):
     return diff
 
 
-def compute_diff(left, right, indent=""):
+def compute_diff(left: Node, right: Node, indent: str = "") -> list[Action]:
     from .differ_one import COMPUTE_DIFF_ONE_CALLS
 
     if left.dumps() == right.dumps():
@@ -64,8 +74,10 @@ def compute_diff(left, right, indent=""):
     return diff
 
 
-def changed_el(el, stack_left, indent, change_class):
-    diff = []
+def changed_el(
+    el: Node, stack_left: list[Node], indent: str, change_class: type[Action]
+) -> list[Action]:
+    diff: list[Action] = []
     el_diff = compute_diff(stack_left[0], el, indent=indent + INDENT)
     stack_el = stack_left.pop(0)
 
@@ -75,14 +87,16 @@ def changed_el(el, stack_left, indent, change_class):
     return diff
 
 
-def simplify_to_add_to_remove(to_add, to_remove):
+def simplify_to_add_to_remove(to_add: list[Node], to_remove: list[Node]) -> None:
     # Simplify if possible
     while to_add and to_remove and same_el(to_add[0], to_remove[0]):
         del to_add[0]
         del to_remove[0]
 
 
-def append_replace(diff, to_add, to_remove, indent):
+def append_replace(
+    diff: list[Action], to_add: list[Node], to_remove: list[Node], indent: str
+) -> None:
     if to_remove and to_add:
         # Transform add+remove into a ReplaceEls
         logging.debug("%s transforming into replace", indent)
@@ -99,7 +113,9 @@ def append_replace(diff, to_add, to_remove, indent):
         diff.pop()
 
 
-def __remove_or_replace(diff, els, indent, ignore_context=False):
+def __remove_or_replace(
+    diff: list[Action], els: list[Node], indent: str, ignore_context: bool = False
+) -> None:
     assert els
     context = gather_context(els[0])
 
@@ -117,7 +133,7 @@ def __remove_or_replace(diff, els, indent, ignore_context=False):
         diff += __remove(els, context=context, indent=indent + INDENT)
 
 
-def __remove(els, context, indent):
+def __remove(els: list[Node], context: Any, indent: str) -> list[Action]:
     logging.debug("%s remove els %r", indent, ", ".join(short_display_el(el) for el in els))
 
     if len(els) == 1:
@@ -132,13 +148,13 @@ def __remove(els, context, indent):
     return [RemoveEls(els, context=context)]
 
 
-def _remove_or_replace(diff, els, indent):
+def _remove_or_replace(diff: list[Action], els: list[Node], indent: str) -> None:
     els = split_diff_if_matching_with(diff, els, indent)
     if els:
         __remove_or_replace(diff, els, indent)
 
 
-def _flush_remove(els, diff, indent):
+def _flush_remove(els: list[Node], diff: list[Action], indent: str) -> None:
     if not els:
         return
 
@@ -147,7 +163,9 @@ def _flush_remove(els, diff, indent):
     del els[:]
 
 
-def process_stack_till_el(stack_left, stop_el, tree, diff, indent):
+def process_stack_till_el(
+    stack_left: list[Node], stop_el: Node | None, tree: ProxyList, diff: list[Action], indent: str
+) -> None:
     """stop_el is None means continue till the end of the stack"""
     els = []
     while stack_left and not (stop_el and same_el(stack_left[0], stop_el)):
@@ -165,7 +183,15 @@ def process_stack_till_el(stack_left, stop_el, tree, diff, indent):
     _flush_remove(els, diff=diff, indent=indent)
 
 
-def process_stack_el(stack_left, el_to_delete, tree, els, diff, indent, force_separate=False):
+def process_stack_el(
+    stack_left: list[Node],
+    el_to_delete: Node,
+    tree: ProxyList,
+    els: list[Node],
+    diff: list[Action],
+    indent: str,
+    force_separate: bool = False,
+) -> None:
     matching_el_by_id = find_el_strong(tree, target_el=el_to_delete)
     if matching_el_by_id:
         logging.debug("%s marking as found %r", indent + 2 * INDENT, short_display_el(el_to_delete))
@@ -182,7 +208,7 @@ def process_stack_el(stack_left, el_to_delete, tree, els, diff, indent, force_se
         els.append(el_to_delete)
 
 
-def process_same_el(el_right, stack_left, indent):
+def process_same_el(el_right: Node, stack_left: list[Node], indent: str) -> list[Action]:
     logging.debug("%s same el %r", indent, short_display_el(el_right))
 
     if stack_left[0].indentation != el_right.indentation:
@@ -191,7 +217,9 @@ def process_same_el(el_right, stack_left, indent):
     return [SameEl(stack_left.pop(0))]
 
 
-def process_matched_el_from_look_ahead(el_right, stack_left, indent):
+def process_matched_el_from_look_ahead(
+    el_right: Node, stack_left: list[Node], indent: str
+) -> list[Action]:
     if el_right.already_processed:
         return []
 
@@ -201,13 +229,13 @@ def process_matched_el_from_look_ahead(el_right, stack_left, indent):
     return changed_el(el_right, stack_left, indent=indent + INDENT, change_class=ChangeEl)
 
 
-def check_for_with_first_element(with_node, start_el):
+def check_for_with_first_element(with_node: nodes.WithNode, start_el: Node) -> bool:
     assert start_el
     code_block = start_el.parent.make_code_block(start=start_el, length=len(with_node))
     return any([same_el(with_node[0], el) for el in code_block[1:5]])
 
 
-def score_removed_with(with_node, start_el, indent):
+def score_removed_with(with_node: nodes.WithNode, start_el: Node | None, indent: str) -> float:
     """Check for removal of with node + shifting of content"""
     assert isinstance(with_node, nodes.WithNode)
 
@@ -223,7 +251,9 @@ def score_removed_with(with_node, start_el, indent):
     return compare_with_code(with_node, start_el=start_el)
 
 
-def process_removed_with(stack_left, i, start_el, diff, indent):
+def process_removed_with(
+    stack_left: list[Node], i: int, start_el: Node, diff: list[Action], indent: str
+) -> list[Action]:
     logging.debug("%s with node removal %r", indent + INDENT, short_display_el(stack_left[i]))
     process_stack_till_el(stack_left, stack_left[i], start_el.parent, diff, indent)
     with_node = stack_left.pop(0)
@@ -232,7 +262,9 @@ def process_removed_with(stack_left, i, start_el, diff, indent):
     return [RemoveWith(with_node, context=gather_context(start_el))]
 
 
-def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
+def check_removed_withs(
+    stack_left: list[Node], el_right: Node, indent: str, diff: list[Action], max_ahead: int = 10
+) -> list[Action]:
     if isinstance(el_right, nodes.EmptyLineNode):
         return []
     if look_ahead(stack_left, el_right):
@@ -254,7 +286,12 @@ def check_removed_withs(stack_left, el_right, indent, diff, max_ahead=10):
     return []
 
 
-def look_ahead(stack_left, el_right, max_ahead=10, compare_fun=same_el_guess):
+def look_ahead(
+    stack_left: list[Node],
+    el_right: Node,
+    max_ahead: int = 10,
+    compare_fun: Callable[[Node, Node], bool] = same_el_guess,
+) -> Node | None:
     if empty_lines([el_right]):
         return None
 
@@ -265,7 +302,7 @@ def look_ahead(stack_left, el_right, max_ahead=10, compare_fun=same_el_guess):
     return None
 
 
-def simplify_white_lines(diff, indent):
+def simplify_white_lines(diff: list[Action], indent: str) -> None:
     if not diff:
         return
 
@@ -291,19 +328,21 @@ def simplify_white_lines(diff, indent):
                 break
 
 
-def call_diff_iterable(el, stack_left, indent, diff):
+def call_diff_iterable(
+    el: Node, stack_left: list[Node], indent: str, diff: list[Action]
+) -> list[Action]:
     from .differ_iterable import COMPUTE_DIFF_ITERABLE_CALLS
 
     return COMPUTE_DIFF_ITERABLE_CALLS[type(el)](stack_left, el, indent, global_diff=diff)
 
 
-def compare_with_code(with_node, start_el):
+def compare_with_code(with_node: nodes.WithNode, start_el: Node) -> float:
     code_block = start_el.parent
     code_block_to_compare = code_block.make_code_block(start=start_el, length=len(with_node))
     return code_block_similarity(with_node.value, code_block_to_compare)
 
 
-def look_for_with(with_node, code_block):
+def look_for_with(with_node: nodes.WithNode, code_block: ProxyList) -> Node | None:
     with_node_copy = with_node.copy()
     with_node_copy.decrease_indentation()
 
@@ -319,7 +358,7 @@ def look_for_with(with_node, code_block):
     return None
 
 
-def look_for_with_in_diff(with_node, diff):
+def look_for_with_in_diff(with_node: nodes.WithNode, diff: list[Action]) -> Node | None:
     if not diff:
         return None
     if not isinstance(diff[-1], (AddEls, ReplaceEls)):
@@ -327,7 +366,13 @@ def look_for_with_in_diff(with_node, diff):
     return look_for_with(with_node, code_block=diff[-1].to_add)
 
 
-def _split_diff_on_with(with_node, to_remove, diff, start_el, indent):
+def _split_diff_on_with(
+    with_node: nodes.WithNode,
+    to_remove: list[Node],
+    diff: list[Action],
+    start_el: Node,
+    indent: str,
+) -> None:
     logging.debug("%s transforming into RemoveWith", indent + INDENT)
     with_node_copy = with_node.copy()
     with_node_copy.decrease_indentation()
@@ -357,11 +402,13 @@ def _split_diff_on_with(with_node, to_remove, diff, start_el, indent):
         diff += [AddEls(tail_els, context=gather_context(tail_els[0]))]
 
 
-def split_diff_if_matching_with(diff, to_remove, indent):
+def split_diff_if_matching_with(
+    diff: list[Action], to_remove: list[Node], indent: str
+) -> list[Node]:
     if not diff or not isinstance(diff[-1], AddEls):
         return to_remove
 
-    els = []
+    els: list[Node] = []
     for el in to_remove:
         if isinstance(el, nodes.WithNode):
             with_node = el
@@ -381,7 +428,9 @@ def split_diff_if_matching_with(diff, to_remove, indent):
     return els
 
 
-def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
+def compute_diff_iterables(
+    left: ProxyList, right: ProxyList, indent: str = "", context_class: type[Action] = ChangeEl
+) -> list[Action]:
     logging.debug(
         "%s compute_diff_iterables %r <=> %r", indent, type(left).__name__, type(right).__name__
     )
@@ -468,7 +517,7 @@ def compute_diff_iterables(left, right, indent="", context_class=ChangeEl):
     return diff
 
 
-def detect_comment_before_function(el):
+def detect_comment_before_function(el: Node) -> Node | None:
     comment_before_function = None
     if isinstance(el, nodes.CommentNode):
         n = el
@@ -480,7 +529,13 @@ def detect_comment_before_function(el):
     return comment_before_function
 
 
-def add_to_diff(diff, el, last_added=False, indent="", changes=None):
+def add_to_diff(
+    diff: list[Action],
+    el: Node,
+    last_added: bool = False,
+    indent: str = "",
+    changes: list[Action] | None = None,
+) -> None:
     comment_before_function = detect_comment_before_function(el)
     if comment_before_function is not None:
         assert not changes
@@ -499,11 +554,11 @@ def add_to_diff(diff, el, last_added=False, indent="", changes=None):
             diff += [AddEls([el], context=context, after_context=after_context)]
 
 
-def diff_indent(left, right):
+def diff_indent(left: Node, right: Node) -> list[Action]:
     assert not isinstance(left, nodes.NodeList)
     assert not isinstance(right, nodes.NodeList)
 
-    diff = []
+    diff: list[Action] = []
     if left.indentation != right.indentation:
         delta = len(right.indentation) - len(left.indentation)
         diff += [ChangeIndentation(delta)]

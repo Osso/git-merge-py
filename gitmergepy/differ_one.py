@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
 from diff_match_patch import diff_match_patch
 from redbaron import RedBaron, nodes
@@ -66,32 +69,39 @@ from .tools import (
     short_display_el,
 )
 
+if TYPE_CHECKING:
+    from redbaron.base_nodes import Node
+    from redbaron.proxy_list import ProxyList
 
-def get_previous_arg(arg, deleted):
+# Type alias for action classes (no common base class)
+Action = Any
+
+
+def get_previous_arg(arg: Node, deleted: list[Node]) -> Node | None:
     previous = arg.previous
-    deleted = set(id_from_el(el) for el in deleted)
-    while id_from_el(previous) in deleted:
+    deleted_ids = set(id_from_el(el) for el in deleted)
+    while id_from_el(previous) in deleted_ids:
         previous = previous.previous
     return previous
 
 
-def diff_redbaron(left, right, indent):
+def diff_redbaron(left: RedBaron, right: RedBaron, indent: str) -> list[Action]:
     return compute_diff_iterables(left, right, indent=indent + INDENT)
 
 
-def diff_replace(left, right, indent):
+def diff_replace(left: Node, right: Node, indent: str) -> list[Action]:
     return [Replace(new_value=right, old_value=left)]
 
 
-def diff_number_node(left, right, indent):
+def diff_number_node(left: nodes.NumberNode, right: nodes.NumberNode, indent: str) -> list[Action]:
     if left.value == right.value:
         return []
 
     return [ChangeNumberValue(right.value)]
 
 
-def diff_arg_node(left, right, indent):
-    diff = []
+def diff_arg_node(left: Node, right: Node, indent: str) -> list[Action]:
+    diff: list[Action] = []
     # Target
     if id_from_el(left.target) != id_from_el(right.target):
         diff += [ReplaceTarget(new_value=right.target, old_value=left.target)]
@@ -117,8 +127,8 @@ def diff_arg_node(left, right, indent):
     return diff
 
 
-def diff_def_node(left, right, indent):
-    diff = []
+def diff_def_node(left: nodes.DefNode, right: nodes.DefNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
     # Name
     if left.name != right.name:
         right.old_name = left.name
@@ -186,9 +196,9 @@ def diff_def_node(left, right, indent):
     return diff
 
 
-def diff_import_node(left, right, indent):
+def diff_import_node(left: nodes.FromImportNode, right: nodes.FromImportNode, indent: str) -> list[Action]:
     to_add, to_remove = diff_list(left.targets, right.targets, key_getter=lambda t: t.value)
-    diff = []
+    diff: list[Action] = []
     if to_add:
         diff += [
             AddImports(
@@ -202,8 +212,8 @@ def diff_import_node(left, right, indent):
     return diff
 
 
-def diff_with_node(left, right, indent):
-    diff = []
+def diff_with_node(left: nodes.WithNode, right: nodes.WithNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
     if left.contexts.dumps() != right.contexts.dumps():
         logging.debug("%s changed contexts %r", indent, short_display_el(right.contexts))
         diff += [ReplaceAttr("contexts", right.contexts.copy())]
@@ -213,8 +223,8 @@ def diff_with_node(left, right, indent):
     return diff
 
 
-def diff_atom_trailer_node(left, right, indent):
-    diff = []
+def diff_atom_trailer_node(left: nodes.AtomtrailersNode, right: nodes.AtomtrailersNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     if len(left) != len(right):
         return [Replace(new_value=right, old_value=left)]
@@ -234,13 +244,13 @@ def diff_atom_trailer_node(left, right, indent):
     return [ChangeAtomTrailer(right, diff)]
 
 
-def _check_for_arg_changes(arg):
+def _check_for_arg_changes(arg: Node) -> str:
     endl = "\n" if arg.on_new_line else ""
     return endl + arg.dumps() + "_%d" % arg.index_on_parent
 
 
-def diff_call_node(left, right, indent):
-    diff = []
+def diff_call_node(left: nodes.CallNode, right: nodes.CallNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     # Added/Removed args
     to_add, to_remove = diff_list(left, right, key_getter=id_from_arg)
@@ -283,8 +293,8 @@ def diff_call_node(left, right, indent):
     return diff
 
 
-def diff_assignment_node(left, right, indent):
-    diff = []
+def diff_assignment_node(left: nodes.AssignmentNode, right: nodes.AssignmentNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
     if left.target.value != right.target.value:
         diff += [ReplaceAttr("target", right.target)]
 
@@ -295,8 +305,8 @@ def diff_assignment_node(left, right, indent):
     return diff
 
 
-def diff_class_node_decorators(left, right, indent):
-    diff = []
+def diff_class_node_decorators(left: nodes.ClassNode, right: nodes.ClassNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     to_add, to_remove = diff_list(left.decorators, right.decorators)
     for decorator in to_add:
@@ -324,8 +334,8 @@ def diff_class_node_decorators(left, right, indent):
     return diff
 
 
-def diff_class_node_bases(left, right, indent):
-    diff = []
+def diff_class_node_bases(left: nodes.ClassNode, right: nodes.ClassNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     to_add, to_remove = diff_list(left.inherit_from, right.inherit_from)
     for base in to_add:
@@ -346,8 +356,8 @@ def diff_class_node_bases(left, right, indent):
     return diff
 
 
-def diff_class_node(left, right, indent):
-    diff = []
+def diff_class_node(left: nodes.ClassNode, right: nodes.ClassNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     # Name
     if left.name != right.name:
@@ -368,15 +378,15 @@ def diff_class_node(left, right, indent):
     return diff
 
 
-def diff_if_else_block_node(left, right, indent):
+def diff_if_else_block_node(left: nodes.IfelseblockNode, right: nodes.IfelseblockNode, indent: str) -> list[Action]:
     diff = compute_diff_iterables(left.value, right.value, indent + INDENT)
     if diff:
         return [ChangeValue(right, changes=diff)]
     return []
 
 
-def diff_if_node(left, right, indent):
-    diff = []
+def diff_if_node(left: nodes.IfNode, right: nodes.IfNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
     if left.test.dumps() != right.test.dumps():
         diff += [ChangeAttr("test", compute_diff(left.test, right.test, indent=indent + INDENT))]
 
@@ -384,8 +394,8 @@ def diff_if_node(left, right, indent):
     return diff
 
 
-def diff_elif_node(left, right, indent):
-    diff = []
+def diff_elif_node(left: nodes.ElifNode, right: nodes.ElifNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
     if left.test.dumps() != right.test.dumps():
         diff += [ChangeAttr("test", compute_diff(left.test, right.test, indent=indent + INDENT))]
 
@@ -393,45 +403,45 @@ def diff_elif_node(left, right, indent):
     return diff
 
 
-def diff_else_node(left, right, indent):
+def diff_else_node(left: nodes.ElseNode, right: nodes.ElseNode, indent: str) -> list[Action]:
     return compute_diff_iterables(left, right, indent=indent + INDENT)
 
 
-def diff_endl_node(left, right, indent):
+def diff_endl_node(left: nodes.EndlNode, right: nodes.EndlNode, indent: str) -> list[Action]:
     return []
 
 
-def diff_return_node(left, right, indent):
+def diff_return_node(left: nodes.ReturnNode, right: nodes.ReturnNode, indent: str) -> list[Action]:
     diff = compute_diff(left.value, right.value, indent=indent + INDENT)
     if diff:
         return [ChangeReturn(right, changes=diff)]
     return []
 
 
-def diff_list_node(left, right, indent):
+def diff_list_node(left: nodes.ListNode, right: nodes.ListNode, indent: str) -> list[Action]:
     diff = compute_diff_iterables(left.value, right.value, indent + INDENT)
     if diff:
         return [ChangeValue(right, changes=diff)]
     return []
 
 
-def diff_tuple_node(left, right, indent):
+def diff_tuple_node(left: nodes.TupleNode, right: nodes.TupleNode, indent: str) -> list[Action]:
     diff = compute_diff_iterables(left.value, right.value, indent + INDENT)
     if diff:
         return [ChangeValue(right, changes=diff)]
     return []
 
 
-def diff_list_argument_node(left, right, indent):
+def diff_list_argument_node(left: nodes.ListArgumentNode, right: nodes.ListArgumentNode, indent: str) -> list[Action]:
     return compute_diff(left.value, right.value, indent=indent + INDENT)
 
 
-def diff_dict_argument_node(left, right, indent):
+def diff_dict_argument_node(left: nodes.DictArgumentNode, right: nodes.DictArgumentNode, indent: str) -> list[Action]:
     return compute_diff(left.value, right.value, indent=indent + INDENT)
 
 
-def diff_dict_node(left, right, indent):
-    diff = []
+def diff_dict_node(left: nodes.DictNode, right: nodes.DictNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     to_add, to_remove = diff_list(left, right)
 
@@ -456,8 +466,8 @@ def diff_dict_node(left, right, indent):
     return diff
 
 
-def diff_for_node(left, right, indent):
-    diff = []
+def diff_for_node(left: nodes.ForNode, right: nodes.ForNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
     if left.target.dumps() != right.target.dumps():
         diff += [ReplaceAttr("target", right.target.copy())]
 
@@ -469,8 +479,8 @@ def diff_for_node(left, right, indent):
     return diff
 
 
-def diff_while_node(left, right, indent):
-    diff = []
+def diff_while_node(left: nodes.WhileNode, right: nodes.WhileNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     if left.test.dumps() != right.test.dumps():
         diff += [ReplaceAttr("test", right.test.copy())]
@@ -480,8 +490,8 @@ def diff_while_node(left, right, indent):
     return diff
 
 
-def diff_else_node_for_loops(left, right, indent):
-    diff = []
+def diff_else_node_for_loops(left: Node, right: Node, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     if left.else_ and right.else_:
         diff_else = compute_diff_iterables(
@@ -497,11 +507,11 @@ def diff_else_node_for_loops(left, right, indent):
     return diff
 
 
-def diff_pass_node(left, right, indent):
+def diff_pass_node(left: nodes.PassNode, right: nodes.PassNode, indent: str) -> list[Action]:
     return []
 
 
-def diff_inline_vs_multiline(left, right, indent):
+def diff_inline_vs_multiline(left: Node, right: Node, indent: str) -> list[Action]:
     if left.value.header and not right.value.header:
         return [MakeInline()]
     if not left.value.header and right.value.header:
@@ -509,8 +519,8 @@ def diff_inline_vs_multiline(left, right, indent):
     return []
 
 
-def diff_try_node(left, right, indent):
-    diff = []
+def diff_try_node(left: nodes.TryNode, right: nodes.TryNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     diff += compute_diff_iterables(left, right, indent=indent + INDENT)
     diff += diff_excepts_node(left, right, indent)
@@ -518,8 +528,8 @@ def diff_try_node(left, right, indent):
     return diff
 
 
-def diff_excepts_node(left, right, indent):
-    diff = []
+def diff_excepts_node(left: nodes.TryNode, right: nodes.TryNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     for index, (left_except, right_except) in enumerate(zip(left.excepts, right.excepts)):
         diff_except = compute_diff_iterables(
@@ -531,18 +541,20 @@ def diff_excepts_node(left, right, indent):
     return diff
 
 
-def diff_string_node(left, right, indent):
+def diff_string_node(left: nodes.StringNode, right: nodes.StringNode, indent: str) -> list[Action]:
     dmp = diff_match_patch()
     patches = dmp.patch_make(left.value, right.value)
     diff = dmp.patch_toText(patches)
     return [ChangeString(left, changes=diff)]
 
 
-def diff_name_node(left, right, indent):
+def diff_name_node(left: nodes.NameNode, right: nodes.NameNode, indent: str) -> list[Action]:
     return [Replace(new_value=right, old_value=left)]
 
 
-def diff_list_comments(left, right, indent, list_changer):
+def diff_list_comments(
+    left: ProxyList, right: ProxyList, indent: str, list_changer: type[Action]
+) -> list[Action]:
     def _comment_getter(el):
         sep = el.associated_sep
         if sep is None:
@@ -584,15 +596,15 @@ def diff_list_comments(left, right, indent, list_changer):
     return diff
 
 
-def diff_assert_node(left, right, indent):
+def diff_assert_node(left: nodes.AssertNode, right: nodes.AssertNode, indent: str) -> list[Action]:
     changes = compute_diff(left.value, right.value)
     if changes:
         return [ChangeAttr("value", changes)]
     return []
 
 
-def diff_comparison_node(left, right, indent):
-    diff = []
+def diff_comparison_node(left: nodes.ComparisonNode, right: nodes.ComparisonNode, indent: str) -> list[Action]:
+    diff: list[Action] = []
 
     changes = compute_diff(left.value, right.value)
     if changes:

@@ -1,17 +1,24 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from redbaron import RedBaron, nodes
-from redbaron.base_nodes import NodeList
+from redbaron.base_nodes import Node, NodeList
 from redbaron.node_mixin import ValueIterableMixin
 from redbaron.proxy_list import DictProxyList, ProxyList
+
+if TYPE_CHECKING:
+    from .actions import Action, Conflict
 
 PLACEHOLDER = RedBaron("# GITMERGEPY PLACEHOLDER")[0]
 
 
-def hide_if_empty(tree):
+def hide_if_empty(tree: NodeList | ValueIterableMixin) -> None:
     if all(el.hidden for el in tree):
         tree.hidden = True
 
 
-def apply_changes(tree, changes, skip_checks=False):
+def apply_changes(tree: Node, changes: list[Action], skip_checks: bool = False) -> list[Conflict]:
     from .actions import RemoveImports, Replace
 
     conflicts = []

@@ -59,6 +59,9 @@ def apply_changes(tree: Node, changes: list[Action], skip_checks: bool = False) 
             ),
         ):
             tree_to_check = tree_to_check.parent.parent
+        # ComprehensionLoopNode is not standalone valid Python, skip to parent comprehension
+        if isinstance(tree_to_check, nodes.ComprehensionLoopNode):
+            tree_to_check = tree_to_check.parent.parent
         if isinstance(tree_to_check, nodes.CallNode):
             tree_to_check = tree_to_check.parent.parent
         while isinstance(tree_to_check, (nodes.ElseNode, nodes.FinallyNode, ProxyList)):

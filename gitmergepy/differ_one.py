@@ -18,7 +18,10 @@ from .actions import (
     AddFunArg,
     AddImports,
     AddSepComment,
+    ChangeComprehensionGenerator,
+    ChangeComprehensionResult,
     ChangeFinallyNode,
+    ChangeLambdaBody,
     RemoveExcept,
     RemoveFinally,
     ArgOnNewLine,
@@ -720,6 +723,175 @@ def diff_comparison_node(
     return diff
 
 
+def diff_lambda_node(
+    left: nodes.LambdaNode, right: nodes.LambdaNode, indent: str
+) -> list[Action]:
+    """Diff a lambda expression, comparing arguments and body."""
+    diff: list[Action] = []
+
+    # Args - similar to diff_def_node
+    to_add, to_remove = diff_list(left.arguments, right.arguments)
+    for arg in to_add:
+        logging.debug("%s lambda new arg %r", indent, short_display_el(arg))
+        diff += [AddFunArg(arg, context=gather_context(arg, limit=1), on_new_line=arg.on_new_line)]
+    if to_remove:
+        for arg in to_remove:
+            logging.debug("%s lambda old arg %r", indent, short_display_el(arg))
+        diff += [RemoveFunArgs(to_remove)]
+    changed = changed_in_list(left.arguments, right.arguments, value_getter=_check_for_arg_changes)
+    for old_arg, new_arg in changed:
+        logging.debug("%s lambda changed args %r", indent, short_display_el(new_arg))
+        diff_arg = compute_diff(old_arg, new_arg, indent=indent + INDENT)
+        if diff_arg:
+            diff += [ChangeDefArg(new_arg, changes=diff_arg)]
+
+    # Body
+    body_diff = compute_diff(left.value, right.value, indent=indent + INDENT)
+    if body_diff:
+        logging.debug("%s lambda body changed", indent)
+        diff += [ChangeLambdaBody(body_diff)]
+
+    return diff
+
+
+def diff_comprehension_loop_node(
+    left: nodes.ComprehensionLoopNode, right: nodes.ComprehensionLoopNode, indent: str
+) -> list[Action]:
+    """Diff a comprehension loop (for clause)."""
+    diff: list[Action] = []
+
+    # Iterator (the variable being iterated: for X in ...)
+    if left.iterator.dumps() != right.iterator.dumps():
+        logging.debug("%s comprehension iterator changed", indent)
+        diff += [ReplaceAttr("iterator", right.iterator.copy())]
+
+    # Target (what we're iterating over: for x in TARGET)
+    if left.target.dumps() != right.target.dumps():
+        logging.debug("%s comprehension target changed", indent)
+        diff += [ReplaceAttr("target", right.target.copy())]
+
+    # Ifs (filter conditions)
+    # For now, if ifs changed, replace them all
+    left_ifs = left.ifs.dumps() if left.ifs else ""
+    right_ifs = right.ifs.dumps() if right.ifs else ""
+    if left_ifs != right_ifs:
+        logging.debug("%s comprehension ifs changed", indent)
+        diff += [ReplaceAttr("ifs", right.ifs.copy() if right.ifs else [])]
+
+    return diff
+
+
+def diff_list_comprehension_node(
+    left: nodes.ListComprehensionNode, right: nodes.ListComprehensionNode, indent: str
+) -> list[Action]:
+    """Diff a list comprehension, comparing result and generators."""
+    diff: list[Action] = []
+
+    # Result expression
+    result_diff = compute_diff(left.result, right.result, indent=indent + INDENT)
+    if result_diff:
+        logging.debug("%s list comprehension result changed", indent)
+        diff += [ChangeComprehensionResult(result_diff)]
+
+    # Generators (for clauses)
+    for index, (left_gen, right_gen) in enumerate(zip(left.generators, right.generators)):
+        gen_diff = compute_diff(left_gen, right_gen, indent=indent + INDENT)
+        if gen_diff:
+            logging.debug("%s list comprehension generator %d changed", indent, index)
+            diff += [ChangeComprehensionGenerator(index, gen_diff)]
+
+    # Handle added/removed generators
+    if len(right.generators) > len(left.generators):
+        logging.debug("%s list comprehension has more generators, replacing", indent)
+        return [Replace(new_value=right, old_value=left)]
+    if len(right.generators) < len(left.generators):
+        logging.debug("%s list comprehension has fewer generators, replacing", indent)
+        return [Replace(new_value=right, old_value=left)]
+
+    return diff
+
+
+def diff_dict_comprehension_node(
+    left: nodes.DictComprehensionNode, right: nodes.DictComprehensionNode, indent: str
+) -> list[Action]:
+    """Diff a dict comprehension, comparing result and generators."""
+    diff: list[Action] = []
+
+    # Result expression (key: value pair)
+    result_diff = compute_diff(left.result, right.result, indent=indent + INDENT)
+    if result_diff:
+        logging.debug("%s dict comprehension result changed", indent)
+        diff += [ChangeComprehensionResult(result_diff)]
+
+    # Generators (for clauses)
+    for index, (left_gen, right_gen) in enumerate(zip(left.generators, right.generators)):
+        gen_diff = compute_diff(left_gen, right_gen, indent=indent + INDENT)
+        if gen_diff:
+            logging.debug("%s dict comprehension generator %d changed", indent, index)
+            diff += [ChangeComprehensionGenerator(index, gen_diff)]
+
+    # Handle added/removed generators
+    if len(right.generators) != len(left.generators):
+        logging.debug("%s dict comprehension generator count changed, replacing", indent)
+        return [Replace(new_value=right, old_value=left)]
+
+    return diff
+
+
+def diff_set_comprehension_node(
+    left: nodes.SetComprehensionNode, right: nodes.SetComprehensionNode, indent: str
+) -> list[Action]:
+    """Diff a set comprehension, comparing result and generators."""
+    diff: list[Action] = []
+
+    # Result expression
+    result_diff = compute_diff(left.result, right.result, indent=indent + INDENT)
+    if result_diff:
+        logging.debug("%s set comprehension result changed", indent)
+        diff += [ChangeComprehensionResult(result_diff)]
+
+    # Generators (for clauses)
+    for index, (left_gen, right_gen) in enumerate(zip(left.generators, right.generators)):
+        gen_diff = compute_diff(left_gen, right_gen, indent=indent + INDENT)
+        if gen_diff:
+            logging.debug("%s set comprehension generator %d changed", indent, index)
+            diff += [ChangeComprehensionGenerator(index, gen_diff)]
+
+    # Handle added/removed generators
+    if len(right.generators) != len(left.generators):
+        logging.debug("%s set comprehension generator count changed, replacing", indent)
+        return [Replace(new_value=right, old_value=left)]
+
+    return diff
+
+
+def diff_generator_comprehension_node(
+    left: nodes.GeneratorComprehensionNode, right: nodes.GeneratorComprehensionNode, indent: str
+) -> list[Action]:
+    """Diff a generator expression, comparing result and generators."""
+    diff: list[Action] = []
+
+    # Result expression
+    result_diff = compute_diff(left.result, right.result, indent=indent + INDENT)
+    if result_diff:
+        logging.debug("%s generator expression result changed", indent)
+        diff += [ChangeComprehensionResult(result_diff)]
+
+    # Generators (for clauses)
+    for index, (left_gen, right_gen) in enumerate(zip(left.generators, right.generators)):
+        gen_diff = compute_diff(left_gen, right_gen, indent=indent + INDENT)
+        if gen_diff:
+            logging.debug("%s generator expression generator %d changed", indent, index)
+            diff += [ChangeComprehensionGenerator(index, gen_diff)]
+
+    # Handle added/removed generators
+    if len(right.generators) != len(left.generators):
+        logging.debug("%s generator expression generator count changed, replacing", indent)
+        return [Replace(new_value=right, old_value=left)]
+
+    return diff
+
+
 COMPUTE_DIFF_ONE_CALLS = {
     RedBaron: diff_redbaron,
     nodes.CommentNode: diff_replace,
@@ -753,4 +925,10 @@ COMPUTE_DIFF_ONE_CALLS = {
     nodes.NameNode: diff_name_node,
     nodes.AssertNode: diff_assert_node,
     nodes.ComparisonNode: diff_comparison_node,
+    nodes.LambdaNode: diff_lambda_node,
+    nodes.ListComprehensionNode: diff_list_comprehension_node,
+    nodes.DictComprehensionNode: diff_dict_comprehension_node,
+    nodes.SetComprehensionNode: diff_set_comprehension_node,
+    nodes.GeneratorComprehensionNode: diff_generator_comprehension_node,
+    nodes.ComprehensionLoopNode: diff_comprehension_loop_node,
 }

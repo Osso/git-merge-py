@@ -1046,7 +1046,7 @@ class AddFunArg:
         return tree.arguments
 
     def apply(self, tree: Node) -> list[Conflict]:
-        if not isinstance(tree, (nodes.DefNode, nodes.CallNode)):
+        if not isinstance(tree, (nodes.DefNode, nodes.CallNode, nodes.LambdaNode)):
             return [Conflict([self.arg], self, "tree is not a def node")]
 
         args = self.get_args(tree)
@@ -1771,6 +1771,54 @@ class ChangeString(ChangeEl):
         patched, _ = dmp.patch_apply(patches, tree.value)
         tree.value = patched
         return []
+
+
+class ChangeLambdaBody(ChangeEl):
+    """Change the body of a lambda expression."""
+
+    def __init__(self, changes: list[Action]) -> None:
+        super().__init__(None, changes)
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". changing lambda body")
+        return apply_changes(tree.value, self.changes)
+
+    def __repr__(self) -> str:
+        return "<%s changes=%r>" % (self.__class__.__name__, self.changes)
+
+
+class ChangeComprehensionResult(ChangeEl):
+    """Change the result expression of a comprehension."""
+
+    def __init__(self, changes: list[Action]) -> None:
+        super().__init__(None, changes)
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". changing comprehension result")
+        return apply_changes(tree.result, self.changes)
+
+    def __repr__(self) -> str:
+        return "<%s changes=%r>" % (self.__class__.__name__, self.changes)
+
+
+class ChangeComprehensionGenerator:
+    """Change a generator (for clause) in a comprehension."""
+
+    def __init__(self, index: int, changes: list[Action]) -> None:
+        self.index = index
+        self.changes = changes
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". changing comprehension generator at index %d", self.index)
+        try:
+            generator = tree.generators[self.index]
+        except IndexError:
+            logging.debug(". generator index out of range, ignoring")
+            return []
+        return apply_changes(generator, self.changes)
+
+    def __repr__(self) -> str:
+        return "<%s index=%r changes=%r>" % (self.__class__.__name__, self.index, self.changes)
 
 
 class RemoveSepComment:

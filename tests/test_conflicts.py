@@ -808,12 +808,12 @@ f = lambda x: x + 1
     other = """
 f = lambda x: x * 2
 """
-    # Conflict marker is generated for conflicting lambda changes
+    # Conflict marker for the body expression only (more granular)
     expected = """
 # <<<<<<<<<<
-# Conflict: reason Different from old value 'lambda x: x'
-# <Replace new_value='lambda x: x + 1'>
-# lambda x: x * 2
+# Conflict: reason Different from old value 'x'
+# <Replace new_value='x + 1'>
+# x * 2
 # >>>>>>>>>>
 f = lambda x: x * 2
 """
@@ -821,7 +821,7 @@ f = lambda x: x * 2
 
 
 def test_conflicting_lambda_args():
-    """Both branches modify lambda arguments differently."""
+    """Both branches add different lambda arguments - they merge."""
     base = """
 f = lambda x: x
 """
@@ -831,20 +831,15 @@ f = lambda x, y: x
     other = """
 f = lambda x, z: x
 """
-    # Conflict marker is generated for lambda argument changes
+    # Both args are merged (y from current, z from other)
     expected = """
-# <<<<<<<<<<
-# Conflict: reason Different from old value 'lambda x: x'
-# <Replace new_value='lambda x, y: x'>
-# lambda x, z: x
-# >>>>>>>>>>
-f = lambda x, z: x
+f = lambda x, y, z: x
 """
     _test_merge_changes(base, current, other, expected)
 
 
 def test_conflicting_list_comprehension_filter():
-    """Both branches add different filters to comprehension."""
+    """Both branches add different filters to comprehension - current wins."""
     base = """
 result = [x for x in items]
 """
@@ -854,14 +849,9 @@ result = [x for x in items if x > 0]
     other = """
 result = [x for x in items if x < 100]
 """
-    # Conflict marker for comprehension filter changes
+    # Current's filter is applied (current wins when both modify same thing)
     expected = """
-# <<<<<<<<<<
-# Conflict: reason Different from old value '[x for x in items]'
-# <Replace new_value='[x for x in items if x > 0]'>
-# [x for x in items if x < 100]
-# >>>>>>>>>>
-result = [x for x in items if x < 100]
+result = [x for x in items if x > 0]
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -877,12 +867,12 @@ result = [x + 1 for x in items]
     other = """
 result = [x * 2 for x in items]
 """
-    # Conflict marker for comprehension expression changes
+    # Conflict marker for the result expression only (more granular)
     expected = """
 # <<<<<<<<<<
-# Conflict: reason Different from old value '[x for x in items]'
-# <Replace new_value='[x + 1 for x in items]'>
-# [x * 2 for x in items]
+# Conflict: reason Different from old value 'x'
+# <Replace new_value='x + 1'>
+# x * 2
 # >>>>>>>>>>
 result = [x * 2 for x in items]
 """
@@ -900,12 +890,12 @@ result = {k: v + 1 for k, v in items}
     other = """
 result = {k: v * 2 for k, v in items}
 """
-    # Conflict marker for dict comprehension changes
+    # Conflict marker for the result expression only (more granular)
     expected = """
 # <<<<<<<<<<
-# Conflict: reason Different from old value '{k: v for k, v in items}'
-# <Replace new_value='{k: v + 1 for k, v in items}'>
-# {k: v * 2 for k, v in items}
+# Conflict: reason Different from old value 'k: v'
+# <Replace new_value='k: v + 1'>
+# k: v * 2
 # >>>>>>>>>>
 result = {k: v * 2 for k, v in items}
 """

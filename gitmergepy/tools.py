@@ -292,5 +292,5 @@ def empty_lines(els: list[Node]) -> bool:
 
 def get_args_names(args: ProxyList | nodes.CallNode) -> list[str]:
     """Get list of argument names/identifiers."""
-    assert isinstance(args.parent, nodes.DefNode) or isinstance(args, nodes.CallNode)
+    assert isinstance(args.parent, (nodes.DefNode, nodes.LambdaNode)) or isinstance(args, nodes.CallNode)
     return [id_from_el(arg) for arg in args]

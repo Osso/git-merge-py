@@ -442,11 +442,13 @@ def best_block(tree: list[Node] | ProxyList, target_el: Node) -> Node | None:
 
 def code_block_similarity(left: Node, right: Node) -> float:
     """Calculate similarity between two code blocks (0.0 to 1.0)."""
+    left_node: Any = left
+    right_node: Any = right
     if isinstance(left, (nodes.DefNode, nodes.ClassNode, nodes.WithNode, nodes.ForNode)):
-        left = left.value
-        right = right.value
-    left_lines = set(line.strip() for line in left.dumps().splitlines()) - set([""])
-    right_lines = set(line.strip() for line in right.dumps().splitlines()) - set([""])
+        left_node = left.value
+        right_node = right.value
+    left_lines = set(line.strip() for line in left_node.dumps().splitlines()) - set([""])
+    right_lines = set(line.strip() for line in right_node.dumps().splitlines()) - set([""])
     same_lines_count = len(left_lines & right_lines)
     total_lines_count = max(len(left_lines), len(right_lines))
     return same_lines_count / total_lines_count

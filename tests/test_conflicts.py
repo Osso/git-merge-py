@@ -527,9 +527,9 @@ class Child(Base, MixinA):
 class Child(Base, MixinB):
     pass
 """
-    # Base is duplicated when both add different mixins
+    # Both mixins are added (MixinA appended after existing bases)
     expected = """
-class Child(Base, MixinA, Base, MixinB):
+class Child(Base, MixinB, MixinA):
     pass
 """
     _test_merge_changes(base, current, other, expected)
@@ -549,10 +549,9 @@ class Child(NewBase):
 class Child:
     pass
 """
-    # Bug: class name gets corrupted when base is removed in other
-    # and changed in current (ChildNewBase instead of Child(NewBase))
+    # NewBase is added even though other removed the base class
     expected = """
-class ChildNewBase:
+class Child(NewBase):
     pass
 """
     _test_merge_changes(base, current, other, expected)
@@ -1179,12 +1178,14 @@ try:
 except ValueError:
     modified()
 """
-    # The new except clause is NOT added
+    # The new except clause IS added (additive change merged)
     expected = """
 try:
     pass
 except ValueError:
     modified()
+except TypeError:
+    handle_type_error()
 """
     _test_merge_changes(base, current, other, expected)
 
@@ -1245,12 +1246,13 @@ try:
 except:
     modified()
 """
-    # The finally is NOT added
+    # The finally IS added (additive change merged, inline format)
     expected = """
 try:
     pass
 except:
     modified()
+finally: cleanup()
 """
     _test_merge_changes(base, current, other, expected)
 

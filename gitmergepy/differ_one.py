@@ -13,6 +13,8 @@ from .actions import (
     AddDecorator,
     AddDictItem,
     AddElseNode,
+    AddExcept,
+    AddFinally,
     AddFunArg,
     AddImports,
     AddSepComment,
@@ -342,21 +344,41 @@ def diff_class_node_decorators(
     return diff
 
 
+def _expand_bases(inherit_from: list[Node]) -> list[Node]:
+    """Expand TupleNodes in inherit_from to individual base classes.
+
+    RedBaron parses `class C(A, B)` as inherit_from=[TupleNode("A, B")]
+    rather than [NameNode("A"), NameNode("B")]. This function flattens
+    the list so we can compare individual bases.
+    """
+    result = []
+    for item in inherit_from:
+        if type(item) is nodes.TupleNode:
+            result.extend(item.value)
+        else:
+            result.append(item)
+    return result
+
+
 def diff_class_node_bases(
     left: nodes.ClassNode, right: nodes.ClassNode, indent: str
 ) -> list[Action]:
     diff: list[Action] = []
 
-    to_add, to_remove = diff_list(left.inherit_from, right.inherit_from)
+    # Expand TupleNodes to get individual bases for comparison
+    left_bases = _expand_bases(left.inherit_from)
+    right_bases = _expand_bases(right.inherit_from)
+
+    to_add, to_remove = diff_list(left_bases, right_bases)
     for base in to_add:
-        diff += [AddBase(base, context=gather_context(base))]
+        diff += [AddBase(base.copy(), context=gather_context(base))]
     if to_remove:
         diff += [RemoveBases(to_remove)]
     if to_add:
         logging.debug("%s class new bases %r", indent, to_add)
     if to_remove:
         logging.debug("%s class old bases %r", indent, to_remove)
-    changed = changed_in_list(left.inherit_from, right.inherit_from)
+    changed = changed_in_list(left_bases, right_bases)
     for left_el, right_el in changed:
         logging.debug("%s class changed base %r ", indent, right_el)
         diff_base = compute_diff(left_el, right_el, indent=indent + INDENT)
@@ -541,18 +563,31 @@ def diff_try_node(left: nodes.TryNode, right: nodes.TryNode, indent: str) -> lis
     diff += compute_diff_iterables(left, right, indent=indent + INDENT)
     diff += diff_excepts_node(left, right, indent)
     diff += diff_else_node_for_loops(left, right, indent)
+
+    # Handle finally block
+    if not left.finally_ and right.finally_:
+        logging.debug("%s added finally block", indent)
+        diff += [AddFinally(right.finally_)]
+
     return diff
 
 
 def diff_excepts_node(left: nodes.TryNode, right: nodes.TryNode, indent: str) -> list[Action]:
     diff: list[Action] = []
 
+    # Handle changes to existing except clauses
     for index, (left_except, right_except) in enumerate(zip(left.excepts, right.excepts)):
         diff_except = compute_diff_iterables(
             left_except.value, right_except.value, indent=indent + INDENT
         )
         if diff_except:
             diff += [ChangeExceptsNode(index, diff_except)]
+
+    # Handle added except clauses
+    if len(right.excepts) > len(left.excepts):
+        for except_node in right.excepts[len(left.excepts) :]:
+            logging.debug("%s added except clause %r", indent, short_display_el(except_node))
+            diff += [AddExcept(except_node)]
 
     return diff
 

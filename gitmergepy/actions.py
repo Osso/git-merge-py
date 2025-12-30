@@ -1112,6 +1112,15 @@ class AddBase(AddDecorator):
     def get_elements(tree: Node) -> ProxyList:
         return tree.inherit_from
 
+    def apply(self, tree: Node) -> list[Conflict]:
+        # Handle empty inherit_from specially to avoid RedBaron corruption bug
+        # When inherit_from is empty, inserting corrupts the class name
+        if len(tree.inherit_from) == 0:
+            logging.debug(". adding first base %r to %r", short_display_el(self.el), short_display_el(tree))
+            tree.inherit_from = self.el.dumps()
+            return []
+        return super().apply(tree)
+
 
 class RemoveFunArgs:
     def __init__(self, args: list[Node]) -> None:
@@ -1595,6 +1604,52 @@ class ChangeExceptsNode:
 
     def __repr__(self) -> str:
         return "<%s index=%r changes=%r>" % (self.__class__.__name__, self.index, self.changes)
+
+
+class AddExcept:
+    """Add a new except clause to a try statement."""
+
+    def __init__(self, except_node: Node) -> None:
+        self.except_node = except_node
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". adding except clause")
+        # Copy the except node and append it to the excepts list
+        new_except = self.except_node.copy()
+        tree.excepts.append(new_except)
+        return []
+
+    def __repr__(self) -> str:
+        return "<%s except=%r>" % (self.__class__.__name__, short_display_el(self.except_node))
+
+
+class AddFinally:
+    """Add a finally block to a try statement."""
+
+    def __init__(self, finally_node: Node) -> None:
+        self.finally_node = finally_node
+
+    def apply(self, tree: Node) -> list[Conflict]:
+        logging.debug(". adding finally block")
+        if tree.finally_:
+            logging.debug(".. finally already exists, skipping")
+            return []
+        # Create the finally block by setting first statement as string,
+        # then append remaining nodes. We can't use dumps() directly on
+        # the whole node list because multi-line content causes
+        # "inline code can't have multiple lines" error
+        if not self.finally_node:
+            return []
+        # Get the first node's content, stripping whitespace
+        first_content = self.finally_node[0].dumps().strip()
+        tree.finally_ = first_content
+        # Add remaining nodes
+        for node in self.finally_node[1:]:
+            tree.finally_.append(node.copy())
+        return []
+
+    def __repr__(self) -> str:
+        return "<%s>" % self.__class__.__name__
 
 
 class ChangeString(ChangeEl):

@@ -238,6 +238,14 @@ def same_el_guess(left: Node, right: Node, context: Any = None) -> bool:
                 return True
             return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
 
+        case nodes.MatchNode():
+            if left.subject.dumps() == right.subject.dumps():
+                return True
+            return code_block_similarity(left.value, right.value) > CODE_BLOCK_SIMILARITY_THRESHOLD
+
+        case nodes.CaseNode():
+            return left.pattern.dumps() == right.pattern.dumps()
+
         case nodes.DictNode():
             return dict_similarity(left, right) > DICT_SIMILARITY_THRESHOLD
 

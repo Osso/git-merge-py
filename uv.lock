@@ -13,8 +13,8 @@ wheels = [
 
 [[package]]
 name = "baron"
-version = "1.0"
-source = { git = "https://github.com/Osso/baron.git?rev=master#5a70eb21e1ded3809bd6c77e3b4abe36ee8f4fc3" }
+version = "1.0.0"
+source = { git = "https://github.com/Osso/baron.git?branch=master#4db77b96396570bfd832c735d82ecba9c291d33a" }
 dependencies = [
     { name = "rply" },
 ]
@@ -42,7 +42,6 @@ name = "gitmergepy"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "baron" },
     { name = "diff-match-patch" },
     { name = "python-levenshtein" },
     { name = "redbaron" },
@@ -57,7 +56,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "baron", git = "https://github.com/Osso/baron.git?rev=master" },
     { name = "diff-match-patch", specifier = ">=20200713" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
@@ -285,7 +283,7 @@ wheels = [
 [[package]]
 name = "redbaron"
 version = "1.0"
-source = { git = "https://github.com/Osso/redbaron.git?rev=master#c60932cb3665aa20b6920785b2b0bdb0febc0774" }
+source = { git = "https://github.com/Osso/redbaron.git?rev=master#9f3e467f4f9f2271a247a51858be2bb1142fbffa" }
 dependencies = [
     { name = "baron" },
 ]

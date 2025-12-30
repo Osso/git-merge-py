@@ -19,7 +19,6 @@ classifiers = [
     "Topic :: Software Development :: Version Control :: Git",
 ]
 dependencies = [
-    "baron @ git+https://github.com/Osso/baron.git@master",
     "redbaron @ git+https://github.com/Osso/redbaron.git@master",
     "python-Levenshtein>=0.12.2",
     "diff-match-patch>=20200713",

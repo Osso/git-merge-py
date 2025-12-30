@@ -1,16 +1,27 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from redbaron import nodes
+from redbaron.base_nodes import Node
 from redbaron.node_mixin import CodeBlockMixin
 from redbaron.proxy_list import ProxyList
 
+if TYPE_CHECKING:
+    from .actions import Conflict
 
-def add_conflicts(source_el, conflicts):
+
+def add_conflicts(source_el: Node, conflicts: list[Conflict]) -> None:
+    """Add all conflicts as comments to the source element."""
     for conflict in conflicts:
         add_conflict(source_el, conflict)
 
 
-def add_conflict(source_el, conflict):
-    if isinstance(source_el.parent, ProxyList) and \
-       isinstance(source_el.parent.parent, nodes.IfelseblockNode):
+def add_conflict(source_el: Node, conflict: Conflict) -> None:
+    """Insert conflict markers as comments before or at the source element."""
+    if isinstance(source_el.parent, ProxyList) and isinstance(
+        source_el.parent.parent, nodes.IfelseblockNode
+    ):
         source_el = source_el.parent.parent
 
     if conflict.insert_before and isinstance(source_el.parent, CodeBlockMixin):
@@ -20,13 +31,15 @@ def add_conflict(source_el, conflict):
         tree = source_el
         index = 0
 
-    while tree.parent and (not isinstance(tree, CodeBlockMixin) or isinstance(tree, nodes.IfelseblockNode)):
+    while tree.parent and (
+        not isinstance(tree, CodeBlockMixin) or isinstance(tree, nodes.IfelseblockNode)
+    ):
         tree = tree.parent
 
     # We can only add code to add CodeProxyList
     assert isinstance(tree, CodeBlockMixin)
 
-    def _insert(text):
+    def _insert(text: str) -> None:
         nonlocal index
         txt = "# " + text
         tree.insert(index, txt.strip() + "\n")

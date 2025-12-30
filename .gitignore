@@ -1,3 +1,9 @@
 gitmergepy.egg-info
 .pytest_cache
 __pycache__
+*.pyc
+*.pyo
+.venv/
+dist/
+build/
+*.egg-info/

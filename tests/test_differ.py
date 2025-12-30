@@ -1,8 +1,6 @@
-from redbaron import (node,
-                      nodes)
+from redbaron import node, nodes
 
-from gitmergepy.actions import (AddEls,
-                                RemoveEls)
+from gitmergepy.actions import AddEls, RemoveEls
 from gitmergepy.differ import simplify_white_lines
 
 

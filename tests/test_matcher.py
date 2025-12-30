@@ -1,14 +1,13 @@
-from redbaron import (RedBaron,
-                      node,
-                      nodes)
+from redbaron import RedBaron, node, nodes
 
-from gitmergepy.context import (AfterContext,
-                                BeforeContext)
-from gitmergepy.matcher import (code_block_similarity,
-                                find_el,
-                                find_import,
-                                find_single_el_with_context,
-                                same_el_guess)
+from gitmergepy.context import AfterContext, BeforeContext
+from gitmergepy.matcher import (
+    code_block_similarity,
+    find_el,
+    find_import,
+    find_single_el_with_context,
+    same_el_guess,
+)
 
 
 def test_find_el_at_the_end():

@@ -1,45 +1,48 @@
 import logging
 
+from diff_match_patch import diff_match_patch
 from redbaron import nodes
-from redbaron.base_nodes import (BaseNode,
-                                 NodeList)
+from redbaron.base_nodes import BaseNode, NodeList
 from redbaron.node_mixin import CodeBlockMixin
 from redbaron.utils import indent_str
 
-from diff_match_patch import diff_match_patch
-
-from .applyier import apply_changes
-from .conflicts import (add_conflict,
-                        add_conflicts)
-from .context import (AfterContext,
-                      find_context,
-                      find_context_with_reduction,
-                      gather_after_context,
-                      gather_context)
-from .matcher import (CODE_BLOCK_SIMILARITY_THRESHOLD,
-                      code_block_similarity,
-                      find_class,
-                      find_el,
-                      find_func,
-                      find_import,
-                      find_imports,
-                      find_key,
-                      same_arg_guess,
-                      same_el_guess)
-from .tools import (apply_diff_to_list,
-                    as_from_contexts,
-                    empty_lines,
-                    get_args_names,
-                    get_call_els,
-                    id_from_arg,
-                    id_from_el,
-                    merge_imports,
-                    same_el,
-                    short_context,
-                    short_display_el,
-                    short_display_list,
-                    skip_context_endl,
-                    sort_imports)
+from .applier import apply_changes
+from .conflicts import add_conflict, add_conflicts
+from .context import (
+    AfterContext,
+    find_context,
+    find_context_with_reduction,
+    gather_after_context,
+    gather_context,
+)
+from .matcher import (
+    CODE_BLOCK_SIMILARITY_THRESHOLD,
+    code_block_similarity,
+    find_class,
+    find_el,
+    find_func,
+    find_import,
+    find_imports,
+    find_key,
+    same_arg_guess,
+    same_el_guess,
+)
+from .tools import (
+    apply_diff_to_list,
+    as_from_contexts,
+    empty_lines,
+    get_args_names,
+    get_call_els,
+    id_from_arg,
+    id_from_el,
+    merge_imports,
+    same_el,
+    short_context,
+    short_display_el,
+    short_display_list,
+    skip_context_endl,
+    sort_imports,
+)
 from .tools_actions import remove_with
 from .tools_lists import insert_at_context_coma_list
 
@@ -59,7 +62,7 @@ def cursor_index(tree):
 
 
 def tree_after_cursor(tree):
-    return tree[cursor_index(tree)+1:]
+    return tree[cursor_index(tree) + 1 :]
 
 
 def set_cursor(tree, el):
@@ -84,8 +87,7 @@ class BaseEl:
         self.el = el
 
     def __repr__(self):
-        return "<%s el=\"%s\">" % (self.__class__.__name__,
-                                   short_display_el(self.el))
+        return '<%s el="%s">' % (self.__class__.__name__, short_display_el(self.el))
 
 
 class ElWithContext(BaseEl):
@@ -94,9 +96,11 @@ class ElWithContext(BaseEl):
         self.context = context
 
     def __repr__(self):
-        return "<%s el=\"%s\" context=%r>" % (
-            self.__class__.__name__, short_display_el(self.el),
-            short_context(self.context))
+        return '<%s el="%s" context=%r>' % (
+            self.__class__.__name__,
+            short_display_el(self.el),
+            short_context(self.context),
+        )
 
 
 class RemoveEls:
@@ -106,9 +110,11 @@ class RemoveEls:
         self.context = context
 
     def __repr__(self):
-        return "<%s to_remove=\"%s\" context=%r>" % (
-            self.__class__.__name__, short_display_list(self.to_remove),
-            short_context(self.context))
+        return '<%s to_remove="%s" context=%r>' % (
+            self.__class__.__name__,
+            short_display_list(self.to_remove),
+            short_context(self.context),
+        )
 
     def find_anchor(self, tree):
         # We modify this
@@ -117,15 +123,17 @@ class RemoveEls:
         skipped_to_remove = []
         anchor_el = None
         for el_to_remove in self.to_remove:
-            if isinstance(el_to_remove, (nodes.SpaceNode, nodes.EmptyLineNode)) and not empty_lines(self.to_remove):
+            if isinstance(el_to_remove, (nodes.SpaceNode, nodes.EmptyLineNode)) and not empty_lines(
+                self.to_remove
+            ):
                 logging.debug(". skipping empty space anchor")
             else:
-                logging.debug(". looking for el %r",
-                              short_display_el(el_to_remove))
+                logging.debug(". looking for el %r", short_display_el(el_to_remove))
                 # Removed els were not found in the new tree, therefore
                 # the context gathered is from the old tree
-                anchor_el = find_el(tree, el_to_remove, context=self.context,
-                                    look_in_old_tree_first=True)
+                anchor_el = find_el(
+                    tree, el_to_remove, context=self.context, look_in_old_tree_first=True
+                )
                 if anchor_el:
                     logging.debug(". el found")
                     break
@@ -189,9 +197,10 @@ class AddImports:
         self.add_brackets = add_brackets
 
     def __repr__(self):
-        return "<%s imports=%r>" % (self.__class__.__name__,
-                                    ', '.join(short_display_el(el)
-                                              for el in self.imports))
+        return "<%s imports=%r>" % (
+            self.__class__.__name__,
+            ", ".join(short_display_el(el) for el in self.imports),
+        )
 
     def apply(self, tree):
         logging.debug(". adding imports")
@@ -224,17 +233,19 @@ class RemoveImports:
         self.imports = imports
 
     def __repr__(self):
-        return "<%s imports=%r>" % (self.__class__.__name__,
-                                    ', '.join(short_display_el(el)
-                                              for el in self.imports))
+        return "<%s imports=%r>" % (
+            self.__class__.__name__,
+            ", ".join(short_display_el(el) for el in self.imports),
+        )
 
     def apply(self, tree):
         logging.debug(". removing imports")
         for import_el in self.imports:
             logging.debug(".. removing import %r", short_display_el(import_el))
 
-        apply_diff_to_list(tree.targets, to_add=[], to_remove=self.imports,
-                           key_getter=lambda t: t.value)
+        apply_diff_to_list(
+            tree.targets, to_add=[], to_remove=self.imports, key_getter=lambda t: t.value
+        )
         if len(tree.targets) == 1:
             tree.targets.remove_brackets()
             tree.targets.header = []
@@ -252,10 +263,11 @@ class BaseAddEls:
         self.added = []
 
     def __repr__(self):
-        return "<%s to_add=\"%s\" context=%r>" % (
+        return '<%s to_add="%s" context=%r>' % (
             self.__class__.__name__,
-            ', '.join(short_display_el(el) for el in self.to_add),
-            short_context(self.context))
+            ", ".join(short_display_el(el) for el in self.to_add),
+            short_context(self.context),
+        )
 
     def add_el(self, el):
         self.to_add.append(el)
@@ -279,21 +291,21 @@ class BaseAddEls:
             indexes = find_context_with_reduction(tree, self.context)
 
             if not indexes and self.after_context:
-                logging.debug(". context not found, looking for after context "
-                              "%r", short_context(self.after_context))
+                logging.debug(
+                    ". context not found, looking for after context %r",
+                    short_context(self.after_context),
+                )
                 indexes = find_context_with_reduction(tree, self.after_context)
 
             if not indexes:
                 logging.debug(". context not found")
                 if empty_lines(self.to_add):
                     return []
-                if (isinstance(self.context[0], (nodes.DefNode,
-                                                 nodes.ClassNode)) and
-                        all(isinstance(el, nodes.CommentNode)
-                            for el in self.to_add)):
+                if isinstance(self.context[0], (nodes.DefNode, nodes.ClassNode)) and all(
+                    isinstance(el, nodes.CommentNode) for el in self.to_add
+                ):
                     return []
-                return [Conflict(self.to_add, self,
-                                 reason="context not found")]
+                return [Conflict(self.to_add, self, reason="context not found")]
 
             index = indexes[0]
             if len(indexes) > 1:
@@ -302,7 +314,7 @@ class BaseAddEls:
             if index == 0:
                 at = "the beginning"
             else:
-                el = tree[index-1]
+                el = tree[index - 1]
                 at = short_display_el(el)
                 # Mostly in case an inline comment has been added
                 if self.to_add[0].on_new_line and not el.endl:
@@ -323,7 +335,7 @@ class BaseAddEls:
 
     def _insert_el(self, el_to_add, index, tree):
         if index > 0 and not el_to_add.on_new_line:
-            tree[index-1].remove_endl()
+            tree[index - 1].remove_endl()
 
         el = el_to_add.copy()
         el.new = True
@@ -371,9 +383,10 @@ class ReplaceEls(BaseAddEls):
     def __repr__(self):
         return "<%s\nto_add:\n* %s\nto_remove:\n* %s\ncontext:\n* %s\n>" % (
             self.__class__.__name__,
-            '\n* '.join(short_display_el(el).lstrip(" ") for el in self.to_add),
-            '\n* '.join(short_display_el(el).lstrip(" ") for el in self.to_remove),
-            '\n* '.join(line.lstrip(" ") for line in short_context(self.context).split("|")))
+            "\n* ".join(short_display_el(el).lstrip(" ") for el in self.to_add),
+            "\n* ".join(short_display_el(el).lstrip(" ") for el in self.to_remove),
+            "\n* ".join(line.lstrip(" ") for line in short_context(self.context).split("|")),
+        )
 
     def match_to_remove_at_index(self, tree, index):
         if index >= len(tree):
@@ -384,11 +397,11 @@ class ReplaceEls(BaseAddEls):
         offset = 0
         # match all to_remove items
         for el in self.to_remove:
-            while index+offset < len(tree) and tree[index+offset].hidden:
+            while index + offset < len(tree) and tree[index + offset].hidden:
                 offset += 1
             try:
-                if not same_el_guess(tree[index+offset], el):
-                    if offset > 0 and isinstance(tree[index+offset], nodes.CommentNode):
+                if not same_el_guess(tree[index + offset], el):
+                    if offset > 0 and isinstance(tree[index + offset], nodes.CommentNode):
                         continue
                     return False
             except IndexError:
@@ -399,12 +412,10 @@ class ReplaceEls(BaseAddEls):
 
     def _look_for_context(self, tree):
         matches = find_context_with_reduction(tree, self.context)
-        return [index for index in matches
-                if self.match_to_remove_at_index(tree, index)]
+        return [index for index in matches if self.match_to_remove_at_index(tree, index)]
 
     def _look_for_els(self, tree):
-        return [index for index in range(len(tree))
-                if self.match_to_remove_at_index(tree, index)]
+        return [index for index in range(len(tree)) if self.match_to_remove_at_index(tree, index)]
 
     def apply(self, tree):
         logging.debug("replacing els")
@@ -427,8 +438,7 @@ class ReplaceEls(BaseAddEls):
 
         if not indexes:
             logging.debug(". cannot match reduced context")
-            add_conflicts(tree, [Conflict(self.to_remove, self,
-                                        reason="Cannot match els")])
+            add_conflicts(tree, [Conflict(self.to_remove, self, reason="Cannot match els")])
             return []
         else:
             logging.debug(". matched reduced context")
@@ -447,13 +457,16 @@ class ReplaceEls(BaseAddEls):
         offset = 0
         for el_to_remove in self.to_remove:
             try:
-                el = tree[index+offset]
+                el = tree[index + offset]
             except IndexError:
                 # End of tree, we can only assume the other elements
                 # are already removed
                 break
-            if (offset > 0 and isinstance(el, nodes.CommentNode) and
-                    not isinstance(el_to_remove, nodes.CommentNode)):
+            if (
+                offset > 0
+                and isinstance(el, nodes.CommentNode)
+                and not isinstance(el_to_remove, nodes.CommentNode)
+            ):
                 tree.hide(el)
                 el = el.next
                 offset += 1
@@ -478,15 +491,18 @@ class Replace:
     def apply(self, tree):
         if tree.dumps() != self.new_value.dumps():
             if tree.dumps() != self.old_value.dumps():
-                return [Conflict([tree], self,
-                                 reason="Different from old value %r" %
-                                        short_display_el(self.old_value))]
+                return [
+                    Conflict(
+                        [tree],
+                        self,
+                        reason="Different from old value %r" % short_display_el(self.old_value),
+                    )
+                ]
         tree.replace(self.new_value.copy())
         return []
 
     def __repr__(self):
-        return "<%s new_value=%r>" % (self.__class__.__name__,
-                                      short_display_el(self.new_value))
+        return "<%s new_value=%r>" % (self.__class__.__name__, short_display_el(self.new_value))
 
 
 class ReplaceTarget(Replace):
@@ -516,8 +532,7 @@ class ReplaceAttr:
         return value
 
     def __repr__(self):
-        return "<%s %s=%r>" % (self.__class__.__name__, self.attr_name,
-                               self.value_str)
+        return "<%s %s=%r>" % (self.__class__.__name__, self.attr_name, self.value_str)
 
 
 class ReplaceAnnotation:
@@ -534,8 +549,7 @@ class ReplaceAnnotation:
         return []
 
     def __repr__(self):
-        return "<%s new_value=%r>" % (self.__class__.__name__,
-                                      short_display_el(self.new_value))
+        return "<%s new_value=%r>" % (self.__class__.__name__, short_display_el(self.new_value))
 
 
 class RemoveAllDecoratorArgs(BaseEl):
@@ -559,19 +573,22 @@ class ChangeEl(BaseEl):
         self.context = context
 
     def __repr__(self):
-        changes_str = "\n".join(indent_str(str(change), ".")
-                                for change in self.changes)
-        return "<%s el=\"%s\" context=%r> changes=\n%s" % (
-            self.__class__.__name__, short_display_el(self.el),
-            short_context(self.context), changes_str)
+        changes_str = "\n".join(indent_str(str(change), ".") for change in self.changes)
+        return '<%s el="%s" context=%r> changes=\n%s' % (
+            self.__class__.__name__,
+            short_display_el(self.el),
+            short_context(self.context),
+            changes_str,
+        )
 
     def apply(self, tree):
-        logging.debug("changing %s context %s", short_display_el(self.el),
-                      short_context(self.context))
+        logging.debug(
+            "changing %s context %s", short_display_el(self.el), short_context(self.context)
+        )
         el = find_el(tree, self.el, self.context)
         if el is None:
             logging.debug(". not found")
-            add_conflicts(tree, [Conflict([self.el], self, 'el not found')])
+            add_conflicts(tree, [Conflict([self.el], self, "el not found")])
         else:
             logging.debug(". found")
             conflicts = apply_changes(el, self.changes)
@@ -591,17 +608,14 @@ class ChangeAttr:
         self.changes = changes
 
     def __repr__(self):
-        changes_str = "\n".join(indent_str(str(change), ".")
-                                for change in self.changes)
-        return "<%s el=\"%s\" changes=\n%s>" % (
-            self.__class__.__name__, self.attr_name, changes_str)
+        changes_str = "\n".join(indent_str(str(change), ".") for change in self.changes)
+        return '<%s el="%s" changes=\n%s>' % (self.__class__.__name__, self.attr_name, changes_str)
 
     def apply(self, tree):
         try:
             attr = getattr(tree, self.attr_name)
         except AttributeError:
-            return [Conflict([], self,
-                             "element has no attr %s" % self.attr_name)]
+            return [Conflict([], self, "element has no attr %s" % self.attr_name)]
         return apply_changes(attr, self.changes)
 
 
@@ -653,9 +667,11 @@ class ChangeDefArg(ChangeEl):
         return []
 
     def __repr__(self):
-        return "<%s el=%r changes=%r>" % (self.__class__.__name__,
-                                          short_display_el(self.el),
-                                          self.changes)
+        return "<%s el=%r changes=%r>" % (
+            self.__class__.__name__,
+            short_display_el(self.el),
+            self.changes,
+        )
 
 
 class ChangeCallArg(ChangeDefArg):
@@ -668,7 +684,7 @@ class ArgOnNewLine:
         self.indentation = indentation
 
     def __repr__(self):
-        return "<%s indent=\"%s\">" % (self.__class__.__name__, self.indentation)
+        return '<%s indent="%s">' % (self.__class__.__name__, self.indentation)
 
     def apply(self, tree):
         logging.debug(". putting arg %s on a new line", short_display_el(tree))
@@ -699,24 +715,26 @@ class RemoveCallEndl:
 
 
 class Conflict:
-    def __init__(self, els, change, reason='', insert_before=True):
+    def __init__(self, els, change, reason="", insert_before=True):
         self.els = els
         self.change = change
         self.reason = reason
         self.insert_before = insert_before
 
     def __repr__(self):
-        return "<%s els=\"%s\" change=%r reason=%r>" % (
+        return '<%s els="%s" change=%r reason=%r>' % (
             self.__class__.__name__,
-            ', '.join(short_display_el(el) for el in self.els),
-            self.change, self.reason)
+            ", ".join(short_display_el(el) for el in self.els),
+            self.change,
+            self.reason,
+        )
 
 
 class ChangeFun(ChangeEl):
     def apply(self, tree):
         logging.debug("changing fun %r", short_display_el(self.el))
         el = find_func(tree, self.el)
-        if not el and hasattr(self.el, 'old_name'):
+        if not el and hasattr(self.el, "old_name"):
             tmp_el = self.el.copy()
             tmp_el.name = self.el.old_name
             el = find_func(tree, tmp_el)
@@ -736,9 +754,12 @@ class ChangeImport(ChangeEl):
         self.can_be_added_as_is = can_be_added_as_is
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context))
+        return '<%s el="%s" changes=%r context=%r>' % (
+            self.__class__.__name__,
+            short_display_el(self.el),
+            self.changes,
+            short_context(self.context),
+        )
 
     def apply(self, tree):
         logging.debug("changing import %r", short_display_el(self.el))
@@ -782,9 +803,13 @@ class ChangeClass(ChangeEl):
         self.old_name = old_name
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r old_name=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context), self.old_name)
+        return '<%s el="%s" changes=%r context=%r old_name=%r>' % (
+            self.__class__.__name__,
+            short_display_el(self.el),
+            self.changes,
+            short_context(self.context),
+            self.old_name,
+        )
 
     def apply(self, tree):
         el = find_class(tree, self.el)
@@ -807,8 +832,7 @@ class EnsureEmptyLines:
         self.lines = lines
 
     def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__,
-                                        self.lines)
+        return "<%s %r>" % (self.__class__.__name__, self.lines)
 
     def apply(self, tree):
         index = tree.index_on_parent + 1
@@ -833,9 +857,13 @@ class MoveElWithId(ChangeEl):
         self.old_empty_lines = old_empty_lines or []
 
     def __repr__(self):
-        return "<%s el=\"%s\" changes=%r context=%r empty_lines=%r>" % (
-            self.__class__.__name__, short_display_el(self.el), self.changes,
-            short_context(self.context), self.old_empty_lines)
+        return '<%s el="%s" changes=%r context=%r empty_lines=%r>' % (
+            self.__class__.__name__,
+            short_display_el(self.el),
+            self.changes,
+            short_context(self.context),
+            self.old_empty_lines,
+        )
 
     def apply(self, tree):
         fun = self.finder(tree, self.el)
@@ -895,8 +923,9 @@ class ChangeAssignment(ChangeEl):
 
 class ChangeAtomTrailer(ChangeEl):
     def apply(self, tree):
-        if (not isinstance(tree, nodes.AtomtrailersNode)
-                or len(tree.value.node_list) != len(self.el.value.node_list)):
+        if not isinstance(tree, nodes.AtomtrailersNode) or len(tree.value.node_list) != len(
+            self.el.value.node_list
+        ):
             tree.replace(self.el.copy())
             return []
         return apply_changes(tree, self.changes)
@@ -909,11 +938,11 @@ class ChangeAtomtrailersEl(ChangeEl):
 
     def apply(self, tree):
         if not isinstance(tree, nodes.AtomtrailersNode):
-            return [Conflict([self.el], self, 'tree is not atom trailer node')]
+            return [Conflict([self.el], self, "tree is not atom trailer node")]
         try:
             el = tree[self.index]
         except IndexError:
-            return [Conflict([self.el], self, 'calls elements not matching')]
+            return [Conflict([self.el], self, "calls elements not matching")]
 
         return apply_changes(el, self.changes)
 
@@ -928,7 +957,7 @@ class ChangeAtomtrailersCall(ChangeEl):
         try:
             el = calls_els[self.index]
         except IndexError:
-            return [Conflict([self.el], self, 'calls elements not matching')]
+            return [Conflict([self.el], self, "calls elements not matching")]
 
         return apply_changes(el, self.changes)
 
@@ -952,31 +981,34 @@ class AddFunArg:
         self.on_new_line = on_new_line
 
     def __repr__(self):
-        return "<%s arg=%r context=%r>" % (self.__class__.__name__,
-                                           short_display_el(self.arg),
-                                           short_context(self.context))
+        return "<%s arg=%r context=%r>" % (
+            self.__class__.__name__,
+            short_display_el(self.arg),
+            short_context(self.context),
+        )
 
     def get_args(self, tree):
         return tree.arguments
 
     def apply(self, tree):
         if not isinstance(tree, (nodes.DefNode, nodes.CallNode)):
-            return [Conflict([self.arg], self, 'tree is not a def node')]
+            return [Conflict([self.arg], self, "tree is not a def node")]
 
         args = self.get_args(tree)
         arg = self.arg.copy()
 
         if id_from_el(arg) in get_args_names(args):
-            logging.debug(". arg %r already exists",
-                          short_display_el(self.arg))
+            logging.debug(". arg %r already exists", short_display_el(self.arg))
             return []
 
-        logging.debug(". adding arg %r to %r, new_line=%r",
-                      short_display_el(self.arg), short_display_el(args),
-                      self.on_new_line)
+        logging.debug(
+            ". adding arg %r to %r, new_line=%r",
+            short_display_el(self.arg),
+            short_display_el(args),
+            self.on_new_line,
+        )
 
-        if not insert_at_context_coma_list(arg, self.context, args,
-                                           on_new_line=self.on_new_line):
+        if not insert_at_context_coma_list(arg, self.context, args, on_new_line=self.on_new_line):
             args.append(arg)
         return []
 
@@ -998,8 +1030,9 @@ class AddCallArg(AddFunArg):
 class AddDecorator(ElWithContext):
     def apply(self, tree):
         decorator = self.el.copy()
-        logging.debug(". adding decorator %r to %r",
-                      short_display_el(self.el), short_display_el(tree))
+        logging.debug(
+            ". adding decorator %r to %r", short_display_el(self.el), short_display_el(tree)
+        )
         context = self.context.copy()
         if isinstance(context[0], nodes.EndlNode):
             del context[0]
@@ -1030,8 +1063,7 @@ class RemoveFunArgs:
         self.args = args
 
     def __repr__(self):
-        return "<%s args=%r>" % (self.__class__.__name__,
-                                 [id_from_el(arg) for arg in self.args])
+        return "<%s args=%r>" % (self.__class__.__name__, [id_from_el(arg) for arg in self.args])
 
     def get_args(self, tree):
         return tree.arguments
@@ -1041,8 +1073,9 @@ class RemoveFunArgs:
         args = self.get_args(tree)
         for el in list(args):
             if id_from_el(el) in to_remove_values:
-                logging.debug(". removing arg %r from %r",
-                              short_display_el(el), short_display_el(args))
+                logging.debug(
+                    ". removing arg %r from %r", short_display_el(el), short_display_el(args)
+                )
                 if el.endl:
                     el.put_on_new_line()
                 args.remove(el)
@@ -1099,25 +1132,27 @@ class RemoveWith(ElWithContext):
                 if with_node_as & el_node_as or similiarity > CODE_BLOCK_SIMILARITY_THRESHOLD:
                     similar_with_nodes += [el]
                     if self.context:
-                        if (self.context[-1] is None and previous_el is None or
-                           (self.context[-1] and
-                                same_el(previous_el, self.context[-1]))):
+                        if (
+                            self.context[-1] is None
+                            and previous_el is None
+                            or (self.context[-1] and same_el(previous_el, self.context[-1]))
+                        ):
                             context_with_nodes += [el]
             if not isinstance(el, nodes.EndlNode):
                 previous_el = el
 
         if not similar_with_nodes:
-            logging.debug('. no nodes found')
+            logging.debug(". no nodes found")
             # No with node at all, probably already removed
             return []
         elif len(same_with_nodes) == 1:
-            logging.debug('. same node found')
+            logging.debug(". same node found")
             with_node = same_with_nodes[0]
         elif len(similar_with_nodes) == 1:
-            logging.debug('. similar node found')
+            logging.debug(". similar node found")
             with_node = similar_with_nodes[0]
         elif len(context_with_nodes) == 1:
-            logging.debug('. similar with context node found')
+            logging.debug(". similar with context node found")
             with_node = context_with_nodes[0]
         elif len(same_with_nodes) > 1:
             indexes = [el.index_on_parent for el in same_with_nodes]
@@ -1128,9 +1163,10 @@ class RemoveWith(ElWithContext):
             index = first_index_after_cursor(tree, indexes)
             with_node = tree[index]
         else:
-            add_conflict(tree, Conflict([self.el], self,
-                                        reason="Multiple with nodes found",
-                                        insert_before=False))
+            add_conflict(
+                tree,
+                Conflict([self.el], self, reason="Multiple with nodes found", insert_before=False),
+            )
             return []
 
         added_els = remove_with(with_node)
@@ -1146,24 +1182,25 @@ class ChangeIndentation:
     def apply(self, tree):
         if isinstance(tree, NodeList):
             if not tree:
-                logging.debug('. empty list, skipping')
+                logging.debug(". empty list, skipping")
                 return []
-            logging.debug('. found list, using first el')
+            logging.debug(". found list, using first el")
             tree = tree[0]
 
-        logging.debug('. indentation %d delta %d',
-                      len(tree.indentation), self.relative_indentation)
+        logging.debug(". indentation %d delta %d", len(tree.indentation), self.relative_indentation)
 
         if self.relative_indentation >= 0:
             tree.indentation += self.relative_indentation * " "
         else:
-            tree.indentation = tree.indentation[:self.relative_indentation]
+            tree.indentation = tree.indentation[: self.relative_indentation]
 
         return []
 
     def __repr__(self):
-        return "<%s relative_indentation=\"%s\">" % (self.__class__.__name__,
-                                                     self.relative_indentation)
+        return '<%s relative_indentation="%s">' % (
+            self.__class__.__name__,
+            self.relative_indentation,
+        )
 
 
 class AddDictItem(BaseAddEls):
@@ -1180,19 +1217,18 @@ class AddDictItem(BaseAddEls):
 
     def apply(self, tree):
         if not isinstance(tree, nodes.DictNode):
-            return [Conflict([tree], self,
-                             reason="Invalid type %s, expected dict" %
-                                                                   type(tree))]
+            return [Conflict([tree], self, reason="Invalid type %s, expected dict" % type(tree))]
 
         if find_key(self.el.key, tree):
-            logging.debug("key %s already exists",
-                          short_display_el(self.el.key))
+            logging.debug("key %s already exists", short_display_el(self.el.key))
             return []
 
         if self.previous_item:
-            logging.debug("adding key %s after %s",
-                          short_display_el(self.el.key),
-                          short_display_el(self.previous_item.key))
+            logging.debug(
+                "adding key %s after %s",
+                short_display_el(self.el.key),
+                short_display_el(self.previous_item.key),
+            )
 
             previous_key = find_key(self.previous_item.key, tree)
             if not previous_key:
@@ -1200,8 +1236,7 @@ class AddDictItem(BaseAddEls):
             else:
                 index = tree.index(previous_key) + 1
         else:
-            logging.debug("adding key %s at the beginning",
-                          short_display_el(self.el.key))
+            logging.debug("adding key %s at the beginning", short_display_el(self.el.key))
             index = 0
 
         self._insert_el(self.el, index, tree)
@@ -1214,9 +1249,7 @@ class RemoveDictItem(BaseEl):
         logging.debug("removing key %s", short_display_el(self.el))
 
         if not isinstance(tree, nodes.DictNode):
-            return [Conflict([tree], self,
-                             reason="Invalid type %s, expected dict" %
-                                                                   type(tree))]
+            return [Conflict([tree], self, reason="Invalid type %s, expected dict" % type(tree))]
 
         item = find_key(self.el.key, tree)
         if item is not None:
@@ -1229,9 +1262,7 @@ class ChangeDictValue(ChangeEl):
         logging.debug("changing key %s", short_display_el(self.el.key))
 
         if not isinstance(tree, nodes.DictNode):
-            return [Conflict([tree], self,
-                             reason="Invalid type %s, expected dict" %
-                                                                   type(tree))]
+            return [Conflict([tree], self, reason="Invalid type %s, expected dict" % type(tree))]
 
         item = find_key(self.el.key, tree)
         if not item:
@@ -1244,9 +1275,7 @@ class ChangeDictItem(ChangeEl):
         logging.debug("changing key %s", short_display_el(self.el.key))
 
         if not isinstance(tree, nodes.DictNode):
-            return [Conflict([tree], self,
-                             reason="Invalid type %s, expected dict" %
-                                                                   type(tree))]
+            return [Conflict([tree], self, reason="Invalid type %s, expected dict" % type(tree))]
 
         item = find_key(self.el.key, tree)
         if not item:
@@ -1274,8 +1303,7 @@ class ChangeAssociatedSep:
         if not changes:
             return []
 
-        return apply_changes(tree.associated_sep, changes,
-                             skip_checks=True)
+        return apply_changes(tree.associated_sep, changes, skip_checks=True)
 
 
 class ReplaceDictComment(BaseEl):
@@ -1313,22 +1341,16 @@ class MoveArg:
         self.context = context
 
     def __repr__(self):
-        return "<%s context=%r>" % (self.__class__.__name__,
-                                    short_context(self.context))
+        return "<%s context=%r>" % (self.__class__.__name__, short_context(self.context))
 
     def apply(self, tree):
-        logging.debug(".. moving %s after %s",
-                      short_display_el(tree), self.context[0])
+        logging.debug(".. moving %s after %s", short_display_el(tree), self.context[0])
         if tree.previous is None and self.context[0] is None:
             logging.debug("... already at the beginning")
             return []
-        if (tree.previous and
-                self.context[0] and
-                same_arg_guess(self.context[0], tree.previous)):
+        if tree.previous and self.context[0] and same_arg_guess(self.context[0], tree.previous):
             logging.debug("... already in place")
             return []
-
-        assert tree in tree.parent
 
         if self.context[0] is None:
             tree.parent.remove(tree)
@@ -1339,7 +1361,6 @@ class MoveArg:
             if same_arg_guess(self.context[0], el):
                 tree.parent.remove(tree)
                 el.insert_after(tree)
-                assert tree in tree.parent
                 return []
 
         return [Conflict([tree], self, reason="Context not found")]
@@ -1371,8 +1392,7 @@ class MoveEl(ElWithContext):
     conflict_if_missing = True
 
     def apply(self, tree):
-        logging.debug(".. moving %s after %s",
-                      short_display_el(tree), self.context[0])
+        logging.debug(".. moving %s after %s", short_display_el(tree), self.context[0])
 
         if self.context[0] is None:
             indexes = [0]
@@ -1443,8 +1463,7 @@ class SameEl(BaseEl):
 
         if isinstance(tree, CodeBlockMixin):
             max_ahead = 10 if not isinstance(self.el, nodes.EmptyLineNode) else 1
-            el = look_ahead(tree_after_cursor(tree), self.el,
-                            max_ahead=max_ahead)
+            el = look_ahead(tree_after_cursor(tree), self.el, max_ahead=max_ahead)
             if el:
                 set_cursor(tree, el)
 
@@ -1474,8 +1493,7 @@ class AddElseNode:
 
         if tree.else_:
             logging.debug(".. else already added")
-            return [Conflict(self.new_else, self,
-                             reason="else already added")]
+            return [Conflict(self.new_else, self, reason="else already added")]
 
         tree.else_ = self.new_else
         return []
@@ -1520,15 +1538,16 @@ class ChangeExceptsNode:
         return apply_changes(except_node, self.changes)
 
     def __repr__(self):
-        return "<%s index=%r changes=%r>" % (self.__class__.__name__,
-                                             self.index, self.changes)
+        return "<%s index=%r changes=%r>" % (self.__class__.__name__, self.index, self.changes)
 
 
 class ChangeString(ChangeEl):
     def __repr__(self):
-        return "<%s el=\"%s\" context=%r>" % (
-            self.__class__.__name__, short_display_el(self.el),
-            short_context(self.context))
+        return '<%s el="%s" context=%r>' % (
+            self.__class__.__name__,
+            short_display_el(self.el),
+            short_context(self.context),
+        )
 
     def apply(self, tree):
         dmp = diff_match_patch()

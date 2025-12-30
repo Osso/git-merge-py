@@ -1,9 +1,8 @@
 import logging
 
-from redbaron import (RedBaron,
-                      nodes)
+from redbaron import RedBaron, nodes
 
-from gitmergepy.applyier import apply_changes
+from gitmergepy.applier import apply_changes
 from gitmergepy.differ import compute_diff
 
 

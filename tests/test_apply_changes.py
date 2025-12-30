@@ -2,20 +2,22 @@ import logging
 
 from redbaron import RedBaron
 
-from gitmergepy.actions import (AddCallArg,
-                                AddEls,
-                                ChangeAssignment,
-                                ChangeEl,
-                                ChangeExceptsNode,
-                                ChangeImport,
-                                ChangeString,
-                                ChangeValue,
-                                MoveFun,
-                                MoveImport,
-                                RemoveEls,
-                                RemoveWith,
-                                SameEl)
-from gitmergepy.applyier import apply_changes
+from gitmergepy.actions import (
+    AddCallArg,
+    AddEls,
+    ChangeAssignment,
+    ChangeEl,
+    ChangeExceptsNode,
+    ChangeImport,
+    ChangeString,
+    ChangeValue,
+    MoveFun,
+    MoveImport,
+    RemoveEls,
+    RemoveWith,
+    SameEl,
+)
+from gitmergepy.applier import apply_changes
 from gitmergepy.context import AfterContext
 from gitmergepy.differ import compute_diff
 
@@ -2210,9 +2212,17 @@ l = [
     assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0], ChangeValue)
     assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[0], SameEl)
     assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1], ChangeEl)
-    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0], ChangeValue)
-    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[0], SameEl)
-    assert isinstance(changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[1], RemoveEls)
+    assert isinstance(
+        changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0], ChangeValue
+    )
+    assert isinstance(
+        changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[0],
+        SameEl,
+    )
+    assert isinstance(
+        changes[0].changes[0].changes[0].changes[1].changes[0].changes[1].changes[0].changes[1],
+        RemoveEls,
+    )
 
 
 def test_change_call_brackets():
@@ -2222,8 +2232,8 @@ def test_change_call_brackets():
 
 
 def test_change_call_brackets_2():
-    base = "assert call.fetch(args)[\"stuff\"] == _stuff1"
-    current = "assert user_info[\"stuff\"] == _stuff1"
+    base = 'assert call.fetch(args)["stuff"] == _stuff1'
+    current = 'assert user_info["stuff"] == _stuff1'
     _test_apply_changes(base, current)
 
 

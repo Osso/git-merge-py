@@ -2,7 +2,7 @@ import logging
 
 from redbaron import RedBaron
 
-from gitmergepy.applyier import apply_changes
+from gitmergepy.applier import apply_changes
 from gitmergepy.differ import compute_diff
 
 

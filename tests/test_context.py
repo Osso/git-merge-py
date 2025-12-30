@@ -1,8 +1,6 @@
 from redbaron import RedBaron
 
-from gitmergepy.context import (AfterContext,
-                                BeforeContext,
-                                find_context)
+from gitmergepy.context import AfterContext, BeforeContext, find_context
 
 
 def test_match_after_context():

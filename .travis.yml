@@ -1,8 +1,0 @@
-language: python
-install:
-  - pip install pytest
-  - python setup.py install
-python:
-  - "3.8"
-script:
-  - py.test tests

@@ -1,9 +1,7 @@
 from redbaron import nodes
 
-from .matcher import (same_el,
-                      same_el_guess)
-from .tools import (WHITESPACE_NODES,
-                    empty_lines)
+from .matcher import same_el, same_el_guess
+from .tools import WHITESPACE_NODES, empty_lines
 
 
 class BeforeContext(list):
@@ -20,8 +18,7 @@ class BeforeContext(list):
         def _filter(el):
             return (old_tree and el.new) or (not old_tree and el.hidden)
 
-        not_hidden_prev_elements = [el for el in prev_elements
-                                    if not _filter(el)]
+        not_hidden_prev_elements = [el for el in prev_elements if not _filter(el)]
         for el in els:
             if _filter(el):
                 els.remove(el)
@@ -43,8 +40,7 @@ class BeforeContext(list):
             return False
 
         els = tree[start_index:index]
-        self._skip_els(els, prev_elements=tree[:start_index],
-                       old_tree=old_tree)
+        self._skip_els(els, prev_elements=tree[:start_index], old_tree=old_tree)
 
         if len(els) != len(context):
             return False
@@ -68,8 +64,7 @@ class AfterContext(list):
         def _filter(el):
             return (old_tree and el.new) or (not old_tree and el.hidden)
 
-        not_hidden_next_elements = [el for el in next_elements
-                                    if not _filter(el)]
+        not_hidden_next_elements = [el for el in next_elements if not _filter(el)]
         for el in els:
             if _filter(el):
                 els.remove(el)
@@ -106,21 +101,19 @@ def find_context_with_reduction(tree, context, look_in_old_tree_first=False):
     trimmed_context = context.copy()
 
     while trimmed_context and not empty_lines(trimmed_context):
-
         # Simple case: exact context found
-        matches = find_context(tree, trimmed_context,
-                               look_in_old_tree_first=look_in_old_tree_first)
+        matches = find_context(tree, trimmed_context, look_in_old_tree_first=look_in_old_tree_first)
         if matches:
             return matches
 
         # Empty lines mismatch
         if isinstance(trimmed_context[0], nodes.EmptyLineNode):
             context_no_endl = trimmed_context.copy()
-            while (context_no_endl and
-                   isinstance(context_no_endl[0], nodes.EmptyLineNode)):
+            while context_no_endl and isinstance(context_no_endl[0], nodes.EmptyLineNode):
                 del context_no_endl[0]
-            matches = find_context(tree, context_no_endl,
-                                   look_in_old_tree_first=look_in_old_tree_first)
+            matches = find_context(
+                tree, context_no_endl, look_in_old_tree_first=look_in_old_tree_first
+            )
             if matches:
                 return matches
 
@@ -143,8 +136,7 @@ def _find_context(tree, context, old_tree):
 def find_context(tree, context, look_in_old_tree_first=False):
     indexes = _find_context(tree, context, old_tree=look_in_old_tree_first)
     if not indexes:
-        indexes = _find_context(tree, context,
-                                old_tree=not look_in_old_tree_first)
+        indexes = _find_context(tree, context, old_tree=not look_in_old_tree_first)
     return indexes
 
 
@@ -152,7 +144,7 @@ def gather_context(el, limit=5):
     el = el.previous
     context = BeforeContext([])
     for _ in range(limit):
-        while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
+        while isinstance(el, WHITESPACE_NODES + (nodes.CommaNode,)):
             context.append(el)
             el = el.previous
         context.append(el)
@@ -166,7 +158,7 @@ def gather_after_context(el):
     el = el.next
 
     context = AfterContext([el])
-    while isinstance(el, WHITESPACE_NODES+(nodes.CommaNode, )):
+    while isinstance(el, WHITESPACE_NODES + (nodes.CommaNode,)):
         el = el.next
         context.append(el)
     return context

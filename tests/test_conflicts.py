@@ -734,9 +734,9 @@ async def fun():
 def fun():
     modified()
 """
-    # Async is not added, only body modification is applied
+    # Async IS added, and body modification is applied
     expected = """
-def fun():
+async def fun():
     modified()
 """
     _test_merge_changes(base, current, other, expected)
@@ -781,9 +781,11 @@ def fun():
 async def fun():
     await modified()
 """
-    # Both changes are added (current's body change + other's body kept)
+    # Async is removed, body changes from current applied
+    # Note: This may produce invalid Python (await in non-async function)
+    # if other's changes include await expressions
     expected = """
-async def fun():
+def fun():
     original()
     await modified()
 """

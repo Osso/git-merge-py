@@ -195,6 +195,11 @@ def diff_def_node(left: nodes.DefNode, right: nodes.DefNode, indent: str) -> lis
         if diff_decorator:
             diff += [ChangeDecorator(left_el, changes=diff_decorator)]
 
+    # Async modifier
+    if left.async_ != right.async_:
+        logging.debug("%s async changed from %r to %r", indent, left.async_, right.async_)
+        diff += [ReplaceAttr("async_", right.async_)]
+
     diff += diff_inline_vs_multiline(left, right, indent=indent)
 
     # Body

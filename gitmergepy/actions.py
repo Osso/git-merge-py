@@ -702,7 +702,7 @@ class ChangeDefArg(ChangeEl):
 
 
 class ChangeCallArg(ChangeDefArg):
-    def get_args(self, tree: Node) -> ProxyList:
+    def get_args(self, tree: Node) -> Node:  # type: ignore[override]
         return tree
 
 
@@ -1071,7 +1071,7 @@ class AddFunArg:
 
 
 class AddCallArg(AddFunArg):
-    def get_args(self, tree: Node) -> ProxyList:
+    def get_args(self, tree: Node) -> Node:  # type: ignore[override]
         return tree
 
     def make_conflict(self, reason: str) -> Conflict:
@@ -1134,7 +1134,7 @@ class RemoveFunArgs:
 
 
 class RemoveCallArgs(RemoveFunArgs):
-    def get_args(self, tree: Node) -> ProxyList:
+    def get_args(self, tree: Node) -> Node:  # type: ignore[override]
         return tree
 
 
@@ -1240,6 +1240,7 @@ class ChangeIndentation:
 
         logging.debug(". indentation %d delta %d", len(tree.indentation), self.relative_indentation)
 
+        assert tree.indentation is not None
         if self.relative_indentation >= 0:
             tree.indentation += self.relative_indentation * " "
         else:

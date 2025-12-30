@@ -1,7 +1,6 @@
 from redbaron import RedBaron, node, nodes
 
 from gitmergepy.tools import (
-    apply_diff_to_list,
     changed_in_list,
     diff_list,
     empty_lines,

@@ -1634,15 +1634,13 @@ class AddFinally:
         if tree.finally_:
             logging.debug(".. finally already exists, skipping")
             return []
-        # Create the finally block by setting first statement as string,
-        # then append remaining nodes. We can't use dumps() directly on
-        # the whole node list because multi-line content causes
-        # "inline code can't have multiple lines" error
         if not self.finally_node:
             return []
-        # Get the first node's content, stripping whitespace
+        # Create the finally block by setting first statement with newline prefix.
+        # The "\n" prefix tells RedBaron to create a multiline block with proper
+        # indentation. Without it, we get inline format: "finally: cleanup()"
         first_content = self.finally_node[0].dumps().strip()
-        tree.finally_ = first_content
+        tree.finally_ = "\n" + first_content
         # Add remaining nodes
         for node in self.finally_node[1:]:
             tree.finally_.append(node.copy())

@@ -1246,13 +1246,14 @@ try:
 except:
     modified()
 """
-    # The finally IS added (additive change merged, inline format)
+    # The finally IS added (additive change merged)
     expected = """
 try:
     pass
 except:
     modified()
-finally: cleanup()
+finally:
+    cleanup()
 """
     _test_merge_changes(base, current, other, expected)
 

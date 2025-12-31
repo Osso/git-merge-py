@@ -18,12 +18,6 @@ from .actions import (
     AddFunArg,
     AddImports,
     AddSepComment,
-    ChangeComprehensionGenerator,
-    ChangeComprehensionResult,
-    ChangeFinallyNode,
-    ChangeLambdaBody,
-    RemoveExcept,
-    RemoveFinally,
     ArgOnNewLine,
     ArgRemoveNewLine,
     ChangeAnnotation,
@@ -33,15 +27,19 @@ from .actions import (
     ChangeAtomtrailersEl,
     ChangeAttr,
     ChangeCallArg,
+    ChangeComprehensionGenerator,
+    ChangeComprehensionResult,
     ChangeDecorator,
     ChangeDecoratorArgs,
     ChangeDefArg,
     ChangeDictItem,
     ChangeDictValue,
     ChangeElseNode,
-    ChangeExceptsNode,
     ChangeExceptionTarget,
     ChangeExceptionType,
+    ChangeExceptsNode,
+    ChangeFinallyNode,
+    ChangeLambdaBody,
     ChangeNumberValue,
     ChangeReturn,
     ChangeSepComment,
@@ -57,6 +55,8 @@ from .actions import (
     RemoveDecorators,
     RemoveDictItem,
     RemoveElseNode,
+    RemoveExcept,
+    RemoveFinally,
     RemoveFunArgs,
     RemoveImports,
     RemoveSepComment,
@@ -606,14 +606,18 @@ def diff_excepts_node(left: nodes.TryNode, right: nodes.TryNode, indent: str) ->
         left_exc_type = left_except.exception.dumps() if left_except.exception else None
         right_exc_type = right_except.exception.dumps() if right_except.exception else None
         if left_exc_type != right_exc_type:
-            logging.debug("%s changed exception type from %r to %r", indent, left_exc_type, right_exc_type)
+            logging.debug(
+                "%s changed exception type from %r to %r", indent, left_exc_type, right_exc_type
+            )
             except_changes += [ChangeExceptionType(right_except.exception)]
 
         # Check for target (as e) change
         left_target = left_except.target.dumps() if left_except.target else None
         right_target = right_except.target.dumps() if right_except.target else None
         if left_target != right_target:
-            logging.debug("%s changed exception target from %r to %r", indent, left_target, right_target)
+            logging.debug(
+                "%s changed exception target from %r to %r", indent, left_target, right_target
+            )
             except_changes += [ChangeExceptionTarget(right_except.target, right_except.delimiter)]
 
         # Check for body changes
@@ -723,9 +727,7 @@ def diff_comparison_node(
     return diff
 
 
-def diff_lambda_node(
-    left: nodes.LambdaNode, right: nodes.LambdaNode, indent: str
-) -> list[Action]:
+def diff_lambda_node(left: nodes.LambdaNode, right: nodes.LambdaNode, indent: str) -> list[Action]:
     """Diff a lambda expression, comparing arguments and body."""
     diff: list[Action] = []
 

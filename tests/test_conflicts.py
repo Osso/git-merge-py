@@ -936,19 +936,19 @@ def fun():
 
 def test_add_vs_modify_docstring():
     """One adds docstring, other modifies function body."""
-    base = '''
+    base = """
 def fun():
     original()
-'''
+"""
     current = '''
 def fun():
     """New docstring."""
     original()
 '''
-    other = '''
+    other = """
 def fun():
     modified()
-'''
+"""
     expected = '''
 def fun():
     """New docstring."""
@@ -964,10 +964,10 @@ def fun():
     """Original docstring."""
     pass
 '''
-    current = '''
+    current = """
 def fun():
     pass
-'''
+"""
     other = '''
 def fun():
     """Changed docstring."""

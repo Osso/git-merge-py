@@ -1116,7 +1116,9 @@ class AddBase(AddDecorator):
         # Handle empty inherit_from specially to avoid RedBaron corruption bug
         # When inherit_from is empty, inserting corrupts the class name
         if len(tree.inherit_from) == 0:
-            logging.debug(". adding first base %r to %r", short_display_el(self.el), short_display_el(tree))
+            logging.debug(
+                ". adding first base %r to %r", short_display_el(self.el), short_display_el(tree)
+            )
             tree.inherit_from = self.el.dumps()
             return []
         return super().apply(tree)
